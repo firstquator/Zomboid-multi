@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { builds, verdicts } from "../src/data/builds.mjs";
+import { builds, buildGroups, verdicts } from "../src/data/builds.mjs";
 import { remainingPoints, conflicts, skillTotals, encodeBuild, decodeBuild, SLEEP_TRAITS } from "../src/lib/character.mjs";
 
 const data = JSON.parse(readFileSync(new URL("../src/data/character.json", import.meta.url), "utf8"));
@@ -36,6 +36,20 @@ describe("추천 조합", () => {
       });
     });
   }
+});
+
+describe("추천 조합 목록", () => {
+  it("id 가 겹치지 않고, 모두 정해진 갈래에 속한다", () => {
+    const ids = builds.map((b) => b.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    const groups = new Set(buildGroups.map((g) => g.id));
+    expect(builds.filter((b) => !groups.has(b.group)).map((b) => b.id)).toEqual([]);
+  });
+
+  it("같은 조합(직업과 특성이 모두 같은 것)이 두 번 들어가지 않는다", () => {
+    const keys = builds.map((b) => [b.profession, ...[...b.good, ...b.bad].sort()].join("."));
+    expect(new Set(keys).size).toBe(keys.length);
+  });
 });
 
 describe("특성 평가", () => {

@@ -5,15 +5,15 @@ import Icon from "../components/Icon.astro";
 import PixelIcon from "../components/PixelIcon.astro";
 import { base } from "../lib/base-url.mjs";
 import { remainingPoints, SLEEP_TRAITS } from "../lib/character.mjs";
-import { builds, verdicts, spawnTips, firstDay } from "../data/builds.mjs";
+import { builds, buildGroups, verdicts, spawnTips, firstDay } from "../data/builds.mjs";
 import data from "../data/character.json";
 
-const TAG = {
-  good: { label: "추천", cls: "good" },
-  ok: { label: "상황에 따라", cls: "ok" },
-  bad: { label: "피하기", cls: "bad" },
-  server: { label: "효과 거의 없음", cls: "server" },
-  off: { label: "선택 불가", cls: "off" },
+const TAG: Record<string, { label: string; rank: number }> = {
+  good: { label: "추천", rank: 0 },
+  ok: { label: "상황에 따라", rank: 1 },
+  server: { label: "효과 거의 없음", rank: 3 },
+  bad: { label: "피하기", rank: 4 },
+  off: { label: "선택 불가", rank: 5 },
 };
 
 const profById = new Map(data.professions.map((p) => [p.id, p]));
@@ -26,6 +26,7 @@ const negatives = pickable.filter((t) => t.cost < 0);
 const clean = (s: string) => s.replace(/<br\s*\/?>/gi, " · ").replace(/\s+/g, " ").trim();
 // 남은 포인트에 주는 영향으로 보여 준다. 긍정 특성은 포인트를 쓰므로 음수.
 const fx = (n: number) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : "0");
+const rank = (id: string) => TAG[verdicts[id]?.tag]?.rank ?? 2;
 
 const buildCards = builds.map((b) => {
   const p = profById.get(b.profession)!;
@@ -33,15 +34,23 @@ const buildCards = builds.map((b) => {
   const bad = b.bad.map((id) => traitById.get(id)!);
   return { ...b, p, good, bad, left: remainingPoints(p, [...good, ...bad]) };
 });
+const groupCount = Object.fromEntries(buildGroups.map((g) => [g.id, builds.filter((b) => b.group === g.id).length]));
 
 // 계산기가 쓰는 데이터만 페이지에 넣는다.
 const clientData = {
-  professions: data.professions.map(({ id, name, cost, xp, granted }) => ({ id, name, cost, xp, granted })),
-  traits: pickable.map(({ id, name, cost, exclusive, xp }) => ({ id, name, cost, exclusive, xp })),
+  professions: data.professions.map(({ id, name, cost, xp, granted, icon }) => ({ id, name, cost, xp, granted, icon })),
+  traits: pickable.map(({ id, name, cost, exclusive, xp, icon }) => ({ id, name, cost, exclusive, xp, icon })),
   granted: Object.fromEntries(data.traits.filter((t) => t.professionOnly).map((t) => [t.id, t.name])),
   off: SLEEP_TRAITS,
-  builds: builds.map((b) => ({ id: b.id, profession: b.profession, traits: [...b.good, ...b.bad] })),
+  builds: builds.map((b) => ({ id: b.id, title: b.title, profession: b.profession, traits: [...b.good, ...b.bad] })),
+  base: import.meta.env.BASE_URL.replace(/\/+$/, ""),
 };
+
+const traitCard = (t: any) => ({
+  ...t,
+  verdict: verdicts[t.id],
+  search: `${t.name} ${t.nameEn} ${clean(t.desc)} ${t.xp.map((x: any) => x.name).join(" ")}`.toLowerCase(),
+});
 ---
 
 <Base title="캐릭터 만들기" active="character">
@@ -51,9 +60,16 @@ const clientData = {
     desc="처음 시작할 때 고르는 직업과 특성을 정리했습니다. 수치는 게임 파일에서 그대로 가져왔고, 우리 서버 설정에 맞춘 추천을 붙였습니다."
     icon="user"
     seed={45}
-  />
+  >
+    <nav class="jump" aria-label="이 페이지 안에서 이동">
+      <a href="#rules"><Icon name="information-circle" size={16} />포인트 계산법</a>
+      <a href="#builds"><Icon name="star" size={16} />추천 조합 {builds.length}개</a>
+      <a href="#builder"><Icon name="sliders-horizontal" size={16} />직접 짜 보기</a>
+      <a href="#start"><Icon name="maps-location-01" size={16} />시작 직후</a>
+    </nav>
+  </PageHead>
 
-  <section class="wrap sec rules" aria-labelledby="rules-title">
+  <section class="wrap sec" id="rules" aria-labelledby="rules-title">
     <p class="kicker">01</p>
     <h2 id="rules-title" class="display">포인트 계산법</h2>
 
@@ -80,75 +96,85 @@ const clientData = {
     </div>
     <p class="lede">남은 포인트가 0 이상이면 시작할 수 있습니다. 남은 포인트는 다른 곳에 쓸 수 없어서 0에 가깝게 맞추는 게 좋습니다.</p>
 
-    <h3 class="sub-title">우리 서버에서 달라지는 점</h3>
     <ul class="notes">
       <li class="reveal" style="--i:0">
         <span class="n-ic"><Icon name="moon-02" size={20} /></span>
-        <span><b>수면 특성 3개는 고를 수 없습니다</b>잠 설정이 꺼진 멀티 서버에서는 수면장애, 잠꾸러기, 잠이 적음이 목록에서 빠집니다. 피로도 쌓이지 않습니다.</span>
+        <span><b>수면 특성 3개는 고를 수 없음</b>잠 설정이 꺼진 멀티 서버라 수면장애, 잠꾸러기, 잠이 적음이 목록에서 빠집니다. 피로도 쌓이지 않습니다.</span>
       </li>
       <li class="reveal" style="--i:1">
         <span class="n-ic"><Icon name="book-open-01" size={20} /></span>
-        <span><b>책을 거의 바로 읽습니다</b>독서 시간이 한 쪽당 0.1분이라 <em>속독</em>은 효과가 거의 없고, <em>정독</em>은 사실상 공짜 2점입니다. 대신 <em>문맹</em>은 기술 서적을 못 읽어 손해가 큽니다.</span>
+        <span><b>책을 거의 바로 읽음</b>독서 시간이 한 쪽당 0.1분이라 <em>속독</em>은 효과가 거의 없고 <em>정독</em>은 사실상 공짜 2점입니다. <em>문맹</em>은 기술 서적을 못 읽어 손해가 큽니다.</span>
       </li>
       <li class="reveal" style="--i:2">
         <span class="n-ic"><Icon name="book-02" size={20} /></span>
-        <span><b>스킬 보존 일지가 있습니다</b>일지에 기록한 기술은 죽은 뒤 새 캐릭터가 되찾습니다. 그래서 <em>현자</em>처럼 성장을 빠르게 하는 특성의 가치가 오릅니다.</span>
+        <span><b>스킬 보존 일지가 있음</b>일지에 기록한 기술은 죽은 뒤 되찾습니다. 그래서 <em>현자</em>처럼 성장을 빠르게 하는 특성의 가치가 오릅니다.</span>
       </li>
     </ul>
   </section>
 
-  <section class="wrap sec" aria-labelledby="builds-title">
+  <section class="wrap sec" id="builds" aria-labelledby="builds-title">
     <p class="kicker">02</p>
-    <h2 id="builds-title" class="display">추천 조합</h2>
-    <p class="lede">역할별 조합 4개입니다. 모두 포인트가 맞는지 게임 수치로 검사했습니다. 마음에 드는 조합을 계산기로 불러와 바꿔 볼 수 있습니다.</p>
+    <div class="sec-row">
+      <h2 id="builds-title" class="display">추천 조합</h2>
+      <div class="seg" role="tablist" aria-label="갈래" data-build-filter>
+        <button type="button" role="tab" aria-selected="true" data-group="all">전체 <span class="mono">{builds.length}</span></button>
+        {
+          buildGroups.map((g) => (
+            <button type="button" role="tab" aria-selected="false" data-group={g.id}>
+              {g.label} <span class="mono">{groupCount[g.id]}</span>
+            </button>
+          ))
+        }
+      </div>
+    </div>
+    <p class="lede">역할별 조합입니다. 모두 게임 수치로 포인트가 맞는지 검사했습니다. 마음에 드는 조합을 불러와 계산기에서 바꿔 볼 수 있습니다.</p>
 
-    <div class="build-grid">
+    <div class="build-grid" data-build-grid>
       {
         buildCards.map((b, i) => (
-          <article class="build reveal" style={`--i:${i}`}>
+          <article class="build reveal" data-group={b.group} style={`--i:${i % 3}`}>
             <header class="b-head">
-              <PixelIcon src={b.p.icon} size={36} />
-              <div>
-                <p class="b-tag">{b.tag}</p>
+              <PixelIcon src={b.p.icon} size={36} fallback="user" />
+              <div class="b-title">
                 <h3 class="display">{b.title}</h3>
+                <p class="b-sub">
+                  <span class="b-tag">{b.tag}</span> · {b.p.name} <span class="mono">{fx(b.p.cost)}</span>
+                </p>
               </div>
-              <span class="b-left mono" title="남은 포인트">
-                남은 <b>{b.left}</b>
+              <span class={`b-left ${b.left > 0 ? "rest" : ""}`} title="남은 포인트">
+                남은 <b class="mono">{b.left}</b>
               </span>
             </header>
-            <p class="b-prof">
-              직업 <b>{b.p.name}</b> <span class="mono pts">{fx(b.p.cost)}</span>
-            </p>
-            <div class="b-traits">
-              <p class="b-lbl">긍정 특성</p>
-              <ul>
-                {b.good.map((t) => (
-                  <li>
-                    <PixelIcon src={t.icon} size={18} />
-                    {t.name}
-                    <span class="mono pts minus">{fx(-t.cost)}</span>
-                  </li>
-                ))}
-              </ul>
-              <p class="b-lbl">부정 특성</p>
-              <ul>
-                {b.bad.map((t) => (
-                  <li>
-                    <PixelIcon src={t.icon} size={18} />
-                    {t.name}
-                    <span class="mono pts plus">{fx(-t.cost)}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <ul class="b-why">
-              {b.why.map((w) => (
-                <li>{w}</li>
+            <p class="b-who">{b.who}</p>
+            <ul class="b-chips" aria-label="긍정 특성">
+              {b.good.map((t) => (
+                <li class="pos">
+                  <PixelIcon src={t.icon} size={18} />
+                  {t.name}
+                  <span class="mono">{fx(-t.cost)}</span>
+                </li>
               ))}
             </ul>
+            <ul class="b-chips neg" aria-label="부정 특성">
+              {b.bad.map((t) => (
+                <li class="neg" title={t.name}>
+                  <PixelIcon src={t.icon} size={18} />
+                  {t.name}
+                  <span class="mono">{fx(-t.cost)}</span>
+                </li>
+              ))}
+            </ul>
+            <details class="b-why">
+              <summary>왜 이렇게?</summary>
+              <ul>
+                {b.why.map((w) => (
+                  <li>{w}</li>
+                ))}
+              </ul>
+            </details>
             <button type="button" class="b-load" data-load-build={b.id}>
               <Icon name="sliders-horizontal" size={16} />
-              계산기에서 열기
+              불러와서 바꿔 보기
             </button>
           </article>
         ))
@@ -159,114 +185,171 @@ const clientData = {
   <section class="wrap sec" id="builder" aria-labelledby="builder-title">
     <p class="kicker">03</p>
     <h2 id="builder-title" class="display">직접 짜 보기</h2>
-    <p class="lede">직업 하나와 특성을 눌러 고릅니다. 함께 못 고르는 특성은 자동으로 막히고, 오른쪽에 남은 포인트와 오르는 기술이 바로 보입니다.</p>
+    <p class="lede">직업 → 긍정 특성 → 부정 특성 순서로 고릅니다. 함께 못 고르는 특성은 자동으로 막히고, 요약에서 바로 뺄 수 있습니다.</p>
 
     <script type="application/json" id="char-data" set:html={JSON.stringify(clientData)} />
 
-    <div class="builder">
-      <div class="pick">
-        <h3 class="step-h"><span class="mono">1</span>직업</h3>
-        <div class="profs" role="group" aria-label="직업">
-          {
-            data.professions.map((p) => (
-              <button type="button" class="prof" data-prof={p.id} aria-pressed="false">
-                <PixelIcon src={p.icon} size={28} fallback="user" />
-                <span class="p-name">{p.name}</span>
-                <span class={`mono pts ${p.cost > 0 ? "plus" : p.cost < 0 ? "minus" : ""}`}>{fx(p.cost)}</span>
-              </button>
-            ))
-          }
-        </div>
-        <div class="prof-detail" data-prof-detail aria-live="polite"></div>
-
-        <div class="list-head">
-          <h3 class="step-h"><span class="mono">2</span>긍정 특성 <small>포인트를 씀</small></h3>
-          <label class="only"><input type="checkbox" data-only-good /> 추천만 보기</label>
-        </div>
-        <div class="traits" role="group" aria-label="긍정 특성">
-          {
-            positives.map((t) => (
-              <button type="button" class="trait" data-trait={t.id} data-tag={verdicts[t.id]?.tag ?? ""} aria-pressed="false">
-                <PixelIcon src={t.icon} size={22} />
-                <span class="t-main">
-                  <span class="t-name">
-                    {t.name}
-                    {verdicts[t.id] && <span class={`tag ${TAG[verdicts[t.id].tag].cls}`}>{TAG[verdicts[t.id].tag].label}</span>}
-                  </span>
-                  <span class="t-desc">{verdicts[t.id]?.note ?? clean(t.desc)}</span>
-                  {t.xp.length > 0 && (
-                    <span class="t-xp">
-                      {t.xp.map((x) => (
-                        <span class="xp">
-                          {x.name} {x.level > 0 ? `+${x.level}` : x.level}
-                        </span>
-                      ))}
-                    </span>
-                  )}
-                  <span class="t-why" data-why></span>
-                </span>
-                <span class="mono pts minus">{fx(-t.cost)}</span>
-              </button>
-            ))
-          }
+    <div class="builder" data-builder>
+      <div class="main">
+        <div class="tabs" role="tablist" aria-label="고르는 단계">
+          <button type="button" role="tab" id="tab-prof" aria-controls="panel-prof" aria-selected="true" data-tab="prof">
+            <span class="tab-n mono">1</span>
+            <span class="tab-t">직업<small data-tab-sub="prof">커스텀 직업</small></span>
+          </button>
+          <button type="button" role="tab" id="tab-pos" aria-controls="panel-pos" aria-selected="false" data-tab="pos">
+            <span class="tab-n mono">2</span>
+            <span class="tab-t">긍정 특성<small data-tab-sub="pos">0개</small></span>
+          </button>
+          <button type="button" role="tab" id="tab-neg" aria-controls="panel-neg" aria-selected="false" data-tab="neg">
+            <span class="tab-n mono">3</span>
+            <span class="tab-t">부정 특성<small data-tab-sub="neg">0개</small></span>
+          </button>
         </div>
 
-        <div class="list-head">
-          <h3 class="step-h"><span class="mono">3</span>부정 특성 <small>포인트를 돌려받음</small></h3>
-        </div>
-        <div class="traits" role="group" aria-label="부정 특성">
-          {
-            negatives.map((t) => (
-              <button type="button" class="trait" data-trait={t.id} data-tag={verdicts[t.id]?.tag ?? ""} aria-pressed="false">
-                <PixelIcon src={t.icon} size={22} />
-                <span class="t-main">
-                  <span class="t-name">
-                    {t.name}
-                    {verdicts[t.id] && <span class={`tag ${TAG[verdicts[t.id].tag].cls}`}>{TAG[verdicts[t.id].tag].label}</span>}
+        <div class="panel" role="tabpanel" id="panel-prof" aria-labelledby="tab-prof" data-panel="prof">
+          <div class="profs">
+            {
+              data.professions.map((p) => (
+                <button type="button" class="prof" data-prof={p.id} aria-pressed="false">
+                  <PixelIcon src={p.icon} size={28} fallback="user" />
+                  <span class="p-main">
+                    <span class="p-name">{p.name}</span>
+                    <span class="p-xp">{p.xp.slice(0, 2).map((x) => `${x.name} +${x.level}`).join(" · ") || "기술 보너스 없음"}</span>
                   </span>
-                  <span class="t-desc">{verdicts[t.id]?.note ?? clean(t.desc)}</span>
-                  {t.xp.length > 0 && (
-                    <span class="t-xp">
-                      {t.xp.map((x) => (
-                        <span class="xp">
-                          {x.name} {x.level > 0 ? `+${x.level}` : x.level}
-                        </span>
-                      ))}
-                    </span>
-                  )}
-                  <span class="t-why" data-why></span>
-                </span>
-                <span class="mono pts plus">{fx(-t.cost)}</span>
-              </button>
-            ))
-          }
+                  <span class={`mono pts ${p.cost > 0 ? "plus" : p.cost < 0 ? "minus" : ""}`}>{fx(p.cost)}</span>
+                </button>
+              ))
+            }
+          </div>
+          <div class="panel-foot">
+            <p class="prof-detail" data-prof-detail aria-live="polite"></p>
+            <button type="button" class="next" data-go="pos">긍정 특성 고르기 <Icon name="arrow-right-02" size={18} /></button>
+          </div>
         </div>
+
+        {
+          [
+            { id: "pos", list: positives, next: "neg", nextLabel: "부정 특성 고르기", hint: "포인트를 쓰는 특성" },
+            { id: "neg", list: negatives, next: "", nextLabel: "", hint: "포인트를 돌려받는 특성" },
+          ].map((panel) => (
+            <div class="panel" role="tabpanel" id={`panel-${panel.id}`} aria-labelledby={`tab-${panel.id}`} data-panel={panel.id} hidden>
+              <div class="tools">
+                <label class="search">
+                  <Icon name="search-01" size={16} />
+                  <input type="search" placeholder="이름이나 기술로 찾기" data-search={panel.id} aria-label="특성 찾기" />
+                </label>
+                <div class="seg small" role="group" aria-label="보기">
+                  <button type="button" aria-pressed="false" data-only-good={panel.id}>추천만</button>
+                  <button type="button" aria-pressed="true" data-sort={`${panel.id}:rank`}>추천순</button>
+                  <button type="button" aria-pressed="false" data-sort={`${panel.id}:cost`}>점수순</button>
+                </div>
+              </div>
+              <p class="panel-hint">{panel.hint}. 숫자는 남은 포인트에 주는 영향입니다.</p>
+              <div class="traits" data-list={panel.id}>
+                {panel.list.map(traitCard).map((t: any) => (
+                  <button
+                    type="button"
+                    class="trait"
+                    data-trait={t.id}
+                    data-tag={t.verdict?.tag ?? ""}
+                    data-rank={rank(t.id)}
+                    data-cost={Math.abs(t.cost)}
+                    data-search-text={t.search}
+                    aria-pressed="false"
+                  >
+                    <PixelIcon src={t.icon} size={22} />
+                    <span class="t-main">
+                      <span class="t-name">
+                        {t.name}
+                        {t.verdict && <span class={`tag ${t.verdict.tag}`}>{TAG[t.verdict.tag].label}</span>}
+                      </span>
+                      <span class="t-desc">{t.verdict?.note ?? clean(t.desc)}</span>
+                      {t.xp.length > 0 && (
+                        <span class="t-xp">
+                          {t.xp.map((x: any) => (
+                            <span class="xp">
+                              {x.name} {x.level > 0 ? `+${x.level}` : x.level}
+                            </span>
+                          ))}
+                        </span>
+                      )}
+                      <span class="t-why" data-why />
+                    </span>
+                    <span class={`mono pts ${t.cost > 0 ? "minus" : "plus"}`}>{fx(-t.cost)}</span>
+                    <span class="t-check" aria-hidden="true">
+                      <Icon name="tick-02" size={14} />
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <p class="empty" data-empty={panel.id} hidden>
+                찾는 특성이 없습니다.
+              </p>
+              {panel.next && (
+                <div class="panel-foot">
+                  <span />
+                  <button type="button" class="next" data-go={panel.next}>
+                    {panel.nextLabel} <Icon name="arrow-right-02" size={18} />
+                  </button>
+                </div>
+              )}
+            </div>
+          ))
+        }
       </div>
 
-      <aside class="summary" aria-label="고른 결과">
+      <aside class="summary" aria-label="고른 결과" data-summary>
         <div class="s-card">
-          <p class="s-k">남은 포인트</p>
-          <p class="s-points mono" data-points>8</p>
+          <div class="s-top">
+            <div>
+              <p class="s-k">남은 포인트</p>
+              <p class="s-points mono" data-points>8</p>
+            </div>
+            <button type="button" class="s-close" data-sheet-close aria-label="요약 닫기"><Icon name="cancel-01" size={18} /></button>
+          </div>
+          <div class="meter" aria-hidden="true"><i data-meter></i></div>
+          <p class="s-budget mono" data-budget></p>
           <p class="s-state" data-state>시작할 수 있습니다</p>
 
-          <p class="s-k">고른 것</p>
-          <ul class="s-chosen" data-chosen></ul>
-
-          <p class="s-k">오르는 기술</p>
-          <ul class="s-skills" data-skills></ul>
+          <div class="s-block">
+            <p class="s-k">직업</p>
+            <button type="button" class="s-prof" data-go="prof">
+              <span data-s-prof-icon></span>
+              <span data-s-prof>커스텀 직업</span>
+              <small>바꾸기</small>
+            </button>
+          </div>
+          <div class="s-block">
+            <p class="s-k">긍정 특성</p>
+            <ul class="s-list" data-s-list="pos"></ul>
+          </div>
+          <div class="s-block">
+            <p class="s-k">부정 특성</p>
+            <ul class="s-list" data-s-list="neg"></ul>
+          </div>
+          <div class="s-block">
+            <p class="s-k">오르는 기술</p>
+            <ul class="s-skills" data-skills></ul>
+          </div>
 
           <div class="s-actions">
             <button type="button" class="s-btn" data-reset><Icon name="refresh" size={16} />처음부터</button>
             <button type="button" class="s-btn primary" data-share><Icon name="link-01" size={16} /><span data-share-label>링크 복사</span></button>
           </div>
-          <p class="s-hint">링크를 보내면 친구도 같은 조합을 열어 볼 수 있습니다.</p>
+          <p class="s-hint">링크를 보내면 친구도 같은 조합을 열어 봅니다.</p>
         </div>
       </aside>
     </div>
-    <p class="mobile-points" aria-hidden="true">남은 <b class="mono" data-points-mini>8</b></p>
+
+    <div class="sheet-backdrop" data-sheet-backdrop hidden></div>
+    <button type="button" class="sheet-bar" data-sheet-open aria-label="고른 결과 보기">
+      <span>남은 <b class="mono" data-points-mini>8</b></span>
+      <span class="sb-mid" data-sheet-sum>긍정 0 · 부정 0</span>
+      <span class="sb-open">요약 <Icon name="arrow-up-01" size={14} /></span>
+    </button>
   </section>
 
-  <section class="wrap sec two" aria-labelledby="start-title">
+  <section class="wrap sec two" id="start" aria-labelledby="start-title">
     <div>
       <p class="kicker">04</p>
       <h2 id="start-title" class="display">시작 지역</h2>
@@ -306,8 +389,8 @@ const clientData = {
 <script>
   import { remainingPoints, conflicts, skillTotals, encodeBuild, decodeBuild } from "../lib/character.mjs";
 
-  type Prof = { id: string; name: string; cost: number; xp: any[]; granted: string[] };
-  type Trait = { id: string; name: string; cost: number; exclusive: string[]; xp: any[] };
+  type Prof = { id: string; name: string; cost: number; xp: any[]; granted: string[]; icon: string | null };
+  type Trait = { id: string; name: string; cost: number; exclusive: string[]; xp: any[]; icon: string | null };
   const D = JSON.parse(document.getElementById("char-data")!.textContent!);
   const profs = new Map<string, Prof>(D.professions.map((p: Prof) => [p.id, p]));
   const traits = new Map<string, Trait>(D.traits.map((t: Trait) => [t.id, t]));
@@ -315,19 +398,45 @@ const clientData = {
 
   let profId = "unemployed";
   let chosen = new Set<string>();
+  // 처음 열 때는 주소를 바꾸지 않는다. 고르기 시작한 뒤부터 조합을 주소에 남긴다.
+  let touched = false;
 
-  const $ = <T extends Element>(s: string) => document.querySelector<T>(s)!;
-  const profBtns = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-prof]"));
-  const traitBtns = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-trait]"));
+  const $ = <T extends Element>(s: string, root: ParentNode = document) => root.querySelector<T>(s)!;
+  const $$ = <T extends Element>(s: string, root: ParentNode = document) => Array.from(root.querySelectorAll<T>(s));
   const fx = (n: number) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : "0");
+  const icon = (src: string | null, size = 18) =>
+    src ? `<img src="${D.base}/${src}" alt="" width="${size}" height="${size}" style="image-rendering:pixelated">` : "";
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
-  // t 를 지금 고를 수 없는 이유. 없으면 빈 문자열.
+  // ── 탭 ──
+  const tabs = $$<HTMLButtonElement>("[data-tab]");
+  function showTab(id: string, focus = false) {
+    tabs.forEach((t) => t.setAttribute("aria-selected", String(t.dataset.tab === id)));
+    $$<HTMLElement>("[data-panel]").forEach((p) => (p.hidden = p.dataset.panel !== id));
+    if (focus) document.querySelector<HTMLElement>(`[data-tab="${id}"]`)?.focus();
+  }
+  tabs.forEach((t) => t.addEventListener("click", () => showTab(t.dataset.tab!)));
+  // 좌우 화살표로 탭 이동
+  $(".tabs").addEventListener("keydown", (e) => {
+    const k = (e as KeyboardEvent).key;
+    if (k !== "ArrowRight" && k !== "ArrowLeft") return;
+    const i = tabs.findIndex((t) => t.getAttribute("aria-selected") === "true");
+    const n = tabs[(i + (k === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+    showTab(n.dataset.tab!, true);
+  });
+  document.addEventListener("click", (e) => {
+    const go = (e.target as HTMLElement).closest<HTMLElement>("[data-go]");
+    if (!go) return;
+    showTab(go.dataset.go!);
+    closeSheet();
+    $("[data-builder]").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  // ── 고를 수 없는 이유 ──
   function blocked(t: Trait, p: Prof) {
     if (off.has(t.id)) return "우리 서버에서는 고를 수 없음";
     if (p.granted.includes(t.id)) return "직업이 이미 줌";
-    for (const g of p.granted) {
-      if (t.exclusive.includes(g)) return `직업 특성(${D.granted[g] ?? g})과 함께 못 고름`;
-    }
+    for (const g of p.granted) if (t.exclusive.includes(g)) return `직업 특성(${D.granted[g] ?? g})과 함께 못 고름`;
     for (const id of chosen) {
       const other = traits.get(id)!;
       if (t.exclusive.includes(id) || other.exclusive.includes(t.id)) return `${other.name}와 함께 못 고름`;
@@ -335,13 +444,19 @@ const clientData = {
     return "";
   }
 
-  // 처음 열 때는 주소를 바꾸지 않는다. 사용자가 고르기 시작한 뒤부터 조합을 주소에 남긴다.
-  let touched = false;
+  // ── 그리기 ──
+  const profBtns = $$<HTMLButtonElement>("[data-prof]");
+  const traitBtns = $$<HTMLButtonElement>("[data-trait]");
 
   function render() {
     const p = profs.get(profId)!;
     const ts = [...chosen].map((id) => traits.get(id)!);
+    const pos = ts.filter((t) => t.cost > 0);
+    const neg = ts.filter((t) => t.cost < 0);
     const left = remainingPoints(p, ts);
+    // 예산 = 직업이 주는 포인트 + 부정 특성 보상, 사용 = 직업이 먹는 포인트 + 긍정 특성 비용
+    const budget = Math.max(0, p.cost) + neg.reduce((s, t) => s - t.cost, 0);
+    const spent = Math.max(0, -p.cost) + pos.reduce((s, t) => s + t.cost, 0);
 
     profBtns.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.prof === profId)));
     traitBtns.forEach((b) => {
@@ -353,44 +468,59 @@ const clientData = {
       b.querySelector<HTMLElement>("[data-why]")!.textContent = why;
     });
 
-    const pointsEl = $<HTMLElement>("[data-points]");
-    pointsEl.textContent = fx(left).replace("+", "");
-    pointsEl.classList.toggle("neg", left < 0);
+    $<HTMLElement>("[data-tab-sub='prof']").textContent = p.name;
+    $<HTMLElement>("[data-tab-sub='pos']").textContent = `${pos.length}개`;
+    $<HTMLElement>("[data-tab-sub='neg']").textContent = `${neg.length}개`;
+
+    const pts = $<HTMLElement>("[data-points]");
+    pts.textContent = String(left);
+    pts.classList.toggle("neg", left < 0);
+    pts.classList.remove("bump");
+    void pts.offsetWidth;
+    pts.classList.add("bump");
     $<HTMLElement>("[data-points-mini]").textContent = String(left);
+    $<HTMLElement>("[data-points-mini]").classList.toggle("neg", left < 0);
+    $<HTMLElement>("[data-sheet-sum]").textContent = `긍정 ${pos.length} · 부정 ${neg.length}`;
+    const meter = $<HTMLElement>("[data-meter]");
+    meter.style.width = `${budget ? Math.min(100, (spent / budget) * 100) : spent ? 100 : 0}%`;
+    meter.classList.toggle("over", left < 0);
+    $<HTMLElement>("[data-budget]").textContent = `예산 ${budget} · 사용 ${spent}`;
     $<HTMLElement>("[data-state]").textContent =
       left < 0 ? `${-left}점이 모자랍니다. 긍정 특성을 빼거나 부정 특성을 더하세요` : left === 0 ? "딱 맞습니다. 시작할 수 있습니다" : `${left}점이 남습니다. 시작할 수 있습니다`;
 
-    const chosenEl = $<HTMLElement>("[data-chosen]");
-    chosenEl.innerHTML = "";
-    const add = (text: string, pts: string, cls: string) => {
-      const li = document.createElement("li");
-      li.className = cls;
-      li.innerHTML = `<span></span><b class="mono"></b>`;
-      li.querySelector("span")!.textContent = text;
-      li.querySelector("b")!.textContent = pts;
-      chosenEl.append(li);
-    };
-    add(`직업 · ${p.name}`, fx(p.cost), "prof");
-    for (const g of p.granted) add(`직업 특성 · ${D.granted[g] ?? g}`, "", "granted");
-    for (const t of ts) add(t.name, fx(-t.cost), t.cost > 0 ? "pos" : "neg");
+    $<HTMLElement>("[data-s-prof]").textContent = `${p.name} (${fx(p.cost)})`;
+    $<HTMLElement>("[data-s-prof-icon]").innerHTML = icon(p.icon, 22);
+
+    for (const [key, list] of [["pos", pos], ["neg", neg]] as const) {
+      const ul = $<HTMLElement>(`[data-s-list='${key}']`);
+      ul.innerHTML = list.length
+        ? list
+            .map(
+              (t) =>
+                `<li>${icon(t.icon)}<span>${esc(t.name)}</span><b class="mono">${fx(-t.cost)}</b><button type="button" data-remove="${t.id}" aria-label="${esc(t.name)} 빼기">×</button></li>`,
+            )
+            .join("")
+        : `<li class="none">없음</li>`;
+    }
+    const granted = p.granted.map((g) => D.granted[g] ?? g);
+    if (granted.length) {
+      $<HTMLElement>("[data-s-list='pos']").insertAdjacentHTML("afterbegin", `<li class="granted"><span>직업 특성 · ${esc(granted.join(", "))}</span></li>`);
+    }
 
     const skillsEl = $<HTMLElement>("[data-skills]");
     const skills = skillTotals(p, ts);
-    skillsEl.innerHTML = skills.length ? "" : "<li class='none'>없음</li>";
-    for (const s of skills) {
-      const li = document.createElement("li");
-      li.innerHTML = `<span></span><b class="mono"></b><i></i>`;
-      li.querySelector("span")!.textContent = s.name;
-      li.querySelector("b")!.textContent = s.level > 0 ? `+${s.level}` : String(s.level);
-      (li.querySelector("i") as HTMLElement).style.width = `${Math.min(100, Math.abs(s.level) * 12)}%`;
-      li.classList.toggle("down", s.level < 0);
-      skillsEl.append(li);
-    }
+    skillsEl.innerHTML = skills.length
+      ? skills
+          .map(
+            (s) =>
+              `<li class="${s.level < 0 ? "down" : ""}"><i style="width:${Math.min(100, Math.abs(s.level) * 12)}%"></i><span>${esc(s.name)}</span><b class="mono">${s.level > 0 ? "+" : ""}${s.level}</b></li>`,
+          )
+          .join("")
+      : `<li class="none">없음</li>`;
 
-    const detail = $<HTMLElement>("[data-prof-detail]");
     const xp = p.xp.map((x: any) => `${x.name} +${x.level}`).join(" · ");
-    const granted = p.granted.map((g) => D.granted[g] ?? g).join(", ");
-    detail.textContent = [p.name, xp && `기술 ${xp}`, granted && `직업 특성 ${granted}`].filter(Boolean).join("  |  ");
+    $<HTMLElement>("[data-prof-detail]").innerHTML =
+      `<b>${esc(p.name)}</b> ${xp ? esc(xp) : "기술 보너스 없음"}${granted.length ? ` <span>직업 특성 ${esc(granted.join(", "))}</span>` : ""}`;
 
     if (touched && conflicts(p, ts).length === 0) history.replaceState(null, "", `#${encodeBuild(profId, [...chosen])}`);
   }
@@ -399,7 +529,6 @@ const clientData = {
     b.addEventListener("click", () => {
       touched = true;
       profId = b.dataset.prof!;
-      // 새 직업과 부딪히는 특성은 뺀다
       const p = profs.get(profId)!;
       for (const id of [...chosen]) {
         const t = traits.get(id)!;
@@ -417,6 +546,13 @@ const clientData = {
       render();
     }),
   );
+  $("[data-summary]").addEventListener("click", (e) => {
+    const rm = (e.target as HTMLElement).closest<HTMLElement>("[data-remove]");
+    if (!rm) return;
+    touched = true;
+    chosen.delete(rm.dataset.remove!);
+    render();
+  });
 
   function load(profession: string, ids: string[]) {
     if (!profs.has(profession)) return;
@@ -426,17 +562,87 @@ const clientData = {
     render();
   }
 
-  document.querySelectorAll<HTMLButtonElement>("[data-load-build]").forEach((b) =>
+  // ── 찾기·추천만·정렬 ──
+  function applyFilters(panel: string) {
+    const q = $<HTMLInputElement>(`[data-search='${panel}']`).value.trim().toLowerCase();
+    const onlyGood = $<HTMLButtonElement>(`[data-only-good='${panel}']`).getAttribute("aria-pressed") === "true";
+    let shown = 0;
+    $$<HTMLElement>(`[data-list='${panel}'] [data-trait]`).forEach((b) => {
+      const hit = (!q || b.dataset.searchText!.includes(q)) && (!onlyGood || b.dataset.tag === "good" || b.getAttribute("aria-pressed") === "true");
+      b.hidden = !hit;
+      if (hit) shown++;
+    });
+    $<HTMLElement>(`[data-empty='${panel}']`).hidden = shown > 0;
+  }
+  $$<HTMLInputElement>("[data-search]").forEach((i) => i.addEventListener("input", () => applyFilters(i.dataset.search!)));
+  $$<HTMLButtonElement>("[data-only-good]").forEach((b) =>
+    b.addEventListener("click", () => {
+      b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true"));
+      applyFilters(b.dataset.onlyGood!);
+    }),
+  );
+  $$<HTMLButtonElement>("[data-sort]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const [panel, key] = b.dataset.sort!.split(":");
+      $$<HTMLButtonElement>(`[data-sort^='${panel}:']`).forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      const list = $<HTMLElement>(`[data-list='${panel}']`);
+      const items = $$<HTMLElement>("[data-trait]", list);
+      items.sort((a, c) => (key === "cost" ? +c.dataset.cost! - +a.dataset.cost! : +a.dataset.rank! - +c.dataset.rank! || +c.dataset.cost! - +a.dataset.cost!));
+      items.forEach((it) => list.append(it));
+    }),
+  );
+  // 처음엔 추천순으로 둔다
+  $$<HTMLButtonElement>("[data-sort$=':rank']").forEach((b) => b.click());
+
+  // ── 추천 조합 ──
+  $$<HTMLButtonElement>("[data-load-build]").forEach((b) =>
     b.addEventListener("click", () => {
       const build = D.builds.find((x: any) => x.id === b.dataset.loadBuild);
       if (!build) return;
       load(build.profession, build.traits);
-      document.getElementById("builder")!.scrollIntoView({ behavior: "smooth" });
+      showTab("pos");
+      $("[data-builder]").scrollIntoView({ behavior: "smooth", block: "start" });
+      const s = $<HTMLElement>(".s-card");
+      s.classList.remove("flash");
+      void s.offsetWidth;
+      s.classList.add("flash");
     }),
   );
+  const filterBar = $("[data-build-filter]");
+  filterBar.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-group]");
+    if (!btn) return;
+    $$<HTMLButtonElement>("[data-group]", filterBar).forEach((x) => x.setAttribute("aria-selected", String(x === btn)));
+    $$<HTMLElement>("[data-build-grid] .build").forEach((c) => {
+      c.hidden = btn.dataset.group !== "all" && c.dataset.group !== btn.dataset.group;
+      c.classList.add("is-in");
+    });
+  });
 
-  $<HTMLButtonElement>("[data-reset]").addEventListener("click", () => load("unemployed", []));
+  // ── 휴대폰 요약 시트 ──
+  const summary = $<HTMLElement>("[data-summary]");
+  const backdrop = $<HTMLElement>("[data-sheet-backdrop]");
+  function closeSheet() {
+    summary.classList.remove("open");
+    document.body.classList.remove("sheet-open");
+    backdrop.hidden = true;
+  }
+  $("[data-sheet-open]").addEventListener("click", () => {
+    summary.classList.add("open");
+    document.body.classList.add("sheet-open");
+    backdrop.hidden = false;
+  });
+  backdrop.addEventListener("click", closeSheet);
+  $("[data-sheet-close]").addEventListener("click", closeSheet);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeSheet();
+  });
 
+  // ── 링크 복사, 처음부터 ──
+  $<HTMLButtonElement>("[data-reset]").addEventListener("click", () => {
+    load("unemployed", []);
+    showTab("prof");
+  });
   $<HTMLButtonElement>("[data-share]").addEventListener("click", async () => {
     const label = $<HTMLElement>("[data-share-label]");
     try {
@@ -448,22 +654,54 @@ const clientData = {
     setTimeout(() => (label.textContent = "링크 복사"), 1800);
   });
 
-  $<HTMLInputElement>("[data-only-good]").addEventListener("change", (e) => {
-    document.querySelector(".builder")!.classList.toggle("only-good", (e.target as HTMLInputElement).checked);
-  });
-
   const fromHash = decodeBuild(location.hash);
-  if (fromHash) load(fromHash.professionId, fromHash.traitIds);
-  else render();
+  if (fromHash) {
+    load(fromHash.professionId, fromHash.traitIds);
+    showTab("pos");
+  } else render();
 </script>
 
 <style>
+  .jump {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 22px;
+  }
+  .jump a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 999px;
+    color: var(--ink-2);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition:
+      background 150ms ease,
+      color 150ms ease;
+  }
+  .jump a:hover {
+    background: var(--ink);
+    color: var(--paper-3);
+  }
+
   .sec {
     padding-top: 90px;
+    scroll-margin-top: 80px;
   }
   .sec h2 {
     margin-top: 10px;
     font-size: clamp(30px, 4vw, 48px);
+  }
+  .sec-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
   }
   .lede {
     max-width: 52em;
@@ -510,16 +748,18 @@ const clientData = {
     color: var(--ink-2);
   }
   .t-big {
-    font-family: var(--f-stencil);
-    font-size: 44px;
+    font-family: var(--f-mono);
+    font-size: 40px;
+    font-weight: 600;
     line-height: 1;
     color: var(--sodium);
   }
   .op {
     display: grid;
     place-items: center;
-    font-family: var(--f-display);
-    font-size: 30px;
+    font-family: var(--f-mono);
+    font-size: 26px;
+    font-weight: 600;
     color: var(--ink-3);
   }
   .plus {
@@ -528,16 +768,11 @@ const clientData = {
   .minus {
     color: var(--red);
   }
-
-  .sub-title {
-    margin-top: 40px;
-    font-size: 18px;
-  }
   .notes {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
     gap: 14px;
-    margin: 16px 0 0;
+    margin: 26px 0 0;
     padding: 0;
     list-style: none;
   }
@@ -573,88 +808,173 @@ const clientData = {
     color: var(--sodium);
   }
 
+  /* 갈래·보기 전환 버튼 묶음 */
+  .seg {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    background: var(--paper-2);
+  }
+  .seg button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-2);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .seg button .mono {
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .seg button[aria-selected="true"],
+  .seg button[aria-pressed="true"] {
+    background: var(--ink);
+    color: var(--paper-3);
+  }
+  .seg button[aria-selected="true"] .mono,
+  .seg button[aria-pressed="true"] .mono {
+    color: var(--paper-2);
+  }
+  .seg.small button {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
   /* 추천 조합 */
   .build-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr));
-    gap: 18px;
-    margin-top: 28px;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+    gap: 16px;
+    margin-top: 24px;
+  }
+  .build[hidden] {
+    display: none;
   }
   .build {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 20px;
+    gap: 10px;
+    padding: 18px;
     border: 1px solid var(--rule);
     border-radius: 14px;
     background: var(--paper-3);
     box-shadow: var(--shadow-sheet);
+    transition:
+      transform 200ms ease,
+      box-shadow 200ms ease;
+  }
+  .build:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lift);
   }
   .b-head {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     gap: 12px;
   }
-  .b-tag {
+  .b-title h3 {
+    font-weight: 400;
+    font-size: 21px;
+    line-height: 1.2;
+  }
+  .b-sub {
+    margin-top: 2px;
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+  .b-sub .mono {
     font-size: 12px;
+  }
+  .b-tag {
     font-weight: 700;
     color: var(--red);
   }
-  .b-head h3 {
-    font-weight: 400;
-    font-size: 22px;
-  }
   .b-left {
-    padding: 3px 8px;
-    border-radius: 6px;
-    background: color-mix(in srgb, var(--olive) 14%, transparent);
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+    background: color-mix(in srgb, var(--olive) 16%, transparent);
     color: var(--olive);
     font-size: 12px;
+    font-weight: 700;
   }
-  .b-prof {
-    font-size: 14.5px;
+  .b-left b {
+    font-size: 15px;
+  }
+  .b-left.rest {
+    background: color-mix(in srgb, var(--amber) 16%, transparent);
+    color: var(--amber);
+  }
+  .b-who {
+    font-size: 14px;
     color: var(--ink-2);
   }
-  .pts {
-    font-size: 12.5px;
-    font-weight: 600;
-  }
-  .b-lbl {
-    margin-top: 4px;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--ink-3);
-  }
-  .b-traits ul {
+  .b-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
-    margin: 6px 0 0;
+    gap: 5px;
+    margin: 0;
     padding: 0;
     list-style: none;
   }
-  .b-traits li {
+  .b-chips li {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 3px 8px 3px 3px;
-    border: 1px solid var(--rule);
+    gap: 5px;
+    padding: 2px 8px 2px 2px;
     border-radius: 8px;
-    background: var(--paper);
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 600;
   }
-  .b-traits li :global(.px) {
-    border-radius: 5px;
+  .b-chips li :global(.px) {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+  }
+  .b-chips li.pos {
+    background: color-mix(in srgb, var(--red) 9%, var(--paper));
+    border: 1px solid color-mix(in srgb, var(--red) 28%, transparent);
+  }
+  .b-chips li.pos .mono {
+    color: var(--red);
+  }
+  .b-chips li.neg {
+    background: color-mix(in srgb, var(--olive) 8%, var(--paper));
+    border: 1px solid color-mix(in srgb, var(--olive) 26%, transparent);
+    color: var(--ink-2);
+    font-weight: 500;
+  }
+  .b-chips li.neg .mono {
+    color: var(--olive);
   }
   .b-why {
-    display: grid;
-    gap: 6px;
-    margin: 4px 0 0;
-    padding-left: 18px;
     font-size: 13.5px;
     color: var(--ink-2);
+  }
+  .b-why summary {
+    width: fit-content;
+    color: var(--ink-3);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .b-why ul {
+    display: grid;
+    gap: 4px;
+    margin: 8px 0 0;
+    padding-left: 18px;
   }
   .b-load {
     display: inline-flex;
@@ -664,7 +984,7 @@ const clientData = {
     margin-top: auto;
     padding: 10px 14px;
     border: 1.5px solid var(--ink);
-    border-radius: 8px;
+    border-radius: 9px;
     background: transparent;
     color: var(--ink);
     font-weight: 700;
@@ -681,53 +1001,117 @@ const clientData = {
   /* 계산기 */
   .builder {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 320px;
-    gap: 28px;
+    grid-template-columns: minmax(0, 1fr) 330px;
+    gap: 24px;
     align-items: start;
-    margin-top: 28px;
+    margin-top: 26px;
   }
-  .step-h {
+  .tabs {
+    position: sticky;
+    top: 66px;
+    z-index: 4;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    padding: 6px;
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--paper-2) 92%, transparent);
+    backdrop-filter: blur(8px);
+  }
+  .tabs button {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin: 26px 0 12px;
-    font-size: 18px;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--ink-2);
+    text-align: left;
+    cursor: pointer;
+    transition: background 150ms ease;
   }
-  .step-h:first-child {
-    margin-top: 0;
+  .tabs button:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
   }
-  .step-h .mono {
+  .tabs button[aria-selected="true"] {
+    background: var(--paper-3);
+    color: var(--ink);
+    box-shadow: var(--shadow-sheet);
+  }
+  .tab-n {
     display: grid;
     place-items: center;
+    flex: none;
     width: 26px;
     height: 26px;
     border-radius: 50%;
-    background: var(--ink);
-    color: var(--paper-3);
+    border: 1.5px solid currentColor;
     font-size: 13px;
+    font-weight: 600;
   }
-  .step-h small {
-    font-size: 13px;
-    font-weight: 500;
+  [aria-selected="true"] .tab-n {
+    background: var(--red);
+    border-color: var(--red);
+    color: #fff;
+  }
+  .tab-t {
+    display: grid;
+    min-width: 0;
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1.25;
+  }
+  .tab-t small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     color: var(--ink-3);
+    font-size: 12.5px;
+    font-weight: 500;
+  }
+  .panel {
+    margin-top: 16px;
+  }
+  .panel[hidden] {
+    display: none;
+  }
+  .panel-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .next {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 18px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--red);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
   }
   .profs {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
     gap: 8px;
   }
   .prof {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
-    gap: 8px;
-    padding: 6px 10px 6px 6px;
+    gap: 10px;
+    padding: 8px 12px 8px 8px;
     border: 1.5px solid var(--rule);
-    border-radius: 10px;
+    border-radius: 12px;
     background: var(--paper-3);
     color: var(--ink);
-    font-size: 13.5px;
-    font-weight: 600;
     text-align: left;
     cursor: pointer;
     transition:
@@ -742,57 +1126,105 @@ const clientData = {
     border-color: var(--red);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--red) 18%, transparent);
   }
-  .p-name {
+  .p-main {
+    display: grid;
     min-width: 0;
     line-height: 1.3;
   }
+  .p-name {
+    font-size: 14.5px;
+    font-weight: 700;
+  }
+  .p-xp {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--ink-3);
+    font-size: 12px;
+  }
+  .pts {
+    font-size: 13px;
+    font-weight: 700;
+  }
   .prof-detail {
-    min-height: 1.6em;
-    margin-top: 10px;
+    flex: 1 1 280px;
+    margin: 0;
     padding: 10px 14px;
-    border-radius: 8px;
+    border-radius: 10px;
     background: color-mix(in srgb, var(--steel) 10%, transparent);
     color: var(--ink-2);
     font-size: 13.5px;
   }
-  .prof-detail:empty {
-    display: none;
+  .prof-detail :global(b) {
+    margin-right: 6px;
+    color: var(--ink);
   }
-  .list-head {
+  .prof-detail :global(span) {
+    display: block;
+    color: var(--steel);
+    font-weight: 600;
+  }
+
+  .tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+  .search {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    gap: 8px;
+    flex: 1 1 220px;
+    padding: 8px 12px;
+    border: 1.5px solid var(--rule);
+    border-radius: 10px;
+    background: var(--paper-3);
+    color: var(--ink-3);
   }
-  .only {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 14px;
-    font-size: 13.5px;
-    color: var(--ink-2);
-    cursor: pointer;
+  .search:focus-within {
+    border-color: var(--ink-3);
+  }
+  .search input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    font-size: 14.5px;
+  }
+  .panel-hint {
+    margin: 10px 0 12px;
+    font-size: 13px;
+    color: var(--ink-3);
   }
   .traits {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
     gap: 8px;
   }
   .trait {
+    position: relative;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: start;
     gap: 10px;
     padding: 10px 12px 10px 8px;
     border: 1.5px solid var(--rule);
-    border-radius: 10px;
+    border-radius: 12px;
     background: var(--paper-3);
     color: var(--ink);
     text-align: left;
     cursor: pointer;
     transition:
       border-color 150ms ease,
-      opacity 150ms ease;
+      opacity 150ms ease,
+      background 150ms ease;
+  }
+  .trait[hidden] {
+    display: none;
   }
   .trait:hover {
     border-color: var(--ink-3);
@@ -800,14 +1232,32 @@ const clientData = {
   .trait[aria-pressed="true"] {
     border-color: var(--olive);
     background: color-mix(in srgb, var(--olive) 10%, var(--paper-3));
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--olive) 16%, transparent);
   }
   .trait.is-blocked {
     opacity: 0.45;
     cursor: not-allowed;
   }
-  .only-good .trait:not([data-tag="good"]):not([aria-pressed="true"]) {
+  .t-check {
+    position: absolute;
+    top: -7px;
+    right: -7px;
     display: none;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--olive);
+    color: #fff;
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
+  }
+  .trait[aria-pressed="true"] .t-check {
+    display: grid;
+    animation: pop 260ms cubic-bezier(0.3, 1.6, 0.5, 1);
+  }
+  @keyframes pop {
+    from {
+      scale: 0.3;
+    }
   }
   .t-main {
     display: grid;
@@ -823,6 +1273,10 @@ const clientData = {
     font-weight: 700;
   }
   .t-desc {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
     font-size: 12.5px;
     line-height: 1.5;
     color: var(--ink-2);
@@ -871,64 +1325,165 @@ const clientData = {
     background: color-mix(in srgb, var(--ink) 10%, transparent);
     color: var(--ink-3);
   }
+  .empty {
+    padding: 24px;
+    text-align: center;
+    color: var(--ink-3);
+  }
 
+  /* 요약 */
   .summary {
     position: sticky;
-    top: 86px;
+    top: 82px;
   }
   .s-card {
     display: grid;
     gap: 8px;
     padding: 20px;
-    border-radius: 14px;
+    border-radius: 16px;
     background: var(--night);
     color: var(--night-ink);
     box-shadow: var(--shadow-lift);
   }
+  .s-card.flash {
+    animation: flash 900ms ease-out;
+  }
+  @keyframes flash {
+    0% {
+      box-shadow:
+        0 0 0 4px var(--sodium),
+        var(--shadow-lift);
+    }
+  }
+  .s-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+  .s-close {
+    display: none;
+  }
   .s-k {
-    margin-top: 6px;
     font-size: 12px;
     font-weight: 700;
     color: var(--night-dim);
   }
   .s-points {
-    font-family: var(--f-stencil);
-    font-size: 64px;
-    line-height: 1;
+    font-size: 54px;
+    font-weight: 600;
+    line-height: 1.05;
     color: var(--sodium);
     transition: color 200ms ease;
   }
   .s-points.neg {
     color: #ff6b57;
   }
+  .s-points.bump {
+    animation: bump 260ms ease-out;
+  }
+  @keyframes bump {
+    40% {
+      transform: scale(1.12);
+    }
+  }
+  .meter {
+    height: 8px;
+    border-radius: 4px;
+    background: #2c2c24;
+    overflow: hidden;
+  }
+  .meter i {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: 4px;
+    background: var(--sodium);
+    transition: width 300ms ease;
+  }
+  .meter i.over {
+    background: #ff6b57;
+  }
+  .s-budget {
+    font-size: 12px;
+    color: var(--night-dim);
+  }
   .s-state {
     font-size: 13.5px;
     color: #cfc6ad;
   }
-  .s-chosen,
+  .s-block {
+    display: grid;
+    gap: 6px;
+    padding-top: 10px;
+    border-top: 1px dashed rgb(235 226 200 / 0.12);
+  }
+  .s-prof {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border: 1px solid rgb(235 226 200 / 0.14);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--night-ink);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+  }
+  .s-prof small {
+    margin-left: auto;
+    color: var(--sodium);
+    font-size: 12px;
+  }
+  .s-list,
   .s-skills {
     display: grid;
-    gap: 4px;
+    gap: 3px;
     margin: 0;
     padding: 0;
     list-style: none;
     font-size: 13px;
   }
-  .s-chosen :global(li) {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 4px 0;
-    border-bottom: 1px dashed rgb(235 226 200 / 0.12);
+  .s-list :global(li) {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 0;
   }
-  .s-chosen :global(li.pos b) {
+  .s-list :global(li.none),
+  .s-skills :global(li.none) {
+    display: block;
+    color: var(--night-dim);
+  }
+  .s-list :global(li.granted) {
+    display: block;
+    color: var(--night-dim);
+    font-size: 12px;
+  }
+  .s-list :global(button) {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border: 0;
+    border-radius: 6px;
+    background: rgb(235 226 200 / 0.08);
+    color: var(--night-dim);
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .s-list :global(button:hover) {
+    background: #ff6b57;
+    color: #fff;
+  }
+  [data-s-list="pos"] :global(b) {
     color: #ff8a78;
   }
-  .s-chosen :global(li.neg b) {
+  [data-s-list="neg"] :global(b) {
     color: #a9d18e;
-  }
-  .s-chosen :global(li.granted span) {
-    color: var(--night-dim);
   }
   .s-skills :global(li) {
     position: relative;
@@ -941,7 +1496,6 @@ const clientData = {
   .s-skills :global(li i) {
     position: absolute;
     inset: 0 auto 0 0;
-    z-index: 0;
     background: rgb(240 169 58 / 0.18);
   }
   .s-skills :global(li.down i) {
@@ -950,15 +1504,11 @@ const clientData = {
   .s-skills :global(li span),
   .s-skills :global(li b) {
     position: relative;
-    z-index: 1;
-  }
-  .s-skills :global(li.none) {
-    color: var(--night-dim);
   }
   .s-actions {
     display: flex;
     gap: 8px;
-    margin-top: 10px;
+    margin-top: 6px;
   }
   .s-btn {
     display: inline-flex;
@@ -968,7 +1518,7 @@ const clientData = {
     flex: 1;
     padding: 9px 10px;
     border: 1px solid rgb(235 226 200 / 0.3);
-    border-radius: 8px;
+    border-radius: 9px;
     background: transparent;
     color: var(--night-ink);
     font-size: 13.5px;
@@ -983,7 +1533,8 @@ const clientData = {
     font-size: 12px;
     color: var(--night-dim);
   }
-  .mobile-points {
+  .sheet-bar,
+  .sheet-backdrop {
     display: none;
   }
 
@@ -1040,37 +1591,111 @@ const clientData = {
     color: inherit;
   }
 
-  @media (max-width: 1000px) {
+  @media (max-width: 1040px) {
     .builder {
       grid-template-columns: 1fr;
     }
+    /* 휴대폰·좁은 화면: 요약은 아래에서 올라오는 시트 */
     .summary {
-      position: static;
-      order: -1;
-    }
-    .mobile-points {
       position: fixed;
-      right: 16px;
-      bottom: 16px;
-      z-index: 20;
-      display: block;
-      padding: 8px 14px;
-      border-radius: 999px;
+      inset: auto 0 0 0;
+      z-index: 40;
+      max-height: 78dvh;
+      overflow-y: auto;
+      padding: 0 10px 10px;
+      transform: translateY(105%);
+      transition: transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .summary.open {
+      transform: none;
+    }
+    .s-card {
+      border-radius: 16px 16px 12px 12px;
+    }
+    .s-close {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border: 0;
+      border-radius: 50%;
+      background: rgb(235 226 200 / 0.1);
+      color: var(--night-ink);
+      cursor: pointer;
+    }
+    .sheet-bar {
+      position: fixed;
+      inset: auto 12px max(12px, env(safe-area-inset-bottom)) 12px;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 16px;
+      border: 0;
+      border-radius: 14px;
       background: var(--night);
       color: var(--night-ink);
       font-size: 14px;
       box-shadow: var(--shadow-lift);
+      cursor: pointer;
     }
-    .mobile-points b {
+    .sheet-bar b {
       color: var(--sodium);
       font-size: 18px;
+    }
+    .sheet-bar b.neg {
+      color: #ff6b57;
+    }
+    .sb-mid {
+      color: var(--night-dim);
+    }
+    .sb-open {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--sodium);
+      font-weight: 700;
+    }
+    :global(body.sheet-open) .sheet-bar {
+      visibility: hidden;
+    }
+    .sheet-backdrop:not([hidden]) {
+      position: fixed;
+      inset: 0;
+      z-index: 35;
+      display: block;
+      background: rgb(8 8 6 / 0.55);
+      animation: fade 200ms ease-out;
+    }
+    @keyframes fade {
+      from {
+        opacity: 0;
+      }
     }
     .two {
       grid-template-columns: 1fr;
     }
     .op {
       flex-basis: 100%;
-      font-size: 24px;
+      font-size: 22px;
+    }
+  }
+  @media (max-width: 560px) {
+    .tabs {
+      top: 112px;
+    }
+    .tabs button {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      padding: 8px;
+    }
+    .tab-t {
+      font-size: 13.5px;
+    }
+    .profs {
+      grid-template-columns: 1fr;
     }
   }
 </style>
