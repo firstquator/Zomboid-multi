@@ -1,0 +1,61 @@
+---
+import Icon from "./Icon.astro";
+
+// 플레이 팁의 작은 탭 끝에 붙는 "다음" 버튼. 누르면 페이지 스크립트가 그 탭을 연다.
+interface Props {
+  next?: { id: string; label: string } | null;
+}
+const { next } = Astro.props;
+---
+
+{
+  next && (
+    <p class="next-sub">
+      <button type="button" data-go-sub={next.id}>
+        <span>다음</span>
+        <b>{next.label}</b>
+        <Icon name="arrow-right-02" size={18} />
+      </button>
+    </p>
+  )
+}
+
+<style>
+  .next-sub {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 36px;
+    padding-top: 18px;
+    border-top: 1px dashed var(--rule-strong);
+  }
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 16px;
+    border: 1.5px solid var(--ink);
+    border-radius: 10px;
+    background: var(--paper-3);
+    color: var(--ink);
+    font: inherit;
+    font-size: 15px;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 var(--ink);
+    transition:
+      transform 120ms ease,
+      box-shadow 120ms ease;
+  }
+  button span {
+    font-size: 13px;
+    color: var(--ink-3);
+  }
+  button:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  button:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 var(--ink);
+  }
+</style>

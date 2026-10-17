@@ -7,6 +7,7 @@ import KeyMap from "../components/KeyMap.astro";
 import VehicleRadial from "../components/VehicleRadial.astro";
 import Dashboard from "../components/Dashboard.astro";
 import MechDiagram from "../components/MechDiagram.astro";
+import SubNext from "../components/SubNext.astro";
 import { base } from "../lib/base-url.mjs";
 import { site } from "../lib/site.mjs";
 import { keybinds, keyGroups, essentials, inventoryMoves } from "../data/keys.mjs";
@@ -29,6 +30,31 @@ const g = (p: string) => base(`guide/${p}.webp`);
 const fuelUse = (m: number) => Math.abs(1000 - m) / 300 + 1;
 const maxUse = Math.max(...carStats.map((c) => fuelUse(c.mass)));
 const cars = [...carStats].sort((a, b) => fuelUse(a.mass) - fuelUse(b.mass));
+
+// 큰 탭과 그 안의 작은 탭. 작은 탭 id 는 "큰 탭-이름" 이고 주소(#car-fuel)로 남는다.
+const mainTabs = [
+  { id: "keys", label: "단축키", sub: "키보드·마우스", icon: "keyboard" },
+  { id: "car", label: "차량", sub: "타기부터 정비까지", icon: "steering" },
+  { id: "life", label: "생활 꿀팁", sub: "전투·건강·기지", icon: "bulb" },
+];
+const subTabs = {
+  keys: [
+    { id: "keys-ess", label: "먼저 외울 8개" },
+    { id: "keys-map", label: "키보드에서 찾기" },
+    { id: "keys-list", label: "상황별 목록" },
+    { id: "keys-mouse", label: "마우스·조작" },
+  ],
+  car: [
+    { id: "car-start", label: "타기·시동" },
+    { id: "car-menu", label: "메뉴·계기판" },
+    { id: "car-fuel", label: "기름·차 고르기" },
+    { id: "car-mech", label: "정비" },
+    { id: "car-drive", label: "운전·같이 타기" },
+  ],
+};
+// 작은 탭 순서. 단축키 끝은 차량으로, 차량 끝은 생활 꿀팁으로 이어진다.
+const order = [...subTabs.keys, ...subTabs.car, { id: "life", label: "생활 꿀팁" }];
+const nextSub = (id: string) => order[order.findIndex((o) => o.id === id) + 1] ?? null;
 ---
 
 <Base title="플레이 팁" active="tips" description="단축키, 차량 사용법, 생활 꿀팁. 42.21 게임 파일로 확인한 내용과 게임 그림으로 쉽게 정리했습니다.">
@@ -39,19 +65,43 @@ const cars = [...carStats].sort((a, b) => fuelUse(a.mass) - fuelUse(b.mass));
     icon="bulb"
     seed={61}
   >
-    <nav class="jump" aria-label="이 페이지 안에서 이동">
-      <a href="#keys"><Icon name="keyboard" size={16} />단축키</a>
-      <a href="#car"><Icon name="steering" size={16} />차량</a>
-      <a href="#life"><Icon name="bulb" size={16} />생활 꿀팁</a>
-    </nav>
   </PageHead>
 
-  <!-- ───────── 01 단축키 ───────── -->
-  <section class="wrap sec" id="keys" aria-labelledby="keys-title">
-    <p class="kicker">01</p>
-    <h2 id="keys-title" class="display">단축키</h2>
+  <!-- 큰 탭. 주소는 #keys, #car-fuel 처럼 "큰 탭-작은 탭" 으로 남는다. -->
+  <div class="tabbar" data-tabs>
+    <div class="wrap tabbar-in" role="tablist" aria-label="플레이 팁 주제">
+      {
+        mainTabs.map((t, i) => (
+          <button type="button" role="tab" id={`tab-${t.id}`} aria-controls={t.id} aria-selected={i === 0 ? "true" : "false"} data-tab={t.id}>
+            <span class="tb-ic">
+              <Icon name={t.icon} size={22} />
+            </span>
+            <span class="tb-t">
+              <b>{t.label}</b>
+              <small>{t.sub}</small>
+            </span>
+          </button>
+        ))
+      }
+    </div>
+  </div>
+
+  <!-- ───────── 단축키 ───────── -->
+  <section class="wrap sec" id="keys" role="tabpanel" aria-labelledby="tab-keys" data-panel="keys">
+    <h2 class="display">단축키</h2>
     <p class="lede">게임 기본값입니다. 바꾸고 싶으면 <span class="ui">설정</span> → <span class="ui">키 설정</span>에서 바꿉니다. 이름은 키 설정 화면에 나오는 이름 그대로입니다.</p>
 
+    <div class="subtabs" role="tablist" aria-label="단축키 보기">
+      {
+        subTabs.keys.map((s, i) => (
+          <button type="button" role="tab" aria-selected={i === 0 ? "true" : "false"} data-sub={s.id}>
+            {s.label}
+          </button>
+        ))
+      }
+    </div>
+
+    <div class="subpanel" data-subpanel="keys-ess">
     <h3 class="sub">먼저 외울 8개</h3>
     <ol class="ess">
       {
@@ -64,10 +114,16 @@ const cars = [...carStats].sort((a, b) => fuelUse(a.mass) - fuelUse(b.mass));
         ))
       }
     </ol>
+    <SubNext next={nextSub("keys-ess")} />
+    </div>
 
+    <div class="subpanel" data-subpanel="keys-map" hidden>
     <h3 class="sub">키보드에서 찾기</h3>
     <KeyMap />
+    <SubNext next={nextSub("keys-map")} />
+    </div>
 
+    <div class="subpanel" data-subpanel="keys-list" hidden>
     <h3 class="sub">상황별로 보기</h3>
     <div class="kg" data-kg>
       <div class="kg-tabs" role="tablist" aria-label="상황">
@@ -101,8 +157,10 @@ const cars = [...carStats].sort((a, b) => fuelUse(a.mass) - fuelUse(b.mass));
         ))
       }
     </div>
+    <SubNext next={nextSub("keys-list")} />
+    </div>
 
-    <div class="two-col">
+    <div class="subpanel two-col" data-subpanel="keys-mouse" hidden>
       <div>
         <h3 class="sub">소지품 창에서</h3>
         <ul class="moves">
@@ -139,20 +197,32 @@ const cars = [...carStats].sort((a, b) => fuelUse(a.mass) - fuelUse(b.mass));
           </p>
         </div>
       </div>
+      <SubNext next={nextSub("keys-mouse")} />
     </div>
   </section>
 
-  <!-- ───────── 02 차량 ───────── -->
-  <section class="wrap sec" id="car" aria-labelledby="car-title">
+  <!-- ───────── 차량 ───────── -->
+  <section class="wrap sec" id="car" role="tabpanel" aria-labelledby="tab-car" data-panel="car" hidden>
     <div class="sec-art">
       <div>
-        <p class="kicker">02</p>
-        <h2 id="car-title" class="display">차량</h2>
+        <h2 class="display">차량</h2>
         <p class="lede">차는 짐을 많이 싣고 빨리 움직이게 해 주지만, 시끄럽고 기름이 듭니다. 타는 법부터 기름, 정비까지 순서대로 정리했습니다.</p>
       </div>
       <img class="spiffo" src={g("spiffo/spiffo_vehicle")} alt="" loading="lazy" />
     </div>
 
+    <div class="subtabs" role="tablist" aria-label="차량 보기">
+      {
+        subTabs.car.map((s, i) => (
+          <button type="button" role="tab" aria-selected={i === 0 ? "true" : "false"} data-sub={s.id}>
+            <span class="st-num mono">{i + 1}</span>
+            {s.label}
+          </button>
+        ))
+      }
+    </div>
+
+    <div class="subpanel" data-subpanel="car-start">
     <h3 class="sub">타고 시동 걸기</h3>
     <ol class="steps">
       {
@@ -177,7 +247,10 @@ const cars = [...carStats].sort((a, b) => fuelUse(a.mass) - fuelUse(b.mass));
         {alarm.text}
       </p>
     </div>
+    <SubNext next={nextSub("car-start")} />
+    </div>
 
+    <div class="subpanel" data-subpanel="car-menu" hidden>
     <div class="split">
       <div>
         <h3 class="sub">차량 메뉴 <kbd>V</kbd></h3>
@@ -193,7 +266,10 @@ const cars = [...carStats].sort((a, b) => fuelUse(a.mass) - fuelUse(b.mass));
     <h3 class="sub">계기판 읽기</h3>
     <p class="sub-lede">운전석에 앉으면 화면 아래에 계기판이 뜹니다. 번호를 누르거나 설명에 마우스를 올려 보세요.</p>
     <Dashboard />
+    <SubNext next={nextSub("car-menu")} />
+    </div>
 
+    <div class="subpanel" data-subpanel="car-fuel" hidden>
     <h3 class="sub">기름 넣기</h3>
     <div class="fuel">
       {
@@ -260,7 +336,10 @@ const cars = [...carStats].sort((a, b) => fuelUse(a.mass) - fuelUse(b.mass));
       </table>
       <p class="cars-foot">차 무게가 1000에 가까울수록 기름을 덜 씁니다(게임 계산식). 엔진 품질이 낮거나 히터를 켜면 더 씁니다. 트렁크와 소리는 차 파일 값입니다.</p>
     </div>
+    <SubNext next={nextSub("car-fuel")} />
+    </div>
 
+    <div class="subpanel" data-subpanel="car-mech" hidden>
     <h3 class="sub">정비</h3>
     <p class="sub-lede">
       정비 화면은
@@ -295,7 +374,10 @@ const cars = [...carStats].sort((a, b) => fuelUse(a.mass) - fuelUse(b.mass));
       </ul>
       <p class="books-foot">자동차 정비공 직업은 셋 다 알고 시작합니다. 차량정비 8·9·10레벨에 차례로 저절로 배웁니다.</p>
     </div>
+    <SubNext next={nextSub("car-mech")} />
+    </div>
 
+    <div class="subpanel" data-subpanel="car-drive" hidden>
     <h3 class="sub">운전할 때</h3>
     <ul class="notes-grid">
       {
@@ -342,12 +424,13 @@ const cars = [...carStats].sort((a, b) => fuelUse(a.mass) - fuelUse(b.mass));
         </ul>
       </div>
     </div>
+    <SubNext next={nextSub("car-drive")} />
+    </div>
   </section>
 
-  <!-- ───────── 03 생활 꿀팁 ───────── -->
-  <section class="wrap sec" id="life" aria-labelledby="life-title">
-    <p class="kicker">03</p>
-    <h2 id="life-title" class="display">생활 꿀팁</h2>
+  <!-- ───────── 생활 꿀팁 ───────── -->
+  <section class="wrap sec" id="life" role="tabpanel" aria-labelledby="tab-life" data-panel="life" hidden>
+    <h2 class="display">생활 꿀팁</h2>
     <p class="lede">싸우고, 털고, 다치고, 기지를 짓고, 같이 사는 데 필요한 것들입니다. 주제를 골라 보세요.</p>
 
     <div class="topics" data-topics>
@@ -419,34 +502,178 @@ const cars = [...carStats].sort((a, b) => fuelUse(a.mass) - fuelUse(b.mass));
   }
   tabs("[data-kg]", "data-kg-tab", "data-kg-panel");
   tabs("[data-topics]", "data-tp-tab", "data-tp-panel");
+
+  // ── 큰 탭과 작은 탭 ──
+  // 주소: #keys, #car-fuel 처럼 "큰 탭" 또는 "큰 탭-작은 탭". 뒤로 가기로 탭을 되돌릴 수 있게 pushState 를 쓴다.
+  const mainBtns = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-tab]"));
+  const panels = Array.from(document.querySelectorAll<HTMLElement>("[data-panel]"));
+  const tabbar = document.querySelector<HTMLElement>(".tabbar")!;
+
+  function showSub(panel: HTMLElement, subId?: string) {
+    const btns = Array.from(panel.querySelectorAll<HTMLButtonElement>(".subtabs [data-sub]"));
+    if (!btns.length) return;
+    const pick = btns.find((b) => b.dataset.sub === subId) ?? btns.find((b) => b.getAttribute("aria-selected") === "true") ?? btns[0];
+    btns.forEach((b) => b.setAttribute("aria-selected", String(b === pick)));
+    panel.querySelectorAll<HTMLElement>("[data-subpanel]").forEach((p) => (p.hidden = p.dataset.subpanel !== pick.dataset.sub));
+    return pick.dataset.sub;
+  }
+
+  function show(hash: string, push = false, scroll = false) {
+    const [main, ...rest] = hash.replace(/^#/, "").split("-");
+    const id = mainBtns.some((b) => b.dataset.tab === main) ? main : mainBtns[0].dataset.tab!;
+    mainBtns.forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === id)));
+    let shown = id;
+    panels.forEach((p) => {
+      p.hidden = p.dataset.panel !== id;
+      if (!p.hidden) shown = showSub(p, rest.length ? `${id}-${rest.join("-")}` : undefined) ?? id;
+    });
+    const next = `#${shown}`;
+    if (location.hash !== next) history[push ? "pushState" : "replaceState"](null, "", next);
+    // 탭을 바꾸면 탭 줄 바로 아래부터 보이게 올린다(페이지 머리 아래로 멀리 내려가 있을 때만).
+    if (scroll && tabbar.getBoundingClientRect().top < 0) tabbar.scrollIntoView({ block: "start" });
+  }
+
+  mainBtns.forEach((b) => b.addEventListener("click", () => show(`#${b.dataset.tab}`, true)));
+  document.querySelectorAll<HTMLButtonElement>(".subtabs [data-sub]").forEach((b) => b.addEventListener("click", () => show(`#${b.dataset.sub}`, true, true)));
+  // 작은 탭 끝의 "다음" 버튼
+  document.querySelectorAll<HTMLButtonElement>("[data-go-sub]").forEach((b) => b.addEventListener("click", () => show(`#${b.dataset.goSub}`, true, true)));
+  window.addEventListener("popstate", () => show(location.hash));
+  window.addEventListener("hashchange", () => show(location.hash));
+  show(location.hash);
 </script>
 
 <style>
-  .jump {
+  /* ── 큰 탭 ── */
+  .tabbar {
+    position: sticky;
+    top: 66px;
+    z-index: 20;
+    background: color-mix(in srgb, var(--paper) 92%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .tabbar-in {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    padding-block: 10px;
+  }
+  .tabbar button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    padding: 10px 14px;
+    border: 1.5px solid var(--rule-strong);
+    border-radius: 12px;
+    background: var(--paper-3);
+    color: var(--ink-2);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      border-color 150ms ease,
+      box-shadow 150ms ease,
+      transform 150ms ease;
+  }
+  .tabbar button:hover {
+    transform: translateY(-1px);
+    border-color: var(--ink-3);
+  }
+  .tb-ic {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+    color: var(--ink-2);
+  }
+  .tb-t {
+    display: grid;
+    min-width: 0;
+  }
+  .tb-t b {
+    font-size: 17px;
+    color: var(--ink);
+  }
+  .tb-t small {
+    overflow: hidden;
+    font-size: 12.5px;
+    color: var(--ink-3);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .tabbar button[aria-selected="true"] {
+    border-color: var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .tabbar button[aria-selected="true"] .tb-ic {
+    background: var(--red);
+    color: #fff;
+  }
+
+  /* ── 작은 탭 ── */
+  .subtabs {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
     margin-top: 22px;
+    padding: 5px;
+    width: fit-content;
+    max-width: 100%;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--ink) 7%, transparent);
   }
-  .jump a {
+  .subtabs button {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 7px 12px;
-    border: 1px solid var(--rule-strong);
-    border-radius: 999px;
+    gap: 7px;
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
     color: var(--ink-2);
-    font-size: 14px;
-    font-weight: 600;
-    text-decoration: none;
+    font: inherit;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
   }
-  .jump a:hover {
-    background: var(--ink);
-    color: var(--paper-3);
+  .subtabs button:hover {
+    color: var(--ink);
+    background: color-mix(in srgb, var(--paper-3) 70%, transparent);
   }
+  .subtabs button[aria-selected="true"] {
+    background: var(--paper-3);
+    color: var(--ink);
+    box-shadow: 0 2px 6px -2px rgb(40 30 10 / 0.35);
+  }
+  .st-num {
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--ink) 12%, transparent);
+    font-size: 11px;
+  }
+  .subtabs button[aria-selected="true"] .st-num {
+    background: var(--red);
+    color: #fff;
+  }
+  .sec[hidden],
+  .subpanel[hidden] {
+    display: none;
+  }
+  .subpanel > .sub:first-child {
+    margin-top: 28px;
+  }
+
   .sec {
-    padding-top: 90px;
-    scroll-margin-top: 80px;
+    padding-top: 48px;
+    scroll-margin-top: 150px;
   }
   .sec h2 {
     margin-top: 10px;
@@ -1080,6 +1307,41 @@ const cars = [...carStats].sort((a, b) => fuelUse(a.mass) - fuelUse(b.mass));
   }
 
   @media (max-width: 760px) {
+    .tabbar {
+      /* 좁은 화면의 헤더는 메뉴가 아래 줄로 내려가 더 높다 */
+      top: 102px;
+    }
+    .tabbar-in {
+      gap: 6px;
+      padding-block: 8px;
+    }
+    .tabbar button {
+      flex-direction: column;
+      gap: 4px;
+      padding: 8px 4px;
+      text-align: center;
+    }
+    .tb-ic {
+      width: 32px;
+      height: 32px;
+    }
+    .tb-t b {
+      font-size: 14.5px;
+    }
+    .tb-t small {
+      display: none;
+    }
+    .subtabs {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+      width: 100%;
+    }
+    .subtabs button {
+      flex: none;
+      padding: 8px 11px;
+      font-size: 13.5px;
+    }
     .kg-list li {
       grid-template-columns: 1fr;
       gap: 4px;
