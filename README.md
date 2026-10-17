@@ -45,6 +45,9 @@ Project Zomboid Build 42 멀티 서버 안내 사이트와 호스트용 설치 �
 
 ## 모드 바꾸기
 
+0. 넣기 전에 Claude Code 의 `zomboid-mod-check` 스킬(`.claude/skills/zomboid-mod-check/`)로 점검한다.
+   어떤 모드인지, 42.x 와 맞는지, 팩의 다른 모드와 충돌하는지, 격리 서버·클라이언트 로딩, 최근 문제 보고,
+   한국어를 보고 판정한다. 게임 빌드가 오르면 팩 전체(`--add` 없이)를 다시 돌린다
 1. `data/mods.json` 을 고친다. 의존 모드는 별도 항목으로 넣고 `dependsOn` 에 적는다.
    두 모드가 서로를 필수로 지정하면 양쪽 모두 적는다(검사기가 순서 검사에서 뺀다)
 2. `npm run mods:verify` 로 창작마당 실물과 대조한다(B42 태그, Required items, Mod ID)

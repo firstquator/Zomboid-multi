@@ -12,10 +12,15 @@
   겹치지 않는다. 샌드박스 옵션 이름도 겹치지 않는다.
 - 같은 바닐라 함수를 둘 이상의 모드가 고치는 곳은 2곳이고, 둘 다 원래 함수를 이어 부르는 방식이라
   함께 동작한다.
-- 주의할 점은 아래 "발견 사항"에 위험한 순서로 적었다. 지금 고쳐야 할 것은 없고, Stack All 은
-  작성자 업데이트 때 다시 볼 필요가 있다.
-- 게임 안(월드 접속 뒤)에서 인벤토리·우클릭·읽기 같은 실제 조작은 해 보지 않았다. 아래
-  "확인 못 한 점" 참고.
+- **다만 Skill Recovery Journal 은 우리 그룹에서 핵심 기능이 깨진다.** 한글이 들어간 Steam 닉네임으로 접속하면
+  호스트가 게임을 다시 켠 뒤 일지 기록을 못 찾는다. 커뮤니티 이슈 #154 를 이 PC 의 실제 게임 엔진에서 재현했다
+  (아래 "커뮤니티 보고" 1번). 42.21 멀티에서 신체 스킬이 안 적힌다는 보고도 10월에 여러 건이고, 09-04 뒤 업데이트가 없다.
+  모두 영문 닉네임으로 바꾸지 않을 거라면 빼는 편이 낫다.
+- 그다음은 Proximity Inventory 의 지구본 탭이 Better Sorting 과 함께 쓰면 사라진다는 보고(10-15)다.
+  두 모드 코드에 겹치는 곳은 없어서 원인은 모르고, 게임 안에서 확인해야 한다.
+- 정적 분석으로 찾은 주의점은 "발견 사항"에, 커뮤니티 보고는 "커뮤니티 보고"에 위험한 순서로 적었다.
+- 게임 안(월드 접속 뒤)에서 인벤토리·우클릭·읽기 같은 실제 조작은 해 보지 않았다. 시작 전에 할 시험은
+  "확인 못 한 점"에 우선순위대로 적었다.
 
 ## REA 에 대해
 
@@ -188,10 +193,104 @@
 
 - 번역 품질(기계번역 여부)은 보지 않았다.
 
+## 커뮤니티 보고 (2026-10-18 조사, 위험한 순서)
+
+창작마당 댓글·변경 기록·토론과 GitHub 이슈를 서브에이전트가 읽었다. steamcommunity.com 이 429 를 자주 돌려줘서
+Mini Health Panel, Has Been Read, 한글타이핑은 페이지를 거의 읽지 못했다. 인용은 요약 모델을 거친 것이다.
+
+### 1. Skill Recovery Journal: 42.21 멀티에서 핵심 기능이 안 된다는 보고가 많다
+
+- 신체 스킬이 일지에 안 적힘: 10-13 "On MP B42.21, having same issue with physical skills like Running, Aiming, Reloading",
+  10-12 "physical abilities are not transcribing to journal". 일부 XP 가 빨간 막대로 남는다는 보고(10-10, 10-13).
+- 42.21 에서 안 됨: 10-08 "it doesnt work in last stable 42.21", 10-13 "broken for stable", 10-14 두 건.
+- 멀티에서 일지가 비거나 지워짐: 09-26 "the journal contents get wiped after death", 10-05, 10-07.
+- 작성자: 10-02 "I'm getting 0 errors testing", 10-14 "Mod works fine on my end". 마지막 업데이트 09-04.
+- GitHub 에 답 없이 열린 이슈: #156(10-04, 42.21 멀티 "nothing else to add"), #155(09-10, **"hosted multiplayer server,
+  not dedicated"** — 우리 방식), #154(09-09, 비ASCII(한중일) ID·사용자 이름이 깨져 키가 겹치고 저장된 XP 가 가려지거나 지워짐), #152(옮겨 적을 때마다 XP 증가).
+- **우리 쪽에서 재현함 (#154, 한글 닉네임)**:
+  - 우리 방식(Host + Steam 초대)에서는 Steam 닉네임이 그대로 접속 이름이 되고 한글도 막지 않는다
+    (`hosting.md` 의 `GameClient.doConnectCoop` → `SteamFriends.GetPersonaName`, Host 경로는 `AllowNonAsciiUsername` 검사 없음).
+  - SRJ 는 멀티에서 일지 장부 ID 를 `접속이름-시각-난수` 로 만들고(`Skill Recovery Journal Ledger.lua` 의 `mintJournalID`),
+    장부를 자체 JSON 코덱으로 파일에 저장한다. 이 코덱은 문자열을 UTF-8 바이트로 가정하는데(`utf8Codepoints` 의 `s:byte`),
+    Kahlua 문자열은 Java 문자열이라 한글이 한 글자로 들어온다. 저장은 `한` 로 맞게 쓰지만 불러올 때
+    `string.char(0xED,0x95,0x9C)` 세 글자로 되돌려서 원래 이름과 달라진다.
+  - 격리 서버(42.21.0, 실제 Kahlua)에서 SRJ 의 `jsonEncode` → `jsonDecode` 를 돌린 결과:
+    `PlayerOne` 은 `roundtrip=true`, `한글닉네임`·`Kim민수` 는 **`roundtrip=false`, `usernameSame=false`**.
+  - 장부는 프로세스가 뜬 뒤 처음 쓸 때 한 번만 디스크에서 읽는다(`ensureUserLoaded` 의 `loadedUsers` 캐시).
+    그래서 **같은 세션 안에서는 멀쩡하다가, 호스트가 게임을 다시 켠 뒤부터 한글이 들어간 닉네임의 일지 기록을 못 찾고**,
+    다음 저장 때 깨진 키로 덮어쓴다. 우리는 놀 때마다 호스트가 새로 여니 사실상 매번 해당한다.
+  - 닉네임이 영문·숫자뿐인 사람은 해당하지 않는다. 다만 위의 "신체 스킬 안 적힘" 보고는 이름과 무관하다.
+- 출처: https://steamcommunity.com/sharedfiles/filedetails/comments/2503622437 ,
+  https://github.com/Chuckleberry-Finn/Skill-Recovery-Journal/issues/154
+- 판단: **지금 그대로는 넣지 않는 편이 낫다.** 쓰려면 함께 하는 사람 모두 Steam 닉네임을 영문·숫자로 바꾸고 놀아야 하고,
+  그래도 신체 스킬 문제는 시작 전 시험 1번으로 따로 확인해야 한다. 빼면 errorMagnifier·Alert System 도 SRJ 때문에 넣은 것이라
+  같이 뺄 수 있다(둘은 SRJ 를 빼면 필요한 모드가 없다).
+
+### 2. Proximity Inventory + Better Sorting: 지구본 탭이 사라진다는 보고
+
+- 10-15 junhugun(Proximity 댓글): "안되시는 분 들은 "Better Sorting" 이라는 모드를 구독 하고 있지 않은지 확인해보세요." /
+  "전 저걸 지우니까 지구본이 다시 보였습니다." 작성자는 한국어 글이라 답하지 못했다.
+- Proximity 의 42.21 멀티 보고는 엇갈린다. 안 됨(09-29, 10-02, 10-04, 09-12 호스트 서버), 됨(10-06 "120+ mods" 서버,
+  10-13 작성자 "The mod still works as usual").
+- 우리 쪽 근거: Better Sorting 은 `ISInventoryPage`·`ISInventoryPane`·`ISLootWindow` 를 건드리지 않고(바닐라 함수는 유체 행동
+  `complete`/`stop` 만 감쌈), 두 모드가 함께 고치는 함수도 없다. 불러오기 오류도 없다. 코드로는 설명이 안 된다.
+- 출처: https://steamcommunity.com/sharedfiles/filedetails/comments/2847184718
+- 판단: 시작 전 시험 2번으로 확인한다. 지구본이 안 보이면 둘 중 하나를 뺀다.
+
+### 3. Common Sense: 가구 배치 불가 보고, Smarter Storage 이름표가 사라진다는 보고
+
+- 09-29 "cannot place furniture with this mod? i think the new update/hotfix broke it", 10-03 같은 보고. 작성자 답과 변경 기록 언급이 없다.
+- 09-20 Smarter Storage 버그 스레드: "'common sense' & 'reload all magazines' … remove the icons and names given to containers
+  from smart storage". 어느 Common Sense 인지 링크가 없다.
+- 둘 다 10-12 v3.6.0(서버 권한 방식으로 개편) 전 보고다. 현재 3.6.1 에는 인벤토리 보관함 버튼(`ISInventoryPage`)이나
+  가구 배치(`ISMoveable*`)를 건드리는 코드가 없다.
+- 출처: https://steamcommunity.com/sharedfiles/filedetails/comments/3750253491 ,
+  https://steamcommunity.com/workshop/filedetails/discussion/3290232938/4522260786595826312/?ctp=5
+- 판단: 낮음~중간. 시작 전 시험 3번에서 가구 하나 옮겨 보고 이름표 붙인 상자를 확인한다.
+
+### 4. 접속 때 "doesn't exist on the client" (Mod Update and Alert System)
+
+- 09-18 직접 호스팅 멀티: "doesn't exist on the client: chuckleberryfinnmodding_modchangelog.lua". 작성자: "There's a bug with
+  luachecksum, you most likely need to disable that. It's not related to any particular mod." 08-22 "disable LuaCheckSum, just ask
+  your friends to make sure they unsub/resub".
+- 42.21 서버 설정에 `DoLuaChecksum` 이 있다(`zombie/network/ServerOptions`, 기본 `true`).
+- 판단: 지금 설치 스크립트는 그대로 둔다. 친구가 이 오류로 못 들어오면 그 사람이 모드 구독을 풀었다 다시 하고, 그래도 안 되면
+  호스트 ini 에서 `DoLuaChecksum=false` 로 바꾼다(친구끼리 비공개 서버라 치트 검사가 꺼지는 손해는 작다).
+
+### 5. 그 밖
+
+- Hx 통합 번역: 09-27 "멀티 서버 만들 때 '서버가 시작 과정에서 중단되었습니다'" 보고(답 없음, 42.21 정식 하루 전).
+  우리 격리 서버 테스트는 Hx 를 넣고 정상 시작했다. map_symbols.bin 증가(08-21)와 전단지 흰 화면(08-26)은 09-07·08-27 수정 뒤 재보고가 없다.
+  09-28 GitHub 커밋 "42.21 EN 원문 기준 번역 갱신".
+- errorMagnifier: 09-28 "errors 가 나는데 열어 보면 0개" 보고 2건. 표시 문제라 플레이에는 영향이 없다.
+- Smarter Storage: 이름표는 보관함 오브젝트의 ModData 에 쓰고 `transmitModData()` 로 보낸다. 멀티에서 다른 사람에게도 보이는 구조다
+  (`mods.md` 의 "확인 못 한 점" 하나에 대한 답, 실제 화면은 확인 못 함).
+- Stack ALL Fix: 마지막 업데이트 05-14, 42.20.2·42.20.3 멀티 정상 보고(08-06, 08-22), 42.21 언급 없음.
+- Named skill VHS tapes: 작성자 "번역을 바꾸는 모드보다 뒤에 로드"(09-17). 지금 순서가 맞다.
+- Has Been Read: 42.13 시기 "표시를 많이 하면 ModData 가 커져 롤백" 토론이 있었다(오래된 보고).
+- Better Sorting: 아이템 분류값을 바꿔서 샌드박스 "카테고리별 전리품 희귀도"가 바닐라 아이템 1,284개에 덜 먹는다(GitHub #105, 열림). 기존에 알던 내용.
+
+## 시작 전 시험 (우선순위)
+
+격리 테스트로는 볼 수 없는 것들이다. 호스트 PC 에서 실제로 "서버 만들기"로 열고 한 명이 Steam 초대로 들어와서 한다.
+
+1. **Skill Recovery Journal**(남기기로 했다면): 모두 영문 Steam 닉네임으로 접속한 상태에서, 달리기·조준 같은 신체 스킬과
+   목공 같은 일반 스킬을 조금씩 올린 뒤 일지에 옮겨 적기 → 일지 툴팁에 모두 나오는지 → **호스트가 게임을 껐다 다시 연 뒤**
+   캐릭터를 죽이고 새 캐릭터로 읽어서 돌아오는지.
+2. **Proximity Inventory**: 상자 근처에서 인벤토리 창에 지구본 탭이 보이는지, 거기서 꺼내지는지.
+3. **Common Sense / Smarter Storage**: 가구 하나 들어 옮기기, 상자에 이름표 붙이고 다른 사람 화면에서도 보이는지.
+4. Stack All(반쯤 쓴 소모품 두 개 이상 → 우클릭 "모두 합치기"가 한 번만 뜨고 합쳐지는지), Has Been Read(읽은 책 표시),
+   한글 채팅 입력, 미니 체력 창, 미니맵 한국어 지명.
+
 ## 확인 못 한 점
 
-- 월드에 들어가서의 실제 조작: 보관함 이름표, 주변 상자 탭, 모두 합치기, 읽음 표시, 일지 쓰기·읽기,
-  미니 체력 창, 한글 채팅 입력. 서버·클라이언트 모두 "불러오기까지 오류 없음"만 확인했다.
+- 월드에 들어가서의 실제 조작(위 "시작 전 시험"). 서버·클라이언트 모두 "불러오기까지 오류 없음"만 확인했다.
 - Steam 으로 호스트하고 다른 PC 가 접속하는 흐름(체크섬 일치 포함). 테스트는 `-nosteam` 이었다.
 - 오래 플레이할 때의 성능, 저장 파일 크기(Hx 의 `map_symbols.bin` 보고 등).
+- Mini Health Panel, Has Been Read, 한글타이핑의 최근 커뮤니티 보고(429 로 거의 못 읽음).
 - 정적 분석은 정규식 기반이라 동적으로 만든 함수 이름이나 문자열로 부르는 함수는 놓칠 수 있다.
+
+## 다시 점검하는 법
+
+`.claude/skills/zomboid-mod-check/` 스킬이 이 문서의 방법(받기, 정적 분석, 함수 비교, 한국어, 격리 로딩 테스트, 커뮤니티 조사)을
+스크립트로 묶어 둔 것이다. 새 모드를 넣거나 게임 빌드가 오르면 그 스킬로 다시 돌린다.
