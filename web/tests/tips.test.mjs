@@ -58,6 +58,32 @@ describe("차량", () => {
   });
 });
 
+describe("요리", async () => {
+  const cook = await import("../src/data/cooking.mjs");
+  // "item:이름" 은 아이템 아이콘, "cook:이름" 은 열원 그림
+  const file = (ref) =>
+    ref.startsWith("item:") ? new URL(`../public/icons/item/${ref.slice(5)}.webp`, import.meta.url) : new URL(`../public/guide/cook/${ref.slice(5)}.webp`, import.meta.url);
+  it("쓰는 그림이 모두 있다", () => {
+    const refs = [
+      ...cook.cookFacts.map((x) => x.icon),
+      ...cook.cookSteps.map((x) => x.icon),
+      ...cook.recipes.flatMap((r) => [r.base.icon, r.result, ...r.ings.map((i) => i.icon)]),
+      ...cook.bestDishes.flatMap((d) => [d.base, ...d.items.map(([i]) => i)]),
+      ...cook.heatSources.map((h) => h.icon),
+      ...cook.fuels.map((f) => f.icon),
+      ...cook.boilWater.icons,
+      ...cook.storage.map((s) => s.icon),
+      ...cook.cookXp.map((x) => x.icon),
+      ...cook.cookCrafts.map((c) => c.icon),
+    ];
+    expect(refs.filter((r) => !existsSync(file(r)))).toEqual([]);
+  });
+  it("익혀야 하는 요리는 시간이, 추천 요리는 수치가 있다", () => {
+    expect(cook.recipes.every((r) => r.cook === null || r.cook > 0)).toBe(true);
+    expect(cook.bestDishes.every((d) => d.hunger > 0 && d.kcal > 0)).toBe(true);
+  });
+});
+
 describe("생활 꿀팁", () => {
   it("주제마다 그림과 팁이 있고 팁 그림이 모두 있다", () => {
     expect(missing(tipTopics.map((t) => `spiffo/${t.spiffo}`))).toEqual([]);

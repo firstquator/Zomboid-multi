@@ -62,6 +62,9 @@ ITEM_ICONS = ["CarKey", "Crowbar", "Petrol", "JerrycanMilitary", "RubberHose", "
               "Nails", "Sledgehamer", "SheetRope", "Sheet", "Garbagebag", "TentMaterial", "MagazineElectronics02",
               "Cassette3", "Twigs", "BerryBlack", "Egg", "RockSharpened", "AxeStone", "Map", "Pen", "Notebook",
               "LeatherStrips", "Thread"]
+# 요리 탭의 열원·보관 가구 그림(보관함 버튼 아이콘, 건축 메뉴 그림)
+COOK_UI = ["Container_Oven", "Container_Microwave", "Container_Campfire", "Container_Fridge", "Container_Freezer",
+           "Build_Campfire", "Build_CookingPit", "Build_BarrelOven"]
 # 화면 왼쪽 아이콘 줄 그림(media/ui/Sidebar/64)
 SIDEBAR = ["Inventory_On_64", "Heart_On_64", "Carpentry_On_64", "Build_On_64", "Map_On_64", "Search_On_64",
            "AnimalZone_On_64"]
@@ -162,6 +165,16 @@ def main():
         if id(png) not in pages:
             pages[id(png)] = Image.open(io.BytesIO(png)).convert("RGBA")
         save(pages[id(png)].crop((x, y, x + w, y + h)), OUT / "item" / f"{name}.webp")
+        count += 1
+
+    for name in COOK_UI:
+        if name not in pack:
+            missing.append(name)
+            continue
+        png, x, y, w, h = pack[name]
+        if id(png) not in pages:
+            pages[id(png)] = Image.open(io.BytesIO(png)).convert("RGBA")
+        save(pages[id(png)].crop((x, y, x + w, y + h)), OUT / "cook" / f"{name}.webp")
         count += 1
 
     for name in VEHICLE_LOOSE:

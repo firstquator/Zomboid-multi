@@ -25,8 +25,11 @@ import {
   carTips,
 } from "../data/vehicles.mjs";
 import { controlTips, tipTopics } from "../data/tips.mjs";
+import { cookFacts, cookSteps, recipes, bestDishes, heatSources, fuels, boilWater, foodStates, storage, cookSkill, cookXp, cookCrafts } from "../data/cooking.mjs";
 
 const g = (p: string) => base(`guide/${p}.webp`);
+// 요리 데이터의 그림: "item:이름" 은 아이템 아이콘, "cook:이름" 은 열원 그림
+const ic = (ref: string) => (ref.startsWith("item:") ? base(`icons/item/${ref.slice(5)}.webp`) : g(`cook/${ref.slice(5)}`));
 // 연비: 차 무게가 1000 에서 멀수록 기름을 더 쓴다(Vehicles.lua 의 |1000 − 무게| / 300 + 1).
 const fuelUse = (m: number) => Math.abs(1000 - m) / 300 + 1;
 const maxUse = Math.max(...carStats.map((c) => fuelUse(c.mass)));
@@ -36,6 +39,7 @@ const cars = [...carStats].sort((a, b) => fuelUse(a.mass) - fuelUse(b.mass));
 const mainTabs = [
   { id: "keys", label: "단축키", sub: "키보드·마우스", icon: "keyboard" },
   { id: "car", label: "차량", sub: "타기부터 정비까지", icon: "steering" },
+  { id: "cook", label: "요리", sub: "레시피·익히기·보관", icon: "dish-01" },
   { id: "life", label: "생활 꿀팁", sub: "전투·건강·기지", icon: "bulb" },
 ];
 const subTabs = {
@@ -52,9 +56,16 @@ const subTabs = {
     { id: "car-mech", label: "정비" },
     { id: "car-drive", label: "운전·같이 타기" },
   ],
+  cook: [
+    { id: "cook-basic", label: "기본·익히기" },
+    { id: "cook-recipes", label: "레시피" },
+    { id: "cook-best", label: "추천 요리" },
+    { id: "cook-heat", label: "열원·물" },
+    { id: "cook-store", label: "보관·기술·제작" },
+  ],
 };
 // 작은 탭 순서. 단축키 끝은 차량으로, 차량 끝은 생활 꿀팁으로 이어진다.
-const order = [...subTabs.keys, ...subTabs.car, { id: "life", label: "생활 꿀팁" }];
+const order = [...subTabs.keys, ...subTabs.car, ...subTabs.cook, { id: "life", label: "생활 꿀팁" }];
 const nextSub = (id: string) => order[order.findIndex((o) => o.id === id) + 1] ?? null;
 ---
 
@@ -429,6 +440,290 @@ const nextSub = (id: string) => order[order.findIndex((o) => o.id === id) + 1] ?
     </div>
   </section>
 
+  <!-- ───────── 요리 ───────── -->
+  <section class="wrap sec" id="cook" role="tabpanel" aria-labelledby="tab-cook" data-panel="cook" hidden>
+    <div class="sec-art">
+      <div>
+        <h2 class="display">요리</h2>
+        <p class="lede">B42 요리는 냄비·그릇·빵 같은 바탕에 재료를 하나씩 넣어 만듭니다. 익히면 더 든든하고, 여러 재료를 넣으면 기분도 좋아집니다.</p>
+      </div>
+      <img class="spiffo" src={g("spiffo/spiffo_food")} alt="" loading="lazy" />
+    </div>
+
+    <div class="subtabs" role="tablist" aria-label="요리 보기">
+      {
+        subTabs.cook.map((s, i) => (
+          <button type="button" role="tab" aria-selected={i === 0 ? "true" : "false"} data-sub={s.id}>
+            <span class="st-num mono">{i + 1}</span>
+            {s.label}
+          </button>
+        ))
+      }
+    </div>
+
+    <div class="subpanel" data-subpanel="cook-basic">
+      <h3 class="sub">먼저 알 것</h3>
+      <ul class="facts">
+        {
+          cookFacts.map((f, i) => (
+            <li class="reveal" style={`--i:${i % 3}`}>
+              <span class="tile big"><img src={ic(f.icon)} alt="" loading="lazy" /></span>
+              <span>
+                <b>{f.title}</b>
+                <Fragment set:html={keyify(f.text)} />
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+      <h3 class="sub">익히는 순서</h3>
+      <ol class="flow">
+        {
+          cookSteps.map((s, i) => (
+            <li>
+              <span class="tile big"><img src={ic(s.icon)} alt="" loading="lazy" /></span>
+              <span class="fl-n mono">{i + 1}</span>
+              <b>{s.title}</b>
+              <p set:html={keyify(s.text)} />
+            </li>
+          ))
+        }
+      </ol>
+      <SubNext next={nextSub("cook-basic")} />
+    </div>
+
+    <div class="subpanel" data-subpanel="cook-recipes" hidden>
+      <h3 class="sub">레시피 <small class="sub-note">바탕 + 재료 → 요리</small></h3>
+      <p class="sub-lede">바탕을 우클릭하면 메뉴가 뜹니다. 재료는 가방이나 주변 상자에 있어야 목록에 나옵니다. 처음 넣은 뒤에는 만들어진 요리를 다시 우클릭해서 「재료 추가하기」로 더 넣습니다.</p>
+      <ul class="recipes">
+        {
+          recipes.map((r) => (
+            <li>
+              <div class="eqn">
+                <span class="tile big"><img src={ic(r.base.icon)} alt="" loading="lazy" /></span>
+                <span class="op">+</span>
+                <span class="ing-stack">
+                  {r.ings.slice(0, 3).map((x) => (
+                    <span class="tile sm"><img src={ic(x.icon)} alt="" loading="lazy" /></span>
+                  ))}
+                </span>
+                <span class="op">→</span>
+                <span class="tile big res"><img src={ic(r.result)} alt="" loading="lazy" /></span>
+              </div>
+              <div class="rc-head">
+                <b>{r.name}</b>
+                {r.cook ? <span class="pill fire">익혀야 함 · {r.cook}분</span> : r.warm ? <span class="pill">불 없이 · 데우면 더 좋음</span> : <span class="pill cold">불 없이</span>}
+              </div>
+              <p class="rc-base">
+                바탕: <b>{r.base.label}</b>
+                {r.base.learn && <span class="pill learn">배워야 함</span>}
+              </p>
+              <p class="rc-menu">
+                우클릭 → <span class="ui">{r.menu}</span> · 재료 최대 {r.max}개
+              </p>
+              <p class="rc-ings">
+                {r.ings.map((x) => (
+                  <span class="ing">
+                    <img src={ic(x.icon)} alt="" width="18" height="18" loading="lazy" />
+                    {x.name}
+                  </span>
+                ))}
+              </p>
+              <p class="rc-note">{r.note}</p>
+            </li>
+          ))
+        }
+      </ul>
+      <SubNext next={nextSub("cook-recipes")} />
+    </div>
+
+    <div class="subpanel" data-subpanel="cook-best" hidden>
+      <h3 class="sub">초반에 만들기 쉬운 요리</h3>
+      <p class="sub-lede">요리 0레벨, 신선한 재료 기준으로 게임 계산식에서 낸 값입니다. 배고픔은 클수록 든든하고, 불행은 음수면 기분이 좋아집니다.</p>
+      <ul class="best">
+        {
+          bestDishes.map((d, i) => (
+            <li class="reveal" style={`--i:${i % 3}`}>
+              <div class="b-top">
+                <b>{d.name}</b>
+                {d.cook ? <span class="pill fire">익혀서</span> : <span class="pill cold">불 없이</span>}
+              </div>
+              <div class="eqn">
+                <span class="tile"><img src={ic(d.base)} alt="" loading="lazy" /></span>
+                <span class="op">+</span>
+                {d.items.map(([icon, name]) => (
+                  <span class="tile" title={name}>
+                    <img src={ic(icon)} alt={name} loading="lazy" />
+                  </span>
+                ))}
+              </div>
+              <p class="b-ings">{d.items.map(([, n]) => n).join(" · ")}</p>
+              <ul class="b-stats">
+                <li>
+                  <span>배고픔</span>
+                  <b>{d.hunger}</b>
+                </li>
+                <li class="good">
+                  <span>불행</span>
+                  <b>{d.unhappy}</b>
+                </li>
+                <li>
+                  <span>열량</span>
+                  <b>{d.kcal}</b>
+                </li>
+              </ul>
+              <p class="b-why">{d.why}</p>
+            </li>
+          ))
+        }
+      </ul>
+      <SubNext next={nextSub("cook-best")} />
+    </div>
+
+    <div class="subpanel" data-subpanel="cook-heat" hidden>
+      <h3 class="sub">어디서 익히나</h3>
+      <ul class="heat">
+        {
+          heatSources.map((h) => (
+            <li>
+              <span class="tile big"><img src={ic(h.icon)} alt="" loading="lazy" /></span>
+              <div>
+                <b>{h.name}</b>
+                <p class="h-need">
+                  {h.need} · <span class={h.cut.startsWith("단전과") ? "ok" : "warn"}>{h.cut}</span>
+                </p>
+                {h.speed && (
+                  <p class="h-speed">
+                    <span>익는 속도</span>
+                    <i style={`--w:${(h.speed / 2) * 100}%`} />
+                    <b class="mono">×{h.speed}</b>
+                  </p>
+                )}
+                <p class="h-warn">{h.warn}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+      <div class="two-col">
+        <div>
+          <h3 class="sub">땔감이 타는 시간</h3>
+          <ul class="fuels">
+            {
+              fuels.map((f) => (
+                <li>
+                  <span class="tile"><img src={ic(f.icon)} alt="" loading="lazy" /></span>
+                  <b>{f.name}</b>
+                  <span class="bar"><i style={`width:${(f.hours / 6) * 100}%`} /></span>
+                  <span class="mono">{f.hours}시간</span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+        <div>
+          <h3 class="sub">물 끓이기</h3>
+          <div class="icons">
+            {
+              boilWater.icons.map((x) => (
+                <span class="tile"><img src={ic(x)} alt="" loading="lazy" /></span>
+              ))
+            }
+          </div>
+          <p class="sub-lede" style="margin-top:10px">{boilWater.text}</p>
+        </div>
+      </div>
+      <SubNext next={nextSub("cook-heat")} />
+    </div>
+
+    <div class="subpanel" data-subpanel="cook-store" hidden>
+      <div class="two-col">
+        <div>
+          <h3 class="sub">음식 상태</h3>
+          <table class="states">
+            <thead>
+              <tr>
+                <th scope="col">상태</th>
+                <th scope="col">배고픔</th>
+                <th scope="col">그 밖</th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                foodStates.map((s) => (
+                  <tr class={s.tone}>
+                    <th scope="row">{s.name}</th>
+                    <td class="mono">{s.hunger}</td>
+                    <td>{s.mood}</td>
+                  </tr>
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h3 class="sub">보관</h3>
+          <ul class="notes-grid one">
+            {
+              storage.map((s) => (
+                <li>
+                  <span class="tile"><img src={ic(s.icon)} alt="" loading="lazy" /></span>
+                  <span>
+                    <b>{s.title}</b>
+                    {s.text}
+                  </span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </div>
+      <div class="two-col">
+        <div>
+          <h3 class="sub">요리 기술</h3>
+          <ul class="levels">
+            {
+              cookSkill.map((s) => (
+                <li>
+                  <span class="lv mono">Lv {s.lv}</span>
+                  {s.text}
+                </li>
+              ))
+            }
+          </ul>
+          <ul class="notes-grid one" style="margin-top:12px">
+            {
+              cookXp.map((x) => (
+                <li>
+                  <span class="tile"><img src={ic(x.icon)} alt="" loading="lazy" /></span>
+                  <span>{x.text}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+        <div>
+          <h3 class="sub">제작창 <kbd>B</kbd> 의 요리 제작법</h3>
+          <ul class="crafts">
+            {
+              cookCrafts.map((c) => (
+                <li>
+                  <span class="tile sm"><img src={ic(c.icon)} alt="" loading="lazy" /></span>
+                  <span>
+                    <b>{c.name}</b>
+                    <small>{c.need}</small>
+                  </span>
+                  {c.learn && <span class="pill learn">{c.learn}</span>}
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </div>
+      <SubNext next={nextSub("cook-store")} />
+    </div>
+  </section>
+
   <!-- ───────── 생활 꿀팁 ───────── -->
   <section class="wrap sec" id="life" role="tabpanel" aria-labelledby="tab-life" data-panel="life" hidden>
     <h2 class="display">생활 꿀팁</h2>
@@ -556,7 +851,7 @@ const nextSub = (id: string) => order[order.findIndex((o) => o.id === id) + 1] ?
   }
   .tabbar-in {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 8px;
     padding-block: 10px;
   }
@@ -1301,6 +1596,414 @@ const nextSub = (id: string) => order[order.findIndex((o) => o.id === id) + 1] ?
     font-weight: 700;
     color: var(--ink-2);
   }
+  /* ── 요리 ── */
+  .tile.sm {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+  }
+  .tile.sm img {
+    max-width: 26px;
+    max-height: 26px;
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 9px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 700;
+    background: color-mix(in srgb, var(--ink) 9%, transparent);
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+  .pill.fire {
+    background: color-mix(in srgb, var(--red) 15%, transparent);
+    color: var(--red-ink);
+  }
+  .pill.cold {
+    background: color-mix(in srgb, var(--steel) 15%, transparent);
+  }
+  .pill.learn {
+    background: color-mix(in srgb, var(--amber) 22%, transparent);
+  }
+  .sub-note {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-3);
+  }
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .facts li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    align-items: start;
+    padding: 16px;
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    background: var(--paper-3);
+    box-shadow: var(--shadow-sheet);
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  .facts b {
+    display: block;
+    margin-bottom: 3px;
+    font-size: 16px;
+    color: var(--ink);
+  }
+  .flow {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .flow li {
+    position: relative;
+    display: grid;
+    align-content: start;
+    justify-items: start;
+    gap: 8px;
+    padding: 16px;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--amber) 9%, var(--paper-3));
+    border: 1px solid color-mix(in srgb, var(--amber) 25%, transparent);
+  }
+  .flow li:not(:last-child)::after {
+    content: "→";
+    position: absolute;
+    right: -11px;
+    top: 34px;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--paper-3);
+    font-size: 12px;
+  }
+  .fl-n {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    font-size: 24px;
+    font-weight: 600;
+    color: color-mix(in srgb, var(--ink) 20%, transparent);
+  }
+  .flow b {
+    font-size: 15.5px;
+  }
+  .flow p {
+    font-size: 13.5px;
+    color: var(--ink-2);
+  }
+  .recipes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .recipes > li {
+    display: grid;
+    align-content: start;
+    gap: 7px;
+    padding: 16px;
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    background: var(--paper-3);
+    box-shadow: var(--shadow-sheet);
+  }
+  .eqn {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  .op {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink-3);
+  }
+  .ing-stack {
+    display: inline-flex;
+  }
+  .ing-stack .tile + .tile {
+    margin-left: -10px;
+  }
+  .ing-stack .tile {
+    box-shadow:
+      0 0 0 2px var(--paper-3),
+      0 2px 0 rgb(0 0 0 / 0.25);
+  }
+  .tile.res {
+    box-shadow:
+      0 0 0 2px var(--amber),
+      0 2px 0 rgb(0 0 0 / 0.25);
+  }
+  .rc-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .rc-head b {
+    font-size: 18px;
+  }
+  .rc-base,
+  .rc-menu {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    font-size: 13.5px;
+    color: var(--ink-2);
+  }
+  .rc-ings {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .ing {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 8px 1px 2px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--olive) 10%, transparent);
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+  .ing img {
+    image-rendering: pixelated;
+    border-radius: 4px;
+    background: #1c1c17;
+  }
+  .rc-note {
+    font-size: 13px;
+    color: var(--ink-3);
+  }
+  .best {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .best > li {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    padding: 16px;
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    background: var(--paper-3);
+    box-shadow: var(--shadow-sheet);
+  }
+  .b-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .b-top b {
+    font-size: 18px;
+  }
+  .b-ings {
+    font-size: 13px;
+    color: var(--ink-3);
+  }
+  .b-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .b-stats li {
+    display: grid;
+    padding: 6px 10px;
+    border-radius: 9px;
+    background: color-mix(in srgb, var(--ink) 5%, transparent);
+  }
+  .b-stats span {
+    font-size: 11.5px;
+    color: var(--ink-3);
+  }
+  .b-stats b {
+    font-family: var(--f-mono);
+    font-size: 18px;
+  }
+  .b-stats .good b {
+    color: var(--olive);
+  }
+  .b-why {
+    font-size: 13.5px;
+    color: var(--ink-2);
+  }
+  .heat {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .heat > li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    align-items: start;
+    padding: 16px;
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    background: var(--paper-3);
+  }
+  .heat b {
+    font-size: 16.5px;
+  }
+  .h-need {
+    margin-top: 2px;
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+  .h-need .ok {
+    color: var(--olive);
+    font-weight: 700;
+  }
+  .h-need .warn {
+    color: var(--red);
+    font-weight: 700;
+  }
+  .h-speed {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 8px;
+    align-items: center;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .h-speed i {
+    height: 7px;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--amber) var(--w), color-mix(in srgb, var(--ink) 8%, transparent) var(--w));
+  }
+  .h-speed b {
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .h-warn {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+  .fuels {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .fuels li {
+    display: grid;
+    grid-template-columns: auto 60px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    font-size: 14px;
+  }
+  .states {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .states th,
+  .states td {
+    padding: 8px 10px;
+    text-align: left;
+    border-top: 1px dashed var(--rule);
+  }
+  .states thead th {
+    border-top: 0;
+    font-size: 12.5px;
+    color: var(--ink-3);
+  }
+  .states tr.good th {
+    color: var(--olive);
+  }
+  .states tr.bad th {
+    color: var(--red);
+  }
+  .states td:last-child {
+    color: var(--ink-2);
+    font-size: 13.5px;
+  }
+  .notes-grid.one {
+    grid-template-columns: 1fr;
+  }
+  .levels {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .levels li {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 10px;
+    align-items: center;
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  .lv {
+    padding: 3px 0;
+    border-radius: 7px;
+    background: var(--ink);
+    color: var(--paper-3);
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+  }
+  .crafts {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .crafts li {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 6px 8px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--ink) 4%, transparent);
+  }
+  .crafts b {
+    display: block;
+    font-size: 14px;
+  }
+  .crafts small {
+    font-size: 12.5px;
+    color: var(--ink-3);
+  }
+
   .credit {
     margin-top: 64px;
     font-size: 12.5px;
@@ -1330,6 +2033,12 @@ const nextSub = (id: string) => order[order.findIndex((o) => o.id === id) + 1] ?
       font-size: 14.5px;
     }
     .tb-t small {
+      display: none;
+    }
+    .tb-t b {
+      white-space: nowrap;
+    }
+    .flow li::after {
       display: none;
     }
     .subtabs {
