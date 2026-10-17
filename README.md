@@ -65,6 +65,11 @@ Project Zomboid Build 42 멀티 서버 안내 사이트와 호스트용 설치 �
 `npm test` 로 확인한다. 멀티에서 잠 설정이 꺼져 있으면 수면 특성 3개는 고를 수 없다
 (게임 `CharacterCreationProfession.lua` 의 `isTraitEnabled`).
 
+커뮤니티 추천(`communityBuilds`)은 공략 사이트·위키·블로그·유튜브에서 실제로 추천한 조합이고,
+출처 링크를 함께 둔다. 원래 조합에 수면 특성이 있으면 우리 서버용으로 바꾸고 원래 조합과 바꾼
+이유를 `original`, `changed` 에 남긴다. 찾은 과정은 `docs/research/builds-*.md` 에 있다.
+특성 칩(`TraitChip`)에 마우스를 올리면 `TraitTip` 이 게임 설명과 우리 평가를 띄운다.
+
 ## 개발
 
     npm --prefix web install

@@ -718,9 +718,9 @@
         "overweight",
         "fit",
         "obese",
-        "out of shape",
+        "outofshape",
         "unfit",
-        "very underweight",
+        "veryunderweight",
         "smoker"
       ],
       "xp": [
@@ -861,7 +861,7 @@
       "exclusive": [
         "athletic",
         "obese",
-        "out of shape",
+        "outofshape",
         "overweight",
         "unfit"
       ],
@@ -1613,7 +1613,7 @@
         "athletic",
         "fit",
         "emaciated",
-        "very underweight",
+        "veryunderweight",
         "underweight"
       ],
       "xp": [
@@ -1709,7 +1709,7 @@
         "emaciated",
         "fit",
         "lighteater",
-        "very underweight",
+        "veryunderweight",
         "underweight",
         "overweight"
       ],
@@ -1723,6 +1723,30 @@
       "recipes": 0,
       "professionOnly": true,
       "icon": "icons/trait/obese.webp"
+    },
+    {
+      "id": "veryunderweight",
+      "name": "심한 저체중",
+      "nameEn": "Very Low Weight",
+      "cost": 0,
+      "desc": "근력이 매우 낮고, 지구력이 매우 낮으며 부상당하기 쉽습니다.",
+      "exclusive": [
+        "athletic",
+        "obese",
+        "overweight",
+        "heartyappetite",
+        "underweight"
+      ],
+      "xp": [
+        {
+          "skill": "Fitness",
+          "level": -2,
+          "name": "체력"
+        }
+      ],
+      "recipes": 0,
+      "professionOnly": true,
+      "icon": "icons/trait/veryunderweight.webp"
     },
     {
       "id": "nightowl",
@@ -1792,7 +1816,7 @@
       "desc": "근력이 낮고, 지구력이 낮으며 부상당하기 쉽습니다.",
       "exclusive": [
         "obese",
-        "very underweight",
+        "veryunderweight",
         "overweight"
       ],
       "xp": [
@@ -1871,7 +1895,7 @@
       "exclusive": [
         "athletic",
         "fit",
-        "out of shape"
+        "outofshape"
       ],
       "xp": [
         {
@@ -1934,6 +1958,28 @@
       "recipes": 0,
       "professionOnly": false,
       "icon": "icons/trait/thinskinned.webp"
+    },
+    {
+      "id": "outofshape",
+      "name": "건강 이상",
+      "nameEn": "Out of Shape",
+      "cost": -6,
+      "desc": "지구력과 지구력의 회복 속도가 낮습니다.",
+      "exclusive": [
+        "athletic",
+        "fit",
+        "unfit"
+      ],
+      "xp": [
+        {
+          "skill": "Fitness",
+          "level": -2,
+          "name": "체력"
+        }
+      ],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/outofshape.webp"
     },
     {
       "id": "slowlearner",
@@ -2075,7 +2121,7 @@
       "desc": "주기적으로 더 식사를 해야 합니다.",
       "exclusive": [
         "lighteater",
-        "very underweight"
+        "veryunderweight"
       ],
       "xp": [],
       "recipes": 0,

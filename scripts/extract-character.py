@@ -34,9 +34,11 @@ OUT_ICONS = ROOT / "web/public/icons"
 def parse_definitions(text, kind):
     """`character_<kind>_definition base:id { Key = Value, ... }` 블록을 사전 목록으로 바꾼다."""
     out = []
-    pattern = re.compile(r"character_" + kind + r"_definition\s+base:(\w+)\s*\{(.*?)\}", re.S)
+    # "out of shape", "very underweight" 처럼 이름에 띄어쓰기가 있는 특성도 있다.
+    # 주소 링크에 쓰는 id 는 띄어쓰기를 뺀 값(outofshape)으로 하고, 원래 이름은 raw 에 둔다.
+    pattern = re.compile(r"character_" + kind + r"_definition\s+base:([^{\n]+?)\s*\{(.*?)\}", re.S)
     for m in pattern.finditer(text):
-        item = {"id": m.group(1)}
+        item = {"id": m.group(1).replace(" ", ""), "raw": m.group(1)}
         for line in m.group(2).splitlines():
             line = line.strip().rstrip(",")
             if "=" not in line:
@@ -49,6 +51,11 @@ def parse_definitions(text, kind):
 
 def split_list(value):
     return [v.strip().replace("base:", "") for v in (value or "").split(";") if v.strip()]
+
+
+def split_ids(value):
+    """특성 id 목록. parse_definitions 와 같이 띄어쓰기를 뺀다."""
+    return [v.replace(" ", "") for v in split_list(value)]
 
 
 def parse_xp(value):
@@ -167,7 +174,7 @@ def main():
                 "cost": int(p.get("Cost", 0)),
                 "desc": text(p.get("UIDescription")),
                 "xp": xp,
-                "granted": split_list(p.get("GrantedTraits")),
+                "granted": split_ids(p.get("GrantedTraits")),
                 "recipes": len(split_list(p.get("GrantedRecipes"))),
                 "icon": f"icons/prof/{p['id']}.webp" if has_icon else None,
             }
@@ -178,7 +185,7 @@ def main():
         if t.get("DisabledInMultiplayer", "false") == "true":
             continue
         tid = t["id"]
-        has_icon = save_icon(pack, loose, [f"trait_{tid}", f"trait_{tid.lower()}"], OUT_ICONS / "trait" / f"{tid}.webp")
+        has_icon = save_icon(pack, loose, [f"trait_{t['raw']}", f"trait_{tid}", f"trait_{tid.lower()}"], OUT_ICONS / "trait" / f"{tid}.webp")
         xp = parse_xp(t.get("XPBoosts"))
         for x in xp:
             x["name"] = skill_name(x["skill"])
@@ -189,7 +196,7 @@ def main():
                 "nameEn": en.get(t.get("UIName", ""), tid),
                 "cost": int(t.get("Cost", 0)),
                 "desc": text(t.get("UIDescription")),
-                "exclusive": split_list(t.get("MutuallyExclusiveTraits")),
+                "exclusive": split_ids(t.get("MutuallyExclusiveTraits")),
                 "xp": xp,
                 "recipes": len(split_list(t.get("GrantedRecipes"))),
                 "professionOnly": t.get("IsProfessionTrait", "false") == "true",

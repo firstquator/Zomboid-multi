@@ -3,9 +3,11 @@ import Base from "../layouts/Base.astro";
 import PageHead from "../components/PageHead.astro";
 import Icon from "../components/Icon.astro";
 import PixelIcon from "../components/PixelIcon.astro";
+import TraitChip from "../components/TraitChip.astro";
+import TraitTip from "../components/TraitTip.astro";
 import { base } from "../lib/base-url.mjs";
 import { remainingPoints, SLEEP_TRAITS } from "../lib/character.mjs";
-import { builds, buildGroups, verdicts, spawnTips, firstDay } from "../data/builds.mjs";
+import { builds, buildGroups, verdicts, spawnTips, firstDay, communityBuilds, sourceKinds } from "../data/builds.mjs";
 import data from "../data/character.json";
 
 const TAG: Record<string, { label: string; rank: number }> = {
@@ -36,13 +38,49 @@ const buildCards = builds.map((b) => {
 });
 const groupCount = Object.fromEntries(buildGroups.map((g) => [g.id, builds.filter((b) => b.group === g.id).length]));
 
+// 커뮤니티 추천: 우리 서버용으로 바꾼 조합이면 뺀 특성과 넣은 특성을 같이 보여 준다.
+const srcIcon: Record<string, string> = { youtube: "play-square", site: "globe", wiki: "book-open-02", blog: "note-edit" };
+const views = (n?: number) => (!n ? "" : n >= 10000 ? `조회 ${Math.round(n / 1000) / 10}만` : `조회 ${n.toLocaleString("ko-KR")}`);
+const communityCards = communityBuilds.map((b) => {
+  const p = profById.get(b.profession)!;
+  const good = b.good.map((id) => traitById.get(id)!);
+  const bad = b.bad.map((id) => traitById.get(id)!);
+  const finalIds = new Set([...b.good, ...b.bad]);
+  const origIds = b.original ? [...b.original.good, ...b.original.bad] : [];
+  return {
+    ...b,
+    p,
+    good,
+    bad,
+    removed: origIds.filter((id) => !finalIds.has(id)).map((id) => traitById.get(id)!),
+    added: new Set(b.original ? [...finalIds].filter((id) => !origIds.includes(id)) : []),
+    left: remainingPoints(p, [...good, ...bad]),
+    meta: [b.source.date?.replaceAll("-", "."), b.source.version, views(b.source.views)].filter(Boolean).join(" · "),
+  };
+});
+// 여러 조합이 같이 고른 특성. 원래 글의 조합으로 센다. 수면 특성은 우리 서버에서 못 고르니 뺀다.
+const freq = new Map<string, number>();
+for (const b of communityBuilds) {
+  for (const id of new Set([...(b.original?.good ?? b.good), ...(b.original?.bad ?? b.bad)])) freq.set(id, (freq.get(id) ?? 0) + 1);
+}
+const topTraits = (positive: boolean) =>
+  [...freq]
+    .filter(([id]) => !SLEEP_TRAITS.includes(id) && traitById.get(id)!.cost > 0 === positive)
+    .sort((a, b) => b[1] - a[1] || Math.abs(traitById.get(b[0])!.cost) - Math.abs(traitById.get(a[0])!.cost))
+    .slice(0, 6)
+    .map(([id, n]) => ({ t: traitById.get(id)!, n }));
+const common = [
+  { label: "긍정 특성", list: topTraits(true) },
+  { label: "부정 특성", list: topTraits(false) },
+];
+
 // 계산기가 쓰는 데이터만 페이지에 넣는다.
 const clientData = {
   professions: data.professions.map(({ id, name, cost, xp, granted, icon }) => ({ id, name, cost, xp, granted, icon })),
   traits: pickable.map(({ id, name, cost, exclusive, xp, icon }) => ({ id, name, cost, exclusive, xp, icon })),
   granted: Object.fromEntries(data.traits.filter((t) => t.professionOnly).map((t) => [t.id, t.name])),
   off: SLEEP_TRAITS,
-  builds: builds.map((b) => ({ id: b.id, title: b.title, profession: b.profession, traits: [...b.good, ...b.bad] })),
+  builds: [...builds, ...communityBuilds].map((b) => ({ id: b.id, title: b.title, profession: b.profession, traits: [...b.good, ...b.bad] })),
   base: import.meta.env.BASE_URL.replace(/\/+$/, ""),
 };
 
@@ -64,6 +102,7 @@ const traitCard = (t: any) => ({
     <nav class="jump" aria-label="이 페이지 안에서 이동">
       <a href="#rules"><Icon name="information-circle" size={16} />포인트 계산법</a>
       <a href="#builds"><Icon name="star" size={16} />추천 조합 {builds.length}개</a>
+      <a href="#community"><Icon name="user-group" size={16} />커뮤니티 추천 {communityBuilds.length}개</a>
       <a href="#builder"><Icon name="sliders-horizontal" size={16} />직접 짜 보기</a>
       <a href="#start"><Icon name="maps-location-01" size={16} />시작 직후</a>
     </nav>
@@ -148,20 +187,12 @@ const traitCard = (t: any) => ({
             <p class="b-who">{b.who}</p>
             <ul class="b-chips" aria-label="긍정 특성">
               {b.good.map((t) => (
-                <li class="pos">
-                  <PixelIcon src={t.icon} size={18} />
-                  {t.name}
-                  <span class="mono">{fx(-t.cost)}</span>
-                </li>
+                <TraitChip trait={t} />
               ))}
             </ul>
-            <ul class="b-chips neg" aria-label="부정 특성">
+            <ul class="b-chips" aria-label="부정 특성">
               {b.bad.map((t) => (
-                <li class="neg" title={t.name}>
-                  <PixelIcon src={t.icon} size={18} />
-                  {t.name}
-                  <span class="mono">{fx(-t.cost)}</span>
-                </li>
+                <TraitChip trait={t} />
               ))}
             </ul>
             <details class="b-why">
@@ -182,8 +213,112 @@ const traitCard = (t: any) => ({
     </div>
   </section>
 
-  <section class="wrap sec" id="builder" aria-labelledby="builder-title">
+  <section class="wrap sec" id="community" aria-labelledby="community-title">
     <p class="kicker">03</p>
+    <h2 id="community-title" class="display">커뮤니티 추천</h2>
+    <p class="lede">
+      공략 사이트, 위키, 블로그, 유튜브에서 실제로 추천한 조합입니다. 모두 42.21 수치로 다시 계산했습니다. 우리 서버에서 고를 수 없는 수면 특성이 든 조합은 바꾼 내용을 함께 적었습니다. 특성에 마우스를
+      올리면 설명이 나옵니다.
+    </p>
+
+    <div class="common reveal">
+      <p class="cm-title"><Icon name="analytics-01" size={18} />{communityBuilds.length}개 조합에서 자주 나온 특성</p>
+      <div class="cm-cols">
+        {
+          common.map((c) => (
+            <div class="cm-col">
+              <p class="cm-k">{c.label}</p>
+              <ol class="cm-list">
+                {c.list.map(({ t, n }) => (
+                  <li>
+                    <TraitChip trait={t} as="span" />
+                    <span class="cm-bar" aria-hidden="true">
+                      <i style={`width:${(n / communityBuilds.length) * 100}%`} />
+                    </span>
+                    <span class="mono cm-n">
+                      {n}/{communityBuilds.length}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ))
+        }
+      </div>
+      <p class="cm-foot">부정 특성은 대부분 정독, 소화불량, 느린 치유, 질병에 취약함처럼 생활이 조금 불편한 것에서 고릅니다. 수면 특성은 우리 서버에서 고를 수 없어 셈에서 뺐습니다.</p>
+    </div>
+
+    <div class="cb-grid">
+      {
+        communityCards.map((b, i) => (
+          <article class="build cbuild reveal" style={`--i:${i % 3}`}>
+            <header class="cb-src">
+              <span class={`src-badge ${b.source.kind}`}>
+                <Icon name={srcIcon[b.source.kind]} size={14} />
+                {sourceKinds[b.source.kind]}
+              </span>
+              <span class="src-name">{b.source.name}</span>
+              <span class="src-meta mono">{b.meta}</span>
+            </header>
+            <div class="b-head">
+              <PixelIcon src={b.p.icon} size={36} fallback="user" />
+              <div class="b-title">
+                <h3 class="display">{b.title}</h3>
+                <p class="b-sub">
+                  {b.p.name} <span class="mono">{fx(b.p.cost)}</span>
+                </p>
+              </div>
+              <span class={`b-left ${b.left > 0 ? "rest" : ""}`} title="남은 포인트">
+                남은 <b class="mono">{b.left}</b>
+              </span>
+            </div>
+            <ul class="b-chips" aria-label="긍정 특성">
+              {b.good.map((t) => (
+                <TraitChip trait={t} mark={b.added.has(t.id) ? "added" : undefined} />
+              ))}
+            </ul>
+            <ul class="b-chips" aria-label="부정 특성">
+              {b.bad.map((t) => (
+                <TraitChip trait={t} mark={b.added.has(t.id) ? "added" : undefined} />
+              ))}
+            </ul>
+            {b.changed && (
+              <div class="cb-changed">
+                <p>
+                  <Icon name="exchange-01" size={16} />
+                  <span>
+                    <b>우리 서버용으로 바꿈</b>
+                    {b.changed}
+                  </span>
+                </p>
+                {b.removed.length > 0 && (
+                  <ul class="b-chips" aria-label="뺀 특성">
+                    {b.removed.map((t) => (
+                      <TraitChip trait={t} mark="removed" />
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+            <p class="cb-why">{b.why}</p>
+            {b.note && <p class="cb-note">{b.note}</p>}
+            <footer class="cb-foot">
+              <a class="cb-link" href={b.source.url} target="_blank" rel="noopener noreferrer" title={b.source.title}>
+                원본 보기 <Icon name="arrow-up-right-01" size={15} />
+              </a>
+              <button type="button" class="b-load" data-load-build={b.id}>
+                <Icon name="sliders-horizontal" size={16} />
+                불러와서 바꿔 보기
+              </button>
+            </footer>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="wrap sec" id="builder" aria-labelledby="builder-title">
+    <p class="kicker">04</p>
     <h2 id="builder-title" class="display">직접 짜 보기</h2>
     <p class="lede">직업 → 긍정 특성 → 부정 특성 순서로 고릅니다. 함께 못 고르는 특성은 자동으로 막히고, 요약에서 바로 뺄 수 있습니다.</p>
 
@@ -351,7 +486,7 @@ const traitCard = (t: any) => ({
 
   <section class="wrap sec two" id="start" aria-labelledby="start-title">
     <div>
-      <p class="kicker">04</p>
+      <p class="kicker">05</p>
       <h2 id="start-title" class="display">시작 지역</h2>
       <ul class="tips">
         {spawnTips.map((s) => (
@@ -360,7 +495,7 @@ const traitCard = (t: any) => ({
       </ul>
     </div>
     <div>
-      <p class="kicker">05</p>
+      <p class="kicker">06</p>
       <h2 class="display">시작 직후 할 일</h2>
       <ol class="first">
         {
@@ -380,8 +515,10 @@ const traitCard = (t: any) => ({
     </div>
   </section>
 
+  <TraitTip />
+
   <p class="wrap credit">
-    직업·특성 이름, 수치, 아이콘은 Project Zomboid {data.build} 게임 파일에서 가져왔습니다. 아이콘의 저작권은 The Indie Stone 에 있습니다.
+    직업·특성 이름, 수치, 아이콘은 Project Zomboid {data.build} 게임 파일에서 가져왔습니다. 아이콘의 저작권은 The Indie Stone 에 있습니다. 커뮤니티 추천은 각 카드의 원본 글과 영상에서 가져왔고, 2026-10-18 에 확인했습니다.
     참가자 접속 방법은 <a href={base("join/")}>참가자 가이드</a>를 보세요.
   </p>
 </Base>
@@ -497,7 +634,7 @@ const traitCard = (t: any) => ({
         ? list
             .map(
               (t) =>
-                `<li>${icon(t.icon)}<span>${esc(t.name)}</span><b class="mono">${fx(-t.cost)}</b><button type="button" data-remove="${t.id}" aria-label="${esc(t.name)} 빼기">×</button></li>`,
+                `<li>${icon(t.icon)}<span class="s-name" data-tip="${t.id}" tabindex="0">${esc(t.name)}</span><b class="mono">${fx(-t.cost)}</b><button type="button" data-remove="${t.id}" aria-label="${esc(t.name)} 빼기">×</button></li>`,
             )
             .join("")
         : `<li class="none">없음</li>`;
@@ -850,11 +987,174 @@ const traitCard = (t: any) => ({
   }
 
   /* 추천 조합 */
-  .build-grid {
+  .build-grid,
+  .cb-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
     gap: 16px;
     margin-top: 24px;
+  }
+
+  /* ── 커뮤니티 추천 ── */
+  .common {
+    margin-top: 24px;
+    padding: 18px 20px 16px;
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    background: var(--paper-3);
+    box-shadow: var(--shadow-sheet);
+  }
+  .cm-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+  }
+  .cm-title :global(svg) {
+    color: var(--red);
+  }
+  .cm-cols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: 10px 32px;
+    margin-top: 12px;
+  }
+  .cm-k {
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-3);
+  }
+  .cm-list {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .cm-list li {
+    display: grid;
+    grid-template-columns: minmax(0, 150px) minmax(40px, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+  }
+  .cm-bar {
+    height: 6px;
+    border-radius: 99px;
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+    overflow: hidden;
+  }
+  .cm-bar i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--ink-2);
+  }
+  .cm-n {
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .cm-foot {
+    margin-top: 12px;
+    font-size: 12.5px;
+    color: var(--ink-3);
+  }
+  .cbuild:hover {
+    transform: none;
+  }
+  .cb-src {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--rule);
+    font-size: 12.5px;
+  }
+  .src-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--paper-3);
+    background: var(--steel);
+  }
+  .src-badge.youtube {
+    background: var(--red);
+  }
+  .src-badge.wiki {
+    background: var(--olive);
+  }
+  .src-badge.blog {
+    background: var(--amber);
+    color: var(--ink);
+  }
+  .src-name {
+    font-weight: 700;
+  }
+  .src-meta {
+    margin-left: auto;
+    font-size: 11.5px;
+    color: var(--ink-3);
+  }
+  .cb-changed {
+    display: grid;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--amber) 11%, transparent);
+    border: 1px solid color-mix(in srgb, var(--amber) 32%, transparent);
+    font-size: 13px;
+  }
+  .cb-changed p {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px;
+    align-items: start;
+  }
+  .cb-changed p :global(svg) {
+    margin-top: 2px;
+    color: var(--amber);
+  }
+  .cb-changed b {
+    display: block;
+    font-size: 12px;
+  }
+  .cb-why {
+    font-size: 13.5px;
+    color: var(--ink-2);
+  }
+  .cb-note {
+    padding-left: 10px;
+    border-left: 2px solid var(--rule-strong);
+    font-size: 12.5px;
+    color: var(--ink-3);
+  }
+  .cb-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: auto;
+    padding-top: 4px;
+  }
+  .cb-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink-2);
+  }
+  .cb-link:hover {
+    color: var(--red);
+  }
+  .cb-foot .b-load {
+    margin-top: 0;
   }
   .build[hidden] {
     display: none;
@@ -929,36 +1229,6 @@ const traitCard = (t: any) => ({
     margin: 0;
     padding: 0;
     list-style: none;
-  }
-  .b-chips li {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 2px 8px 2px 2px;
-    border-radius: 8px;
-    font-size: 12.5px;
-    font-weight: 600;
-  }
-  .b-chips li :global(.px) {
-    width: 24px;
-    height: 24px;
-    border-radius: 6px;
-  }
-  .b-chips li.pos {
-    background: color-mix(in srgb, var(--red) 9%, var(--paper));
-    border: 1px solid color-mix(in srgb, var(--red) 28%, transparent);
-  }
-  .b-chips li.pos .mono {
-    color: var(--red);
-  }
-  .b-chips li.neg {
-    background: color-mix(in srgb, var(--olive) 8%, var(--paper));
-    border: 1px solid color-mix(in srgb, var(--olive) 26%, transparent);
-    color: var(--ink-2);
-    font-weight: 500;
-  }
-  .b-chips li.neg .mono {
-    color: var(--olive);
   }
   .b-why {
     font-size: 13.5px;
@@ -1451,6 +1721,18 @@ const traitCard = (t: any) => ({
     align-items: center;
     gap: 8px;
     padding: 3px 0;
+  }
+  .s-list :global(.s-name) {
+    width: fit-content;
+    max-width: 100%;
+    border-radius: 4px;
+    text-decoration: underline dotted color-mix(in srgb, var(--night-ink) 35%, transparent);
+    text-underline-offset: 3px;
+    cursor: help;
+  }
+  .s-list :global(.s-name:focus-visible) {
+    outline: 2px solid var(--amber);
+    outline-offset: 2px;
   }
   .s-list :global(li.none),
   .s-skills :global(li.none) {

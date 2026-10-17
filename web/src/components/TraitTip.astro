@@ -1,0 +1,390 @@
+---
+import data from "../data/character.json";
+import { verdicts } from "../data/builds.mjs";
+import { SLEEP_TRAITS } from "../lib/character.mjs";
+
+// 특성 설명 툴팁. 페이지에 한 번만 두면 data-tip="특성 id" 가 붙은 요소 어디서나 뜬다.
+// 마우스는 올리면, 키보드는 칸을 옮기면, 휴대폰은 누르면 뜬다. 나중에 그려지는 칩(계산기 요약)도 된다.
+
+const TAG: Record<string, string> = {
+  good: "추천",
+  ok: "상황에 따라",
+  server: "효과 거의 없음",
+  bad: "피하기",
+  off: "선택 불가",
+};
+const nameOf = new Map(data.traits.map((t) => [t.id, t.name]));
+const tips = Object.fromEntries(
+  data.traits.map((t) => {
+    const v = SLEEP_TRAITS.includes(t.id) ? verdicts[t.id] ?? { tag: "off", note: "" } : verdicts[t.id];
+    return [
+      t.id,
+      {
+        n: t.name,
+        e: t.nameEn,
+        c: t.cost,
+        i: t.icon,
+        // 게임 설명은 <br> 로 문장을 나눈다
+        d: t.desc
+          .split(/<br\s*\/?>/i)
+          .map((s) => s.trim())
+          .filter(Boolean),
+        x: t.xp.map((x) => `${x.name} ${x.level > 0 ? "+" : ""}${x.level}`),
+        t: v?.tag ?? "",
+        l: v ? TAG[v.tag] : "",
+        v: v?.note ?? "",
+        ex: t.exclusive.map((id) => nameOf.get(id)).filter(Boolean),
+      },
+    ];
+  }),
+);
+const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
+---
+
+<div class="ttip" id="trait-tip" role="tooltip" hidden>
+  <div class="tt-head">
+    <span class="tt-ic" data-tt-ic></span>
+    <span class="tt-names">
+      <b data-tt-name></b>
+      <small class="mono" data-tt-en></small>
+    </span>
+    <span class="tt-pts mono" data-tt-pts></span>
+  </div>
+  <p class="tt-tag" data-tt-tag></p>
+  <ul class="tt-desc" data-tt-desc></ul>
+  <p class="tt-xp" data-tt-xp></p>
+  <p class="tt-note" data-tt-note></p>
+  <p class="tt-ex" data-tt-ex></p>
+  <i class="tt-arrow" data-tt-arrow></i>
+</div>
+<script type="application/json" id="trait-tip-data" set:html={JSON.stringify({ base, tips })} />
+
+<script>
+  type Tip = { n: string; e: string; c: number; i: string | null; d: string[]; x: string[]; t: string; l: string; v: string; ex: string[] };
+  const { base, tips } = JSON.parse(document.getElementById("trait-tip-data")!.textContent!) as { base: string; tips: Record<string, Tip> };
+  const tip = document.getElementById("trait-tip")!;
+  const q = (k: string) => tip.querySelector<HTMLElement>(`[data-tt-${k}]`)!;
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+  const fx = (n: number) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : "0");
+
+  let anchor: HTMLElement | null = null;
+  let timer = 0;
+
+  function fill(t: Tip) {
+    q("ic").innerHTML = t.i ? `<img src="${base}/${t.i}" alt="" width="30" height="30">` : "";
+    q("name").textContent = t.n;
+    q("en").textContent = t.e && t.e !== t.n ? t.e : "";
+    // 남은 포인트에 주는 영향. 긍정 특성은 포인트를 쓴다.
+    const pts = q("pts");
+    pts.textContent = fx(-t.c);
+    pts.className = `tt-pts mono ${t.c > 0 ? "use" : t.c < 0 ? "gain" : ""}`;
+    const tag = q("tag");
+    tag.hidden = !t.l;
+    tag.innerHTML = t.l ? `<span class="pill ${t.t}">${esc(t.l)}</span><span>${t.c > 0 ? "포인트를 쓰는 특성" : t.c < 0 ? "포인트를 돌려받는 특성" : ""}</span>` : "";
+    if (!t.l) {
+      tag.hidden = false;
+      tag.innerHTML = `<span>${t.c > 0 ? "포인트를 쓰는 특성" : t.c < 0 ? "포인트를 돌려받는 특성" : ""}</span>`;
+    }
+    const desc = q("desc");
+    desc.innerHTML = t.d.map((s) => `<li>${esc(s)}</li>`).join("");
+    desc.hidden = !t.d.length;
+    const xp = q("xp");
+    xp.innerHTML = t.x.map((s) => `<span>${esc(s)}</span>`).join("");
+    xp.hidden = !t.x.length;
+    const note = q("note");
+    note.innerHTML = t.v ? `<b>우리 평가</b>${esc(t.v)}` : "";
+    note.className = `tt-note ${t.t}`;
+    note.hidden = !t.v;
+    const ex = q("ex");
+    ex.innerHTML = t.ex.length ? `<b>함께 못 고름</b>${esc(t.ex.join(", "))}` : "";
+    ex.hidden = !t.ex.length;
+  }
+
+  function place() {
+    if (!anchor) return;
+    const r = anchor.getBoundingClientRect();
+    const w = tip.offsetWidth;
+    const h = tip.offsetHeight;
+    const gap = 10;
+    const above = r.top > h + gap + 8 || window.innerHeight - r.bottom < h + gap + 8 ? r.top > window.innerHeight - r.bottom : false;
+    const top = above ? r.top - h - gap : r.bottom + gap;
+    const left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), window.innerWidth - w - 8);
+    tip.style.top = `${Math.round(top)}px`;
+    tip.style.left = `${Math.round(left)}px`;
+    tip.dataset.side = above ? "top" : "bottom";
+    const ax = Math.min(Math.max(16, r.left + r.width / 2 - left), w - 16);
+    q("arrow").style.left = `${Math.round(ax)}px`;
+  }
+
+  function show(el: HTMLElement) {
+    const t = tips[el.dataset.tip!];
+    if (!t) return;
+    if (anchor && anchor !== el) anchor.removeAttribute("aria-describedby");
+    anchor = el;
+    el.setAttribute("aria-describedby", "trait-tip");
+    fill(t);
+    tip.hidden = false;
+    tip.classList.remove("in");
+    place();
+    void tip.offsetWidth;
+    tip.classList.add("in");
+  }
+
+  function hide() {
+    clearTimeout(timer);
+    anchor?.removeAttribute("aria-describedby");
+    anchor = null;
+    tip.hidden = true;
+    tip.classList.remove("in");
+  }
+
+  const target = (e: Event) => (e.target as HTMLElement | null)?.closest?.<HTMLElement>("[data-tip]") ?? null;
+
+  // 마우스: 잠깐 머물면 뜨고, 벗어나면 닫는다
+  document.addEventListener("pointerover", (e) => {
+    if ((e as PointerEvent).pointerType !== "mouse") return;
+    const el = target(e);
+    if (!el || el === anchor) return;
+    clearTimeout(timer);
+    timer = window.setTimeout(() => show(el), anchor ? 0 : 90);
+  });
+  document.addEventListener("pointerout", (e) => {
+    if ((e as PointerEvent).pointerType !== "mouse") return;
+    const el = target(e);
+    if (!el) return;
+    const to = (e as PointerEvent).relatedTarget as Node | null;
+    if (to && el.contains(to)) return;
+    clearTimeout(timer);
+    timer = window.setTimeout(hide, 60);
+  });
+  // 키보드
+  document.addEventListener("focusin", (e) => {
+    const el = target(e);
+    if (el && el.matches(":focus-visible")) show(el);
+  });
+  document.addEventListener("focusout", (e) => {
+    if (target(e)) hide();
+  });
+  // 휴대폰: 누르면 열고, 다시 누르거나 다른 곳을 누르면 닫는다
+  document.addEventListener("click", (e) => {
+    const el = target(e);
+    if (el && (e as PointerEvent).pointerType !== "mouse") {
+      if (anchor === el) hide();
+      else show(el);
+      return;
+    }
+    if (!el && anchor && !tip.contains(e.target as Node)) hide();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") hide();
+  });
+  window.addEventListener("scroll", () => anchor && place(), { passive: true });
+  window.addEventListener("resize", hide);
+</script>
+
+<style>
+  .ttip {
+    position: fixed;
+    z-index: 60;
+    width: min(300px, calc(100vw - 16px));
+    padding: 12px 14px 12px;
+    border-radius: 12px;
+    background:
+      radial-gradient(120% 80% at 0% 0%, color-mix(in srgb, var(--sodium) 10%, transparent), transparent 60%),
+      var(--night-2);
+    color: var(--night-ink);
+    border: 1px solid color-mix(in srgb, var(--sodium) 26%, transparent);
+    box-shadow:
+      0 18px 40px -16px rgb(0 0 0 / 0.65),
+      0 3px 10px -4px rgb(0 0 0 / 0.5);
+    font-size: 13px;
+    line-height: 1.5;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+    transform-origin: 50% 100%;
+    transition:
+      opacity 120ms ease,
+      transform 140ms cubic-bezier(0.2, 0.8, 0.3, 1);
+  }
+  .ttip[data-side="bottom"] {
+    transform: translateY(-4px) scale(0.98);
+    transform-origin: 50% 0%;
+  }
+  .ttip.in {
+    opacity: 1;
+    transform: none;
+  }
+  .tt-arrow {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    margin-left: -6px;
+    background: var(--night-2);
+    border: 1px solid color-mix(in srgb, var(--sodium) 26%, transparent);
+    rotate: 45deg;
+  }
+  .ttip[data-side="top"] .tt-arrow {
+    bottom: -7px;
+    border-top: 0;
+    border-left: 0;
+  }
+  .ttip[data-side="bottom"] .tt-arrow {
+    top: -7px;
+    border-bottom: 0;
+    border-right: 0;
+  }
+
+  .tt-head {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 10px;
+  }
+  .tt-ic {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 9px;
+    background: #0d0e0a;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.07);
+  }
+  .tt-ic :global(img) {
+    width: 30px;
+    height: 30px;
+    image-rendering: pixelated;
+  }
+  .tt-names {
+    display: grid;
+    min-width: 0;
+  }
+  .tt-names b {
+    font-size: 15px;
+    line-height: 1.3;
+  }
+  .tt-names small {
+    font-size: 11px;
+    color: var(--night-dim);
+    letter-spacing: 0.02em;
+  }
+  .tt-pts {
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    background: rgb(255 255 255 / 0.06);
+  }
+  .tt-pts.use {
+    color: #f2836e;
+    background: color-mix(in srgb, #e2553f 18%, transparent);
+  }
+  .tt-pts.gain {
+    color: #c3d18a;
+    background: color-mix(in srgb, #a3b16c 18%, transparent);
+  }
+
+  .tt-tag {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0 0;
+    font-size: 11.5px;
+    color: var(--night-dim);
+  }
+  .tt-tag :global(.pill) {
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--night);
+    background: var(--night-dim);
+  }
+  .tt-tag :global(.pill.good) {
+    background: #c3d18a;
+  }
+  .tt-tag :global(.pill.ok) {
+    background: var(--sodium);
+  }
+  .tt-tag :global(.pill.bad) {
+    background: #f2836e;
+  }
+  .tt-tag :global(.pill.off),
+  .tt-tag :global(.pill.server) {
+    background: #8f8a7a;
+  }
+
+  .tt-desc {
+    display: grid;
+    gap: 2px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .tt-desc :global(li) {
+    position: relative;
+    padding-left: 12px;
+  }
+  .tt-desc :global(li)::before {
+    content: "";
+    position: absolute;
+    left: 1px;
+    top: 0.68em;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--sodium);
+  }
+  .tt-xp {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin: 8px 0 0;
+  }
+  .tt-xp :global(span) {
+    padding: 1px 7px;
+    border-radius: 5px;
+    font-size: 11.5px;
+    font-weight: 600;
+    background: rgb(255 255 255 / 0.08);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  }
+  .tt-note,
+  .tt-ex {
+    display: grid;
+    gap: 1px;
+    margin: 10px 0 0;
+    padding-top: 9px;
+    border-top: 1px dashed rgb(255 255 255 / 0.14);
+    font-size: 12.5px;
+    color: #d8cfb5;
+  }
+  .tt-ex {
+    margin-top: 8px;
+    padding-top: 0;
+    border-top: 0;
+    color: var(--night-dim);
+  }
+  .tt-note :global(b),
+  .tt-ex :global(b) {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--sodium);
+  }
+  .tt-ex :global(b) {
+    color: var(--night-dim);
+  }
+  [hidden] {
+    display: none !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ttip,
+    .ttip[data-side="bottom"] {
+      transition: none;
+      transform: none;
+    }
+  }
+</style>

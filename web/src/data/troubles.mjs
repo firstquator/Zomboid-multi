@@ -61,6 +61,18 @@ export const troubles = [
     ],
   },
   {
+    id: "file-mismatch",
+    who: "join",
+    icon: "file-02",
+    q: "File doesn't match the one on the server 오류",
+    steps: [
+      "예전에 구독한 다른 모드가 우리 모드와 Mod ID 가 같아서, 게임이 그쪽 파일을 읽은 경우. 빨간 글씨의 <code>workshop\\content\\108600\\</code> 뒤 숫자가 문제 모드의 창작마당 번호",
+      "게임을 끄고, 그 숫자가 <a href=\"../mods/\">모드 목록</a>에 없으면 창작마당에서 그 아이템을 <span class=\"ui\">구독 취소</span>. 알려진 예: Proximity Inventory 복사판 <code>3740165370</code> (우리 것은 <code>2847184718</code>)",
+      "구독 취소 뒤에도 <code>C:\\Program Files (x86)\\Steam\\steamapps\\workshop\\content\\108600\\(그 숫자)</code> 폴더가 남아 있으면 지운다",
+      "다시 접속하면 서버에 맞는 모드를 받는다. 우리 목록에 있는 번호인데도 뜨면 위의 '버전 불일치' 방법대로 Steam 을 다시 켠다",
+    ],
+  },
+  {
     id: "no-preset",
     who: "host",
     icon: "folder-open",

@@ -1,0 +1,111 @@
+---
+import PixelIcon from "./PixelIcon.astro";
+
+// 특성 한 개를 보여 주는 칩. 마우스를 올리거나 누르면 TraitTip 이 설명을 띄운다.
+// mark: removed(우리 서버용으로 뺀 특성) / added(대신 넣은 특성)
+// as: 목록(ul) 안이면 li, 그 밖이면 span 으로 감싼다.
+interface Props {
+  trait: { id: string; name: string; cost: number; icon: string | null };
+  mark?: "removed" | "added";
+  as?: "li" | "span";
+}
+const { trait: t, mark, as: Tag = "li" } = Astro.props;
+const kind = t.cost > 0 ? "pos" : "neg";
+// 남은 포인트에 주는 영향으로 보여 준다. 긍정 특성은 포인트를 쓰므로 음수.
+const fx = (n: number) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : "0");
+---
+
+<Tag class="wrap-chip">
+  <button type="button" class:list={["chip", kind, mark]} data-tip={t.id}>
+    <PixelIcon src={t.icon} size={18} />
+    <span class="c-name">{t.name}</span>
+    <span class="mono">{fx(-t.cost)}</span>
+  </button>
+</Tag>
+
+<style>
+  .wrap-chip {
+    display: flex;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px 2px 2px;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: inherit;
+    cursor: help;
+    transition:
+      transform 120ms ease,
+      box-shadow 120ms ease,
+      border-color 120ms ease;
+  }
+  .chip :global(.px) {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+  }
+  .chip:hover,
+  .chip:focus-visible,
+  .chip[aria-describedby] {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px -6px rgb(30 20 5 / 0.5);
+  }
+  .chip:focus-visible {
+    outline: 2px solid var(--amber);
+    outline-offset: 2px;
+  }
+  .pos {
+    background: color-mix(in srgb, var(--red) 9%, var(--paper));
+    border: 1px solid color-mix(in srgb, var(--red) 28%, transparent);
+  }
+  .pos .mono {
+    color: var(--red);
+  }
+  .pos:hover,
+  .pos[aria-describedby] {
+    border-color: color-mix(in srgb, var(--red) 55%, transparent);
+  }
+  .neg {
+    background: color-mix(in srgb, var(--olive) 8%, var(--paper));
+    border: 1px solid color-mix(in srgb, var(--olive) 26%, transparent);
+    color: var(--ink-2);
+    font-weight: 500;
+  }
+  .neg .mono {
+    color: var(--olive);
+  }
+  .neg:hover,
+  .neg[aria-describedby] {
+    border-color: color-mix(in srgb, var(--olive) 55%, transparent);
+  }
+  .removed {
+    background: transparent;
+    border-style: dashed;
+    color: var(--ink-3);
+  }
+  .removed .c-name {
+    text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
+  }
+  .removed :global(.px) {
+    opacity: 0.5;
+    filter: grayscale(1);
+  }
+  .added {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--amber) 55%, transparent);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .chip {
+      transition: none;
+    }
+    .chip:hover,
+    .chip:focus-visible,
+    .chip[aria-describedby] {
+      transform: none;
+    }
+  }
+</style>

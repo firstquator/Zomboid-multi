@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { builds, buildGroups, verdicts } from "../src/data/builds.mjs";
+import { builds, buildGroups, verdicts, communityBuilds, sourceKinds } from "../src/data/builds.mjs";
 import { remainingPoints, conflicts, skillTotals, encodeBuild, decodeBuild, SLEEP_TRAITS } from "../src/lib/character.mjs";
 
 const data = JSON.parse(readFileSync(new URL("../src/data/character.json", import.meta.url), "utf8"));
@@ -49,6 +49,54 @@ describe("추천 조합 목록", () => {
   it("같은 조합(직업과 특성이 모두 같은 것)이 두 번 들어가지 않는다", () => {
     const keys = builds.map((b) => [b.profession, ...[...b.good, ...b.bad].sort()].join("."));
     expect(new Set(keys).size).toBe(keys.length);
+  });
+});
+
+describe("커뮤니티 추천 조합", () => {
+  for (const b of communityBuilds) {
+    describe(b.title, () => {
+      const p = prof(b.profession);
+      const ts = [...b.good, ...b.bad].map(trait);
+
+      it("직업과 특성이 모두 게임 데이터에 있고, 긍정·부정이 맞게 나뉘었다", () => {
+        expect(p).toBeTruthy();
+        expect(ts.every(Boolean)).toBe(true);
+        expect(b.good.every((id) => trait(id).cost > 0)).toBe(true);
+        expect(b.bad.every((id) => trait(id).cost < 0)).toBe(true);
+      });
+
+      it("우리 서버에서 그대로 만들 수 있다 (포인트, 상호 배제, 수면 특성)", () => {
+        expect(remainingPoints(p, ts)).toBeGreaterThanOrEqual(0);
+        expect(conflicts(p, ts)).toEqual([]);
+        expect(ts.some((t) => SLEEP_TRAITS.includes(t.id))).toBe(false);
+      });
+
+      it("출처 링크와 종류가 있다", () => {
+        expect(b.source.url).toMatch(/^https:\/\//);
+        expect(sourceKinds[b.source.kind]).toBeTruthy();
+        expect(b.source.name && b.source.title && b.source.version).toBeTruthy();
+      });
+
+      if (b.original) {
+        it("바꾼 조합은 원래 조합(수면 특성 포함)과 바꾼 이유를 적었다", () => {
+          const orig = [...b.original.good, ...b.original.bad];
+          expect(orig.every((id) => trait(id))).toBe(true);
+          expect(orig.some((id) => SLEEP_TRAITS.includes(id))).toBe(true);
+          expect(b.changed).toBeTruthy();
+          // 원래 글의 조합도 42.21 수치로 만들 수 있던 조합이다
+          expect(remainingPoints(p, orig.map(trait))).toBeGreaterThanOrEqual(0);
+        });
+      } else {
+        it("원래 조합 그대로라면 바꾼 내용이 없다", () => {
+          expect(b.changed).toBeUndefined();
+        });
+      }
+    });
+  }
+
+  it("id 가 겹치지 않고 우리 추천 조합 id 와도 겹치지 않는다", () => {
+    const ids = [...builds, ...communityBuilds].map((b) => b.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });
 
