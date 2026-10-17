@@ -1,0 +1,143 @@
+---
+import { base } from "../lib/base-url.mjs";
+import { dashboardSpots } from "../data/vehicles.mjs";
+
+// 게임 계기판 그림(cardashboard) 위에 번호를 찍고, 번호를 누르거나 아래 설명에 마우스를 올리면 서로 강조한다.
+---
+
+<div class="dash" data-dash>
+  <div class="dash-img">
+    <img src={base("guide/vehicle/cardashboard.webp")} alt="게임 운전 화면 아래쪽의 계기판 그림" width="442" height="90" loading="lazy" />
+    {
+      dashboardSpots.map((s, i) => (
+        <button type="button" class="spot" style={`left:${s.x}%;top:${s.y}%`} data-spot={i} aria-label={`${i + 1}. ${s.label}`}>
+          {i + 1}
+        </button>
+      ))
+    }
+  </div>
+  <ol class="dash-list">
+    {
+      dashboardSpots.map((s, i) => (
+        <li data-spot-item={i} tabindex="0">
+          <span class="n mono">{i + 1}</span>
+          <span>
+            <b>{s.label}</b>
+            {s.text}
+          </span>
+        </li>
+      ))
+    }
+  </ol>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>("[data-dash]").forEach((root) => {
+    const spots = Array.from(root.querySelectorAll<HTMLElement>("[data-spot]"));
+    const items = Array.from(root.querySelectorAll<HTMLElement>("[data-spot-item]"));
+    const on = (i: string | null) => {
+      spots.forEach((s) => s.classList.toggle("on", s.dataset.spot === i));
+      items.forEach((s) => s.classList.toggle("on", s.dataset.spotItem === i));
+    };
+    spots.forEach((s) => {
+      s.addEventListener("mouseenter", () => on(s.dataset.spot!));
+      s.addEventListener("focus", () => on(s.dataset.spot!));
+      s.addEventListener("click", () => {
+        on(s.dataset.spot!);
+        items[+s.dataset.spot!].scrollIntoView({ block: "nearest", behavior: "smooth" });
+      });
+    });
+    items.forEach((s) => {
+      s.addEventListener("mouseenter", () => on(s.dataset.spotItem!));
+      s.addEventListener("focus", () => on(s.dataset.spotItem!));
+    });
+    root.addEventListener("mouseleave", () => on(null));
+  });
+</script>
+
+<style>
+  .dash {
+    display: grid;
+    gap: 16px;
+  }
+  .dash-img {
+    position: relative;
+    width: 100%;
+    max-width: 820px;
+    margin-inline: auto;
+    padding: 0;
+  }
+  .dash-img img {
+    display: block;
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 18px 24px rgb(0 0 0 / 0.35));
+  }
+  .spot {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    width: clamp(16px, 2.6vw, 22px);
+    height: clamp(16px, 2.6vw, 22px);
+    /* 아이콘을 가리지 않게 가리키는 곳 바로 위에 둔다 */
+    translate: -50% -118%;
+    border: 2px solid #fffaf0;
+    border-radius: 50%;
+    background: var(--red);
+    color: #fff;
+    font-family: var(--f-mono);
+    font-size: clamp(9px, 1.3vw, 12px);
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.5);
+    transition: transform 120ms ease;
+  }
+  .spot.on,
+  .spot:hover,
+  .spot:focus-visible {
+    transform: scale(1.25);
+    background: var(--sodium);
+    color: var(--night);
+    outline: none;
+  }
+  .dash-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+    gap: 6px 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .dash-list li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+    align-items: start;
+    padding: 8px 10px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    color: var(--ink-2);
+    transition: background 120ms ease;
+  }
+  .dash-list li.on,
+  .dash-list li:focus-visible {
+    background: color-mix(in srgb, var(--sodium) 18%, transparent);
+    outline: none;
+  }
+  .dash-list b {
+    display: block;
+    color: var(--ink);
+    font-size: 14px;
+  }
+  .n {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--paper-3);
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+</style>

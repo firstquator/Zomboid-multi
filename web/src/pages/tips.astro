@@ -1,0 +1,1104 @@
+---
+import Base from "../layouts/Base.astro";
+import PageHead from "../components/PageHead.astro";
+import Icon from "../components/Icon.astro";
+import Keys from "../components/Keys.astro";
+import KeyMap from "../components/KeyMap.astro";
+import VehicleRadial from "../components/VehicleRadial.astro";
+import Dashboard from "../components/Dashboard.astro";
+import MechDiagram from "../components/MechDiagram.astro";
+import { base } from "../lib/base-url.mjs";
+import { site } from "../lib/site.mjs";
+import { keybinds, keyGroups, essentials, inventoryMoves } from "../data/keys.mjs";
+import {
+  startSteps,
+  alarm,
+  fuelWays,
+  powerCut,
+  carStats,
+  mechOpen,
+  mechBooks,
+  driveNotes,
+  together,
+  carTips,
+} from "../data/vehicles.mjs";
+import { controlTips, tipTopics } from "../data/tips.mjs";
+
+const g = (p: string) => base(`guide/${p}.webp`);
+// 연비: 차 무게가 1000 에서 멀수록 기름을 더 쓴다(Vehicles.lua 의 |1000 − 무게| / 300 + 1).
+const fuelUse = (m: number) => Math.abs(1000 - m) / 300 + 1;
+const maxUse = Math.max(...carStats.map((c) => fuelUse(c.mass)));
+const cars = [...carStats].sort((a, b) => fuelUse(a.mass) - fuelUse(b.mass));
+---
+
+<Base title="플레이 팁" active="tips" description="단축키, 차량 사용법, 생활 꿀팁. 42.21 게임 파일로 확인한 내용과 게임 그림으로 쉽게 정리했습니다.">
+  <PageHead
+    kicker={`Build ${site.build} · 단축키 · 차량 · 생활`}
+    title="플레이 팁"
+    desc="처음 같이 하는 사람이 알면 편한 것만 모았습니다. 키와 수치는 게임 파일에서 확인했고, 그림은 게임 안의 것을 그대로 썼습니다."
+    icon="bulb"
+    seed={61}
+  >
+    <nav class="jump" aria-label="이 페이지 안에서 이동">
+      <a href="#keys"><Icon name="keyboard" size={16} />단축키</a>
+      <a href="#car"><Icon name="steering" size={16} />차량</a>
+      <a href="#life"><Icon name="bulb" size={16} />생활 꿀팁</a>
+    </nav>
+  </PageHead>
+
+  <!-- ───────── 01 단축키 ───────── -->
+  <section class="wrap sec" id="keys" aria-labelledby="keys-title">
+    <p class="kicker">01</p>
+    <h2 id="keys-title" class="display">단축키</h2>
+    <p class="lede">게임 기본값입니다. 바꾸고 싶으면 <span class="ui">설정</span> → <span class="ui">키 설정</span>에서 바꿉니다. 이름은 키 설정 화면에 나오는 이름 그대로입니다.</p>
+
+    <h3 class="sub">먼저 외울 8개</h3>
+    <ol class="ess">
+      {
+        essentials.map((e, i) => (
+          <li class="reveal" style={`--i:${i % 4}`}>
+            <Keys keys={e.keys} combo={e.combo} size="lg" />
+            <b>{e.title}</b>
+            <span>{e.text}</span>
+          </li>
+        ))
+      }
+    </ol>
+
+    <h3 class="sub">키보드에서 찾기</h3>
+    <KeyMap />
+
+    <h3 class="sub">상황별로 보기</h3>
+    <div class="kg" data-kg>
+      <div class="kg-tabs" role="tablist" aria-label="상황">
+        {
+          keyGroups.map((gr, i) => (
+            <button type="button" role="tab" aria-selected={i === 0 ? "true" : "false"} data-kg-tab={gr.id} class={`g-${gr.id}`}>
+              <Icon name={gr.icon} size={16} />
+              {gr.label}
+              <span class="mono">{keybinds.filter((b) => b.group === gr.id).length}</span>
+            </button>
+          ))
+        }
+      </div>
+      {
+        keyGroups.map((gr, i) => (
+          <ul class={`kg-list g-${gr.id}`} role="tabpanel" data-kg-panel={gr.id} hidden={i !== 0}>
+            {keybinds
+              .filter((b) => b.group === gr.id)
+              .map((b) => (
+                <li>
+                  <Keys keys={b.keys} alt={b.alt} range={b.range} />
+                  <span class="kg-name">
+                    <b>{b.name}</b>
+                    {b.when && <span class="when">{b.when}</span>}
+                    {b.mod && <span class="when mod">모드</span>}
+                  </span>
+                  {b.tip && <span class="kg-tip">{b.tip}</span>}
+                </li>
+              ))}
+          </ul>
+        ))
+      }
+    </div>
+
+    <div class="two-col">
+      <div>
+        <h3 class="sub">소지품 창에서</h3>
+        <ul class="moves">
+          {
+            inventoryMoves.map((m) => (
+              <li>
+                <Keys keys={m.keys} combo={m.combo} double={m.double} />
+                <span>
+                  <b>{m.title}</b>
+                  {m.text}
+                </span>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+      <div>
+        <h3 class="sub">알아 두면 좋은 조작</h3>
+        <ul class="moves">
+          {
+            controlTips.map((c) => (
+              <li>
+                <Keys keys={c.keys} range={c.range} />
+                <span>{c.text}</span>
+              </li>
+            ))
+          }
+        </ul>
+        <div class="callout">
+          <Icon name="keyboard" size={20} />
+          <p>
+            <b>키가 안 먹으면 한/영부터 확인</b>
+            윈도우 입력기가 한글 상태면 캐릭터가 움직이지 않습니다. 영문으로 두고, 채팅할 때만 채팅창에서 <kbd>\</kbd> 로 한/영을 바꿉니다(한글 채팅 입력 개선 모드).
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────── 02 차량 ───────── -->
+  <section class="wrap sec" id="car" aria-labelledby="car-title">
+    <div class="sec-art">
+      <div>
+        <p class="kicker">02</p>
+        <h2 id="car-title" class="display">차량</h2>
+        <p class="lede">차는 짐을 많이 싣고 빨리 움직이게 해 주지만, 시끄럽고 기름이 듭니다. 타는 법부터 기름, 정비까지 순서대로 정리했습니다.</p>
+      </div>
+      <img class="spiffo" src={g("spiffo/spiffo_vehicle")} alt="" loading="lazy" />
+    </div>
+
+    <h3 class="sub">타고 시동 걸기</h3>
+    <ol class="steps">
+      {
+        startSteps.map((s, i) => (
+          <li class="reveal" style={`--i:${i}`}>
+            <span class="tile big">
+              <img src={g(s.icon)} alt="" loading="lazy" />
+            </span>
+            <span class="st-n mono">{i + 1}</span>
+            <b>{s.title}</b>
+            {s.keys && <Keys keys={s.keys} />}
+            <p>{s.text}</p>
+            <p class="st-note">{s.note}</p>
+          </li>
+        ))
+      }
+    </ol>
+    <div class="callout warn">
+      <Icon name="alert-02" size={20} />
+      <p>
+        <b>{alarm.title}</b>
+        {alarm.text}
+      </p>
+    </div>
+
+    <div class="split">
+      <div>
+        <h3 class="sub">차량 메뉴 <kbd>V</kbd></h3>
+        <p class="sub-lede">차 안과 차 밖에서 뜨는 메뉴가 다릅니다. 시동, 문 잠그기, 주유, 정비처럼 차로 하는 일은 대부분 여기 있습니다. 아이콘을 눌러 보세요.</p>
+        <figure class="real">
+          <img src={g("vehicle/carradialmenu")} alt="게임 안내서에 실린 차량 원형 메뉴 그림" width="250" height="249" loading="lazy" />
+          <figcaption>게임 안내서에 실린 실제 메뉴 그림</figcaption>
+        </figure>
+      </div>
+      <VehicleRadial />
+    </div>
+
+    <h3 class="sub">계기판 읽기</h3>
+    <p class="sub-lede">운전석에 앉으면 화면 아래에 계기판이 뜹니다. 번호를 누르거나 설명에 마우스를 올려 보세요.</p>
+    <Dashboard />
+
+    <h3 class="sub">기름 넣기</h3>
+    <div class="fuel">
+      {
+        fuelWays.map((f) => (
+          <article class="card reveal">
+            <div class="icons">
+              {f.icons.map((ic) => (
+                <span class="tile">
+                  <img src={g(ic)} alt="" loading="lazy" />
+                </span>
+              ))}
+            </div>
+            <b>{f.title}</b>
+            <span class="menu-chip">V → {f.menu}</span>
+            <p>{f.text}</p>
+          </article>
+        ))
+      }
+      <article class="card dark reveal">
+        <div class="icons">
+          {
+            powerCut.icons.map((ic) => (
+              <span class="tile">
+                <img src={g(ic)} alt="" loading="lazy" />
+              </span>
+            ))
+          }
+        </div>
+        <b>{powerCut.title}</b>
+        <p>{powerCut.text}</p>
+      </article>
+    </div>
+
+    <div class="cars reveal">
+      <p class="cars-title"><Icon name="analytics-01" size={18} />어떤 차가 좋을까</p>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">차</th>
+            <th scope="col">기름 쓰는 양 <small>짧을수록 좋음</small></th>
+            <th scope="col">트렁크</th>
+            <th scope="col">엔진 소리</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            cars.map((c) => (
+              <tr>
+                <th scope="row">
+                  {c.name}
+                  {c.note && <small>{c.note}</small>}
+                </th>
+                <td>
+                  <span class="bar">
+                    <i style={`width:${(fuelUse(c.mass) / maxUse) * 100}%`} />
+                  </span>
+                </td>
+                <td class="mono">{c.trunk ?? "–"}</td>
+                <td class="mono">{c.loud ?? "–"}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+      <p class="cars-foot">차 무게가 1000에 가까울수록 기름을 덜 씁니다(게임 계산식). 엔진 품질이 낮거나 히터를 켜면 더 씁니다. 트렁크와 소리는 차 파일 값입니다.</p>
+    </div>
+
+    <h3 class="sub">정비</h3>
+    <p class="sub-lede">
+      정비 화면은
+      {
+        mechOpen.map((m, i) => (
+          <>
+            {i > 0 && ", "}
+            <span class="nowrap">{m.text}</span>
+          </>
+        ))
+      }
+      로 엽니다. 부품을 우클릭해서 장착·분리·수리를 고릅니다.
+    </p>
+    <MechDiagram />
+    <div class="books">
+      <p class="books-title">대형·스포츠 차는 정비 지식이 따로 필요합니다</p>
+      <ul>
+        {
+          mechBooks.map((b) => (
+            <li>
+              <span class="tile">
+                <img src={g(b.icon)} alt="" loading="lazy" />
+              </span>
+              <span>
+                <b>{b.type}</b>
+                <span class="bk-name">잡지: {b.name}</span>
+                <small>{b.cars}</small>
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="books-foot">자동차 정비공 직업은 셋 다 알고 시작합니다. 차량정비 8·9·10레벨에 차례로 저절로 배웁니다.</p>
+    </div>
+
+    <h3 class="sub">운전할 때</h3>
+    <ul class="notes-grid">
+      {
+        driveNotes.map((d, i) => (
+          <li class="reveal" style={`--i:${i % 3}`}>
+            <span class="tile">
+              <img src={g(d.icon)} alt="" loading="lazy" />
+            </span>
+            <span>
+              <b>{d.title}</b>
+              {d.text}
+            </span>
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="two-col">
+      <div>
+        <h3 class="sub">같이 탈 때</h3>
+        <ul class="checks">
+          {together.map((t) => <li>{t}</li>)}
+        </ul>
+      </div>
+      <div>
+        <h3 class="sub">커뮤니티 꿀팁</h3>
+        <ul class="checks src">
+          {
+            carTips.map((t) => (
+              <li>
+                {t.text}
+                <small>
+                  {t.url ? (
+                    <a href={t.url} target="_blank" rel="noopener noreferrer">
+                      {t.src}
+                    </a>
+                  ) : (
+                    t.src
+                  )}
+                </small>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────── 03 생활 꿀팁 ───────── -->
+  <section class="wrap sec" id="life" aria-labelledby="life-title">
+    <p class="kicker">03</p>
+    <h2 id="life-title" class="display">생활 꿀팁</h2>
+    <p class="lede">싸우고, 털고, 다치고, 기지를 짓고, 같이 사는 데 필요한 것들입니다. 주제를 골라 보세요.</p>
+
+    <div class="topics" data-topics>
+      <div class="tp-tabs" role="tablist" aria-label="주제">
+        {
+          tipTopics.map((t, i) => (
+            <button type="button" role="tab" aria-selected={i === 0 ? "true" : "false"} data-tp-tab={t.id}>
+              <img src={g(`spiffo/${t.spiffo}`)} alt="" loading="lazy" />
+              {t.label}
+            </button>
+          ))
+        }
+      </div>
+      {
+        tipTopics.map((t, i) => (
+          <div class="tp-panel" role="tabpanel" data-tp-panel={t.id} hidden={i !== 0}>
+            <div class="tp-head">
+              <img src={g(`spiffo/${t.spiffo}`)} alt="" loading="lazy" />
+              <div>
+                <h3 class="display">{t.label}</h3>
+                <p>{t.lede}</p>
+              </div>
+            </div>
+            <ul class="tp-grid">
+              {t.tips.map((tip: any) => (
+                <li>
+                  {tip.icons && (
+                    <div class="icons">
+                      {tip.icons.map((ic: string) => (
+                        <span class:list={["tile", ic.startsWith("moodle/") && "moodle"]}>
+                          <img src={g(ic)} alt="" loading="lazy" />
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <b>
+                    {tip.title}
+                    {tip.keys && <Keys keys={tip.keys} size="sm" />}
+                  </b>
+                  <p>{tip.text}</p>
+                  {tip.mod && <span class="mod-chip">모드 · {tip.mod}</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <p class="wrap credit">
+    키, 메뉴 이름, 수치, 아이콘과 그림은 Project Zomboid {site.build} 게임 파일에서 가져왔습니다. 메뉴 이름은 바닐라 한국어 표기라서 Hx 통합 번역을 쓰는 실제 화면과 조금 다를 수 있습니다. 확인 과정은 저장소의
+    docs/research 문서에 있습니다.
+  </p>
+</Base>
+
+<script>
+  // 탭 묶음: 버튼을 누르면 같은 이름의 패널만 보인다.
+  function tabs(rootSel: string, tabAttr: string, panelAttr: string) {
+    document.querySelectorAll<HTMLElement>(rootSel).forEach((root) => {
+      const btns = Array.from(root.querySelectorAll<HTMLButtonElement>(`[${tabAttr}]`));
+      btns.forEach((b) =>
+        b.addEventListener("click", () => {
+          btns.forEach((x) => x.setAttribute("aria-selected", String(x === b)));
+          root.querySelectorAll<HTMLElement>(`[${panelAttr}]`).forEach((p) => (p.hidden = p.getAttribute(panelAttr) !== b.getAttribute(tabAttr)));
+        }),
+      );
+    });
+  }
+  tabs("[data-kg]", "data-kg-tab", "data-kg-panel");
+  tabs("[data-topics]", "data-tp-tab", "data-tp-panel");
+</script>
+
+<style>
+  .jump {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 22px;
+  }
+  .jump a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 999px;
+    color: var(--ink-2);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .jump a:hover {
+    background: var(--ink);
+    color: var(--paper-3);
+  }
+  .sec {
+    padding-top: 90px;
+    scroll-margin-top: 80px;
+  }
+  .sec h2 {
+    margin-top: 10px;
+    font-size: clamp(30px, 4vw, 48px);
+  }
+  .lede {
+    max-width: 52em;
+    margin-top: 14px;
+    color: var(--ink-2);
+  }
+  .sub {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 48px 0 14px;
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .sub-lede {
+    max-width: 52em;
+    margin: -6px 0 16px;
+    color: var(--ink-2);
+    font-size: 15px;
+  }
+  .nowrap {
+    white-space: nowrap;
+  }
+
+  /* 게임 아이콘 칸 */
+  .tile {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: #1c1c17;
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.06),
+      0 2px 0 rgb(0 0 0 / 0.25);
+  }
+  .tile img {
+    max-width: 34px;
+    max-height: 34px;
+    image-rendering: pixelated;
+  }
+  /* 무들은 게임에서 밝은 원 위에 그린다 */
+  .tile.moodle {
+    background: radial-gradient(circle, #e9e1c9 0 58%, #1c1c17 60%);
+  }
+  .tile.big {
+    width: 64px;
+    height: 64px;
+    border-radius: 14px;
+  }
+  .tile.big img {
+    max-width: 48px;
+    max-height: 48px;
+    image-rendering: auto;
+  }
+  .icons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* 먼저 외울 8개 */
+  .ess {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .ess li {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    padding: 16px 16px 14px;
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    background: var(--paper-3);
+    box-shadow: var(--shadow-sheet);
+  }
+  .ess b {
+    font-size: 17px;
+  }
+  .ess span:last-child {
+    color: var(--ink-2);
+    font-size: 14px;
+  }
+
+  /* 상황별 */
+  .kg {
+    --c-move: var(--olive);
+    --c-combat: var(--red);
+    --c-item: var(--amber);
+    --c-ui: var(--steel);
+    --c-vehicle: #7a4f8f;
+    --c-chat: #2d7a72;
+  }
+  @media (prefers-color-scheme: dark) {
+    .kg {
+      --c-vehicle: #b98fd0;
+      --c-chat: #6cc3b8;
+    }
+  }
+  .g-move {
+    --c: var(--c-move);
+  }
+  .g-combat {
+    --c: var(--c-combat);
+  }
+  .g-item {
+    --c: var(--c-item);
+  }
+  .g-ui {
+    --c: var(--c-ui);
+  }
+  .g-vehicle {
+    --c: var(--c-vehicle);
+  }
+  .g-chat {
+    --c: var(--c-chat);
+  }
+  .kg-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .kg-tabs button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 13px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--ink-2);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .kg-tabs button :global(svg) {
+    color: var(--c);
+  }
+  .kg-tabs .mono {
+    font-size: 11.5px;
+    color: var(--ink-3);
+  }
+  .kg-tabs button[aria-selected="true"] {
+    border-color: var(--c);
+    background: var(--c);
+    color: #fff;
+  }
+  .kg-tabs button[aria-selected="true"] :global(svg),
+  .kg-tabs button[aria-selected="true"] .mono {
+    color: rgb(255 255 255 / 0.85);
+  }
+  .kg-list {
+    display: grid;
+    margin: 0;
+    padding: 4px 0;
+    list-style: none;
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--c);
+    border-radius: 12px;
+    background: var(--paper-3);
+  }
+  .kg-list[hidden],
+  .tp-panel[hidden] {
+    display: none;
+  }
+  .kg-list li {
+    display: grid;
+    grid-template-columns: minmax(120px, 190px) minmax(140px, 230px) 1fr;
+    gap: 6px 16px;
+    align-items: center;
+    padding: 10px 16px;
+  }
+  .kg-list li + li {
+    border-top: 1px dashed var(--rule);
+  }
+  .kg-name {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+  }
+  .when {
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 700;
+    background: color-mix(in srgb, var(--c) 15%, transparent);
+    color: var(--ink-2);
+  }
+  .when.mod {
+    background: color-mix(in srgb, var(--amber) 25%, transparent);
+  }
+  .kg-tip {
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+    gap: 0 40px;
+  }
+  .moves {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .moves li {
+    display: grid;
+    grid-template-columns: minmax(96px, auto) 1fr;
+    gap: 14px;
+    align-items: start;
+    font-size: 14.5px;
+    color: var(--ink-2);
+  }
+  .moves b {
+    display: block;
+    color: var(--ink);
+  }
+  .callout {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    margin-top: 18px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--steel) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--steel) 28%, transparent);
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  .callout :global(svg) {
+    margin-top: 2px;
+    color: var(--steel);
+  }
+  .callout b {
+    display: block;
+    color: var(--ink);
+  }
+  .callout.warn {
+    background: color-mix(in srgb, var(--red) 9%, transparent);
+    border-color: color-mix(in srgb, var(--red) 30%, transparent);
+  }
+  .callout.warn :global(svg) {
+    color: var(--red);
+  }
+
+  /* 차량 */
+  .sec-art {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 24px;
+  }
+  .spiffo {
+    width: clamp(110px, 16vw, 180px);
+    height: auto;
+    filter: drop-shadow(0 10px 18px rgb(40 30 10 / 0.25));
+  }
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: st;
+  }
+  .steps li {
+    position: relative;
+    display: grid;
+    align-content: start;
+    justify-items: start;
+    gap: 8px;
+    padding: 18px;
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    background: var(--paper-3);
+    box-shadow: var(--shadow-sheet);
+  }
+  .st-n {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    font-size: 28px;
+    font-weight: 600;
+    color: color-mix(in srgb, var(--ink) 18%, transparent);
+  }
+  .steps b {
+    font-size: 17px;
+  }
+  .steps p {
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  .steps .st-note {
+    padding-left: 10px;
+    border-left: 2px solid var(--amber);
+    font-size: 13px;
+    color: var(--ink-3);
+  }
+  .split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 24px 40px;
+    align-items: center;
+  }
+  .real {
+    display: inline-grid;
+    gap: 6px;
+    margin: 4px 0 0;
+  }
+  .real img {
+    width: 150px;
+    height: auto;
+    border-radius: 50%;
+    box-shadow: 0 10px 20px -10px rgb(0 0 0 / 0.5);
+  }
+  .real figcaption {
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .fuel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+    gap: 12px;
+  }
+  .card {
+    display: grid;
+    align-content: start;
+    justify-items: start;
+    gap: 8px;
+    padding: 16px;
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    background: var(--paper-3);
+    box-shadow: var(--shadow-sheet);
+  }
+  .card b {
+    font-size: 16.5px;
+  }
+  .card p {
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  .card.dark {
+    background: var(--night-2);
+    border-color: transparent;
+    color: var(--night-ink);
+  }
+  .card.dark p {
+    color: var(--night-dim);
+  }
+  .menu-chip {
+    padding: 2px 9px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+    font-size: 12.5px;
+    font-weight: 700;
+  }
+  .cars {
+    margin-top: 16px;
+    padding: 16px 18px;
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    background: var(--paper-3);
+    overflow-x: auto;
+  }
+  .cars-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-weight: 700;
+  }
+  .cars table {
+    width: 100%;
+    min-width: 460px;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .cars th,
+  .cars td {
+    padding: 7px 8px;
+    text-align: left;
+    border-top: 1px dashed var(--rule);
+  }
+  .cars thead th {
+    border-top: 0;
+    font-size: 12.5px;
+    color: var(--ink-3);
+  }
+  .cars small {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--ink-3);
+  }
+  .cars tbody th {
+    font-weight: 700;
+  }
+  .bar {
+    display: block;
+    width: 100%;
+    min-width: 120px;
+    height: 8px;
+    border-radius: 99px;
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+  }
+  .bar i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--amber);
+  }
+  .cars-foot {
+    margin-top: 8px;
+    font-size: 12.5px;
+    color: var(--ink-3);
+  }
+  .books {
+    margin-top: 18px;
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--amber) 9%, transparent);
+    border: 1px solid color-mix(in srgb, var(--amber) 28%, transparent);
+  }
+  .books-title {
+    font-weight: 700;
+  }
+  .books ul {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+    gap: 12px;
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .books li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+    align-items: center;
+  }
+  .books li b,
+  .bk-name {
+    display: block;
+  }
+  .bk-name {
+    font-size: 13.5px;
+  }
+  .books small {
+    display: block;
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .books-foot {
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+  .notes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .notes-grid li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    align-items: start;
+    padding: 14px;
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    background: var(--paper-3);
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  .notes-grid b {
+    display: block;
+    margin-bottom: 2px;
+    color: var(--ink);
+    font-size: 15px;
+  }
+  .checks {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .checks li {
+    position: relative;
+    padding-left: 26px;
+    font-size: 14.5px;
+    color: var(--ink-2);
+  }
+  .checks li::before {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 0.45em;
+    width: 12px;
+    height: 7px;
+    border-left: 2.5px solid var(--olive);
+    border-bottom: 2.5px solid var(--olive);
+    rotate: -45deg;
+  }
+  .checks small {
+    display: block;
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .checks a {
+    color: var(--ink-3);
+  }
+
+  /* 생활 꿀팁 */
+  .tp-tabs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 8px;
+    margin: 24px 0 18px;
+  }
+  .tp-tabs button {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    padding: 10px 6px 8px;
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    background: var(--paper-3);
+    color: var(--ink-2);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+      transform 150ms ease,
+      border-color 150ms ease;
+  }
+  .tp-tabs img {
+    width: 58px;
+    height: 58px;
+    object-fit: contain;
+  }
+  .tp-tabs button:hover {
+    transform: translateY(-2px);
+  }
+  .tp-tabs button[aria-selected="true"] {
+    border-color: var(--ink);
+    box-shadow: inset 0 0 0 1px var(--ink);
+    color: var(--ink);
+  }
+  .tp-head {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 18px;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .tp-head img {
+    width: 96px;
+    height: auto;
+  }
+  .tp-head h3 {
+    font-weight: 400;
+    font-size: 28px;
+  }
+  .tp-head p {
+    color: var(--ink-2);
+  }
+  .tp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .tp-grid li {
+    display: grid;
+    align-content: start;
+    gap: 10px;
+    padding: 16px;
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    background: var(--paper-3);
+    box-shadow: var(--shadow-sheet);
+  }
+  .tp-grid b {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    font-size: 16.5px;
+  }
+  .tp-grid p {
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  .mod-chip {
+    justify-self: start;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--amber) 22%, transparent);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-2);
+  }
+  .credit {
+    margin-top: 64px;
+    font-size: 12.5px;
+    color: var(--ink-3);
+  }
+
+  @media (max-width: 760px) {
+    .kg-list li {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+    .split {
+      grid-template-columns: 1fr;
+      justify-items: center;
+    }
+    .split > div {
+      justify-self: stretch;
+    }
+    .sec-art {
+      grid-template-columns: 1fr;
+    }
+    .spiffo {
+      display: none;
+    }
+    .tp-head img {
+      width: 64px;
+    }
+  }
+</style>

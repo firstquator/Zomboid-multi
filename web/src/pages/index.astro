@@ -29,7 +29,7 @@ const flow = [
     icon: "server-stack-01",
     title: "서버 열기",
     desc: `설치 명령 한 줄 → <span class="ui">서버 만들기</span> → <code>${SERVER_NAME}</code> → <span class="ui">시작</span> → <kbd>Esc</kbd> → <span class="ui">친구 초대</span>`,
-    href: base("host/"),
+    href: base("guide/#host-0"),
     cta: "호스트 가이드",
   },
   {
@@ -38,7 +38,7 @@ const flow = [
     icon: "user-group",
     title: "초대 수락",
     desc: `메인 메뉴에서 Steam 초대 <span class="ui">게임 참가</span> → 창작마당 아이템 <span class="ui">설치</span>. 모드는 자동으로 받습니다.`,
-    href: base("join/"),
+    href: base("guide/#join-0"),
     cta: "참가자 가이드",
   },
 ];
@@ -90,7 +90,7 @@ const flow = [
         desc="자기 PC에서 서버를 여는 1명. 설치 명령, 서버 만들기, 방화벽, 친구 초대까지 다룹니다."
         minutes={hostSteps.minutes}
         steps={hostSteps.titles.length - 2}
-        href={base("host/")}
+        href={base("guide/#host-0")}
         cta="호스트 가이드 열기"
         sheet={hostSteps.titles.slice(1, -1)}
         tone="red"
@@ -103,7 +103,7 @@ const flow = [
         desc="호스트 서버에 접속하는 나머지 전원. 버전 확인, 언어 설정, 초대 수락, 모드 설치를 다룹니다."
         minutes={joinSteps.minutes}
         steps={joinSteps.titles.length - 2}
-        href={base("join/")}
+        href={base("guide/#join-0")}
         cta="참가자 가이드 열기"
         sheet={joinSteps.titles.slice(1, -1)}
         index={1}

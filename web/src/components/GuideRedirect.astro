@@ -1,0 +1,30 @@
+---
+import { base } from "../lib/base-url.mjs";
+
+// 예전 주소(/host/, /join/)를 합친 가이드 페이지로 넘긴다. #step-3 처럼 보던 단계도 이어 준다.
+interface Props {
+  role: "host" | "join";
+  label: string;
+}
+const { role, label } = Astro.props;
+const target = base(`guide/#${role}-0`);
+---
+
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>{label} · 좀보이드 멀티</title>
+    <meta http-equiv="refresh" content={`0;url=${target}`} />
+    <link rel="canonical" href={target} />
+    <script is:inline define:vars={{ role, guide: base("guide/") }}>
+      var m = /^#step-(\d+)$/.exec(location.hash);
+      location.replace(guide + "#" + role + "-" + (m ? m[1] : "0"));
+    </script>
+  </head>
+  <body style="font-family: sans-serif; padding: 24px; background: #ece2cb; color: #1d1b16">
+    <p>가이드가 한 페이지로 합쳐졌습니다. <a href={target}>{label}로 이동</a></p>
+  </body>
+</html>

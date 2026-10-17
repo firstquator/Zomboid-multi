@@ -3,16 +3,20 @@ import "../styles/deck.css";
 import Icon from "./Icon.astro";
 
 interface Props {
-  // localStorage 키와 진행 기록에 쓴다. 가이드마다 달라야 한다.
+  // localStorage 키, 주소(#host-3), 진행 기록에 쓴다. 가이드마다 달라야 한다.
   id: string;
   name: string;
   icon: string;
   minutes: number;
   // 슬라이드 제목. 순서가 슬롯 안 Slide 순서와 같아야 한다.
   steps: string[];
-  finish: { href: string; label: string };
+  // 마지막 장의 버튼. role 이 있으면 같은 페이지의 다른 가이드로 바꾼다.
+  finish: { href: string; label: string; role?: string };
+  // 한 페이지에 가이드가 여럿이면 위쪽에 바꾸는 버튼을 단다.
+  roles?: { id: string; label: string; icon: string }[];
+  hidden?: boolean;
 }
-const { id, name, icon, minutes, steps, finish } = Astro.props;
+const { id, name, icon, minutes, steps, finish, roles, hidden = false } = Astro.props;
 const last = steps.length - 1;
 
 // 경로 선. 핀이 놓이는 자리마다 사인 곡선이 가운데 선을 지나도록
@@ -27,13 +31,33 @@ for (let i = 0; i < last; i++) {
 }
 ---
 
-<div class="deck" data-deck={id} data-last={last}>
+<div class="deck" data-deck={id} data-last={last} hidden={hidden}>
   <div class="deck-top">
-    <p class="deck-name">
-      <Icon name={icon} size={18} />
-      <span>{name}</span>
-      <span class="deck-time"><Icon name="timer-01" size={14} />약 {minutes}분</span>
-    </p>
+    {
+      roles ? (
+        <p class="deck-name">
+          <span class="roles" role="group" aria-label="가이드 고르기">
+            {roles.map((r) => (
+              <a href={`#${r.id}-0`} data-role={r.id} aria-current={r.id === id ? "page" : undefined}>
+                <Icon name={r.icon} size={16} />
+                <span>{r.label}</span>
+              </a>
+            ))}
+          </span>
+          <span class="deck-time">
+            <Icon name="timer-01" size={14} />약 {minutes}분
+          </span>
+        </p>
+      ) : (
+        <p class="deck-name">
+          <Icon name={icon} size={18} />
+          <span>{name}</span>
+          <span class="deck-time">
+            <Icon name="timer-01" size={14} />약 {minutes}분
+          </span>
+        </p>
+      )
+    }
     <p class="deck-now" aria-live="polite" data-deck-now></p>
     <details class="toc">
       <summary>
@@ -111,7 +135,7 @@ for (let i = 0; i < last; i++) {
       <span class="nav-label">다음</span>
       <Icon name="arrow-right-02" size={22} />
     </button>
-    <a class="nav-btn next finish" href={finish.href} data-finish hidden>
+    <a class="nav-btn next finish" href={finish.href} data-finish data-role={finish.role} hidden>
       <span class="nav-label">{finish.label}</span>
       <Icon name="arrow-right-02" size={22} />
     </a>
@@ -119,15 +143,53 @@ for (let i = 0; i < last; i++) {
 </div>
 
 <script>
-  const deck = document.querySelector<HTMLElement>("[data-deck]");
-  if (deck) initDeck(deck);
+  // 한 페이지에 가이드(Deck)가 여럿일 수 있다(가이드 페이지의 호스트·참가자).
+  // 보이는 가이드만 키보드와 주소(#host-3)를 쓰고, 위쪽 버튼이나 마지막 장 버튼으로 바꾼다.
+  type DeckApi = { id: string; el: HTMLElement; show: (step?: number) => void; start: (step: number | null) => void };
+  const decks = Array.from(document.querySelectorAll<HTMLElement>("[data-deck]")).map(initDeck);
+  const multi = decks.length > 1;
+  const hashFor = (id: string, i: number) => (multi ? `#${id}-${i}` : `#step-${i}`);
 
-  function initDeck(deck: HTMLElement) {
+  function showRole(id: string, step?: number) {
+    const d = decks.find((x) => x.id === id);
+    if (!d) return;
+    decks.forEach((x) => (x.el.hidden = x !== d));
+    d.show(step);
+  }
+  document.addEventListener("click", (e) => {
+    const a = (e.target as HTMLElement).closest<HTMLElement>("[data-role]");
+    if (!a?.dataset.role || !multi) return;
+    e.preventDefault();
+    // 위쪽 버튼은 그 가이드에서 보던 곳으로, 마지막 장 버튼은 처음으로 간다.
+    showRole(a.dataset.role, a.hasAttribute("data-finish") ? 0 : undefined);
+  });
+
+  // 같은 페이지에서 주소의 # 만 바뀐 경우(링크, 직접 입력)에도 그 가이드로 바꾼다.
+  window.addEventListener("hashchange", () => {
+    const m = /^#([a-z]+)(?:-(\d+))?$/.exec(location.hash);
+    if (multi && m && decks.some((d) => d.id === m[1])) showRole(m[1], m[2] ? Number(m[2]) : undefined);
+  });
+
+  // 처음 열 때: #join-2, #join, 예전 주소 #step-2 순서로 읽는다.
+  if (decks.length) {
+    const h = location.hash;
+    const m = /^#([a-z]+)(?:-(\d+))?$/.exec(h);
+    const old = /^#step-(\d+)$/.exec(h);
+    const byHash = m ? decks.find((d) => d.id === m[1]) : undefined;
+    const first = byHash ?? decks.find((d) => !d.el.hidden) ?? decks[0];
+    decks.forEach((d) => (d.el.hidden = d !== first));
+    const step = byHash && m?.[2] ? Number(m[2]) : old ? Number(old[1]) : null;
+    first.start(step);
+  }
+
+  function initDeck(deck: HTMLElement): DeckApi {
+    const id = deck.dataset.deck!;
     const track = deck.querySelector<HTMLElement>("[data-track]")!;
     const slides = Array.from(track.querySelectorAll<HTMLElement>(".slide"));
     const last = slides.length - 1;
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const storeKey = `zm-deck:${deck.dataset.deck}`;
+    const storeKey = `zm-deck:${id}`;
+    const visible = () => !deck.hidden;
 
     const prev = deck.querySelector<HTMLButtonElement>("[data-prev]")!;
     const next = deck.querySelector<HTMLButtonElement>("[data-next]")!;
@@ -160,8 +222,8 @@ for (let i = 0; i < last; i++) {
       }
     };
 
-    function setActive(i: number) {
-      if (i === cur) return;
+    function setActive(i: number, force = false) {
+      if (i === cur && !force) return;
       cur = i;
       slides.forEach((s, k) => {
         const on = k === i;
@@ -189,8 +251,11 @@ for (let i = 0; i < last; i++) {
       next.hidden = atEnd;
       finish.hidden = !atEnd;
 
-      history.replaceState(null, "", `#step-${i}`);
-      save(i);
+      // 숨은 가이드는 주소와 기록을 건드리지 않는다.
+      if (visible()) {
+        history.replaceState(null, "", hashFor(id, i));
+        save(i);
+      }
     }
 
     function go(i: number, smooth = true) {
@@ -202,6 +267,7 @@ for (let i = 0; i < last; i++) {
     // 손가락으로 밀어서 넘긴 경우에도 현재 단계를 따라간다.
     const io = new IntersectionObserver(
       (entries) => {
+        if (!visible()) return;
         for (const e of entries) {
           if (e.isIntersecting) setActive(slides.indexOf(e.target as HTMLElement));
         }
@@ -221,6 +287,7 @@ for (let i = 0; i < last; i++) {
     });
 
     document.addEventListener("keydown", (e) => {
+      if (!visible()) return;
       const tag = (e.target as HTMLElement).tagName;
       if (["INPUT", "TEXTAREA", "SELECT"].includes(tag) || e.altKey || e.ctrlKey || e.metaKey) return;
       if (e.key === "ArrowRight" || e.key === "PageDown") {
@@ -238,13 +305,23 @@ for (let i = 0; i < last; i++) {
       }
     });
 
-    window.addEventListener("resize", () => go(cur, false));
+    window.addEventListener("resize", () => visible() && go(cur, false));
+
+    // 다른 가이드에서 바꿔 왔을 때. 숨어 있던 동안은 크기가 0이라 보인 뒤에 자리를 맞춘다.
+    function show(step?: number) {
+      requestAnimationFrame(() => {
+        const k = Math.max(0, Math.min(last, step ?? Math.max(cur, 0)));
+        track.scrollTo({ left: slides[k].offsetLeft, behavior: "auto" });
+        setActive(k, true);
+      });
+    }
 
     // 처음 열 때: 주소에 단계가 있으면 거기로, 없으면 지난번 기록을 제안한다.
-    const fromHash = Number(/^#step-(\d+)$/.exec(location.hash)?.[1] ?? NaN);
-    if (Number.isFinite(fromHash)) {
-      requestAnimationFrame(() => go(fromHash, false));
-    } else {
+    function start(step: number | null) {
+      if (step !== null && Number.isFinite(step)) {
+        requestAnimationFrame(() => go(step, false));
+        return;
+      }
       go(0, false);
       const saved = load();
       if (saved > 0 && saved <= last) {
@@ -262,5 +339,59 @@ for (let i = 0; i < last; i++) {
         setTimeout(() => (box.hidden = true), 12000);
       }
     }
+
+    // 숨은 가이드도 첫 장 상태는 그려 둔다(주소는 바꾸지 않는다).
+    if (!visible()) setActive(0);
+    return { id, el: deck, show, start };
   }
 </script>
+
+<style>
+  .deck[hidden] {
+    display: none;
+  }
+  /* deck.css 가 좁은 화면에서 첫 칸(가이드 이름)을 줄이는데, 전환 버튼은 줄이지 않는다 */
+  .deck-name > .roles {
+    max-width: none;
+    overflow: visible;
+  }
+  .roles {
+    display: inline-flex;
+    padding: 3px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--ink) 9%, transparent);
+  }
+  .roles a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    color: var(--ink-2);
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      background 150ms ease,
+      color 150ms ease;
+  }
+  .roles a:hover {
+    color: var(--ink);
+  }
+  .roles a[aria-current="page"] {
+    background: var(--ink);
+    color: var(--paper-3);
+    box-shadow: 0 2px 6px -2px rgb(0 0 0 / 0.4);
+  }
+  @media (max-width: 560px) {
+    .roles a {
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+    /* 좁은 화면에서는 전환 버튼이 잘리지 않게 걸리는 시간을 뺀다 */
+    .roles + .deck-time {
+      display: none;
+    }
+  }
+</style>

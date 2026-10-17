@@ -1,0 +1,181 @@
+---
+import { base } from "../lib/base-url.mjs";
+import { radial } from "../data/vehicles.mjs";
+
+// 차량 메뉴(V)를 게임 아이콘으로 다시 그린 원형 메뉴. 차 안/차 밖을 바꿔 보고,
+// 아이콘에 마우스를 올리거나 누르면 가운데에 이름과 설명이 나온다.
+const sets = [
+  { id: "inside", label: "운전석에서", items: radial.inside },
+  { id: "outside", label: "차 밖에서", items: radial.outside },
+];
+---
+
+<div class="vr" data-vr>
+  <div class="vr-tabs" role="tablist" aria-label="어디서 여는 메뉴인지">
+    {
+      sets.map((s, i) => (
+        <button type="button" role="tab" aria-selected={i === 0 ? "true" : "false"} data-vr-tab={s.id}>
+          {s.label}
+        </button>
+      ))
+    }
+  </div>
+  {
+    sets.map((s, i) => (
+      <div class="vr-ring" data-vr-set={s.id} hidden={i !== 0} style={`--n:${s.items.length}`}>
+        <div class="vr-center" aria-live="polite">
+          <kbd>V</kbd>
+          <b data-vr-label>아이콘을 골라 보세요</b>
+          <small data-vr-note>{s.label} V 를 누르면 뜨는 메뉴</small>
+        </div>
+        {s.items.map((it: any, k: number) => (
+          <button
+            type="button"
+            class:list={["vr-item", it.mod && "mod"]}
+            style={`--k:${k}`}
+            data-label={it.label}
+            data-note={it.note ?? ""}
+            aria-label={it.note ? `${it.label}: ${it.note}` : it.label}
+          >
+            <img src={base(`guide/${it.icon}.webp`)} alt="" loading="lazy" />
+          </button>
+        ))}
+      </div>
+    ))
+  }
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>("[data-vr]").forEach((root) => {
+    const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>("[data-vr-tab]"));
+    tabs.forEach((t) =>
+      t.addEventListener("click", () => {
+        tabs.forEach((x) => x.setAttribute("aria-selected", String(x === t)));
+        root.querySelectorAll<HTMLElement>("[data-vr-set]").forEach((s) => (s.hidden = s.dataset.vrSet !== t.dataset.vrTab));
+      }),
+    );
+    root.querySelectorAll<HTMLElement>("[data-vr-set]").forEach((set) => {
+      const label = set.querySelector<HTMLElement>("[data-vr-label]")!;
+      const note = set.querySelector<HTMLElement>("[data-vr-note]")!;
+      const items = Array.from(set.querySelectorAll<HTMLButtonElement>(".vr-item"));
+      const pick = (b: HTMLButtonElement) => {
+        items.forEach((x) => x.classList.toggle("on", x === b));
+        label.textContent = b.dataset.label!;
+        note.textContent = b.dataset.note || " ";
+      };
+      items.forEach((b) => {
+        b.addEventListener("mouseenter", () => pick(b));
+        b.addEventListener("focus", () => pick(b));
+        b.addEventListener("click", () => pick(b));
+      });
+    });
+  });
+</script>
+
+<style>
+  .vr {
+    display: grid;
+    justify-items: center;
+    gap: 14px;
+  }
+  .vr-tabs {
+    display: inline-flex;
+    padding: 4px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+  }
+  .vr-tabs button {
+    padding: 7px 16px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ink-2);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .vr-tabs button[aria-selected="true"] {
+    background: var(--ink);
+    color: var(--paper-3);
+  }
+  .vr-ring {
+    --size: min(360px, 86vw);
+    --r: calc(var(--size) / 2 - 34px);
+    position: relative;
+    width: var(--size);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle, transparent 36%, rgb(0 0 0 / 0.55) 37%, rgb(0 0 0 / 0.6) 70%, transparent 71%),
+      radial-gradient(circle at 50% 40%, #3a3b31, #16170f 72%);
+    box-shadow:
+      0 24px 50px -28px rgb(0 0 0 / 0.8),
+      inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  }
+  .vr-ring[hidden] {
+    display: none;
+  }
+  .vr-center {
+    position: absolute;
+    inset: 30%;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 4px;
+    text-align: center;
+    color: var(--night-ink);
+  }
+  .vr-center b {
+    font-size: 15px;
+    line-height: 1.25;
+  }
+  .vr-center small {
+    min-height: 1.3em;
+    font-size: 11.5px;
+    line-height: 1.35;
+    color: var(--night-dim);
+  }
+  .vr-item {
+    --a: calc(360deg / var(--n) * var(--k) - 90deg);
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    margin: -28px 0 0 -28px;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.04);
+    transform: rotate(var(--a)) translate(var(--r)) rotate(calc(var(--a) * -1));
+    cursor: pointer;
+    transition:
+      background 120ms ease,
+      box-shadow 120ms ease;
+  }
+  .vr-item img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+  }
+  .vr-item:hover,
+  .vr-item:focus-visible,
+  .vr-item.on {
+    background: color-mix(in srgb, var(--sodium) 28%, transparent);
+    box-shadow: 0 0 0 2px var(--sodium);
+    outline: none;
+  }
+  .vr-item.mod::after {
+    content: "모드";
+    position: absolute;
+    bottom: -6px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--amber);
+    color: var(--ink);
+    font-size: 9.5px;
+    font-weight: 700;
+  }
+</style>

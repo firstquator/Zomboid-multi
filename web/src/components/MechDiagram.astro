@@ -1,0 +1,301 @@
+---
+import { base } from "../lib/base-url.mjs";
+import { mechParts, toolNames } from "../data/vehicles.mjs";
+
+// 게임 정비 화면의 차 그림(4door_base)과 부품별 흰색 마스크로 만든 정비 안내.
+// 부품을 고르면 그 부분이 칠해지고 필요한 도구·레벨이 나온다.
+// 마스크 위치(px, 그림 263×600 기준)는 게임 PNG 의 불투명 영역을 잰 값이다.
+const W = 263;
+const H = 600;
+const boxes: Record<string, [number, number, number, number]> = {
+  battery: [69, 72, 100, 92],
+  engine: [135, 53, 223, 105],
+  gastank: [45, 504, 122, 546],
+  hood: [76, 138, 189, 231],
+  muffler: [177, 492, 196, 554],
+  trunk: [79, 413, 186, 470],
+  headlight_left: [81, 135, 105, 141],
+  headlight_right: [161, 135, 185, 141],
+  brake_front_left: [11, 213, 43, 245],
+  brake_front_right: [221, 213, 254, 245],
+  brake_rear_left: [11, 402, 43, 433],
+  brake_rear_right: [221, 402, 254, 433],
+  suspension_front_left: [12, 181, 44, 213],
+  suspension_front_right: [223, 181, 254, 213],
+  suspension_rear_left: [12, 369, 44, 401],
+  suspension_rear_right: [223, 369, 254, 401],
+  wheel_front_left: [64, 184, 69, 242],
+  wheel_front_right: [196, 184, 201, 242],
+  wheel_rear_left: [63, 371, 68, 429],
+  wheel_rear_right: [197, 371, 202, 429],
+  door_front_left: [69, 246, 78, 319],
+  door_front_right: [187, 246, 197, 319],
+  door_rear_left: [69, 318, 79, 393],
+  door_rear_right: [187, 318, 197, 393],
+  window_front_left: [77, 253, 92, 319],
+  window_front_right: [174, 253, 189, 320],
+  window_rear_left: [77, 318, 94, 385],
+  window_rear_right: [172, 318, 188, 385],
+  window_windshield: [78, 222, 187, 278],
+  window_rear_windshield: [83, 383, 182, 417],
+};
+// 누를 곳은 너무 가는 부품도 누를 수 있게 최소 크기를 둔다.
+const hit = (m: string) => {
+  const [x0, y0, x1, y1] = boxes[m];
+  const minW = 16;
+  const w = Math.max(minW, x1 - x0);
+  const h = Math.max(minW, y1 - y0);
+  const cx = (x0 + x1) / 2;
+  const cy = (y0 + y1) / 2;
+  return `left:${((cx - w / 2) / W) * 100}%;top:${((cy - h / 2) / H) * 100}%;width:${(w / W) * 100}%;height:${(h / H) * 100}%`;
+};
+const level = (p: any) => (p.level ? `차량정비 ${p.level}` : "기술 필요 없음");
+---
+
+<div class="mech" data-mech>
+  <div class="car" role="img" aria-label="정비 화면의 차 그림. 오른쪽 목록에서 부품을 고르면 칠해집니다">
+    <img class="base" src={base("guide/mech/4door_base.webp")} alt="" width={W} height={H} loading="lazy" />
+    {
+      mechParts.flatMap((p) =>
+        p.masks.map((m) => (
+          <span class="mask" data-part={p.id} style={`--m:url(${base(`guide/mech/4door_${m}.webp`)})`} aria-hidden="true" />
+        )),
+      )
+    }
+    {
+      mechParts.flatMap((p) =>
+        p.masks.map((m) => <button type="button" class="hit" data-pick={p.id} style={hit(m)} aria-label={p.label} tabindex="-1" />),
+      )
+    }
+  </div>
+
+  <div class="side">
+    <div class="parts" role="listbox" aria-label="부품">
+      {
+        mechParts.map((p, i) => (
+          <button type="button" role="option" aria-selected={i === 0 ? "true" : "false"} data-pick={p.id}>
+            {p.label}
+            <span class="mono">{p.level || "–"}</span>
+          </button>
+        ))
+      }
+    </div>
+    {
+      mechParts.map((p, i) => (
+        <div class="info" data-info={p.id} hidden={i !== 0}>
+          <h4>{p.label}</h4>
+          <ul class="tools">
+            {p.tools.map((t) => (
+              <li>
+                <span class="tile">
+                  <img src={base(`guide/item/${t}.webp`)} alt="" width="32" height="32" loading="lazy" />
+                </span>
+                {toolNames[t]}
+              </li>
+            ))}
+          </ul>
+          <p class="req">
+            <span class="pill">{level(p)}</span>
+            {p.know && <span class="pill know">정비 지식 필요</span>}
+            {p.nokey && <span class="pill nokey">열쇠 없이 뗌</span>}
+          </p>
+          {p.note && <p class="note">{p.note}</p>}
+        </div>
+      ))
+    }
+    <p class="foot">숫자는 일반 차 기준 차량정비 레벨입니다. 레벨이 모자라도 시도는 되지만, 한 레벨 모자랄 때마다 성공률이 크게 떨어지고 실패하면 부품이 상할 수 있습니다.</p>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>("[data-mech]").forEach((root) => {
+    const select = (id: string) => {
+      root.querySelectorAll<HTMLElement>(".mask").forEach((m) => m.classList.toggle("on", m.dataset.part === id));
+      root.querySelectorAll<HTMLElement>(".parts [data-pick]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.pick === id)));
+      root.querySelectorAll<HTMLElement>("[data-info]").forEach((d) => (d.hidden = d.dataset.info !== id));
+    };
+    root.querySelectorAll<HTMLElement>("[data-pick]").forEach((b) => b.addEventListener("click", () => select(b.dataset.pick!)));
+    root.querySelectorAll<HTMLElement>(".hit").forEach((b) => b.addEventListener("mouseenter", () => select(b.dataset.pick!)));
+    select(root.querySelector<HTMLElement>(".parts [data-pick]")!.dataset.pick!);
+  });
+</script>
+
+<style>
+  .mech {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: clamp(16px, 3vw, 36px);
+    align-items: start;
+  }
+  .car {
+    position: relative;
+    width: min(220px, 40vw);
+    aspect-ratio: 263 / 600;
+    padding: 0;
+    border-radius: 18px;
+  }
+  .base {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.85;
+  }
+  :global(:root[data-theme="dark"]) .base {
+    filter: invert(1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme="light"])) .base {
+      filter: invert(0.88);
+    }
+  }
+  .mask {
+    position: absolute;
+    inset: 0;
+    background: var(--olive);
+    opacity: 0.55;
+    -webkit-mask: var(--m) center / 100% 100% no-repeat;
+    mask: var(--m) center / 100% 100% no-repeat;
+    transition:
+      opacity 150ms ease,
+      background 150ms ease;
+  }
+  .mask.on {
+    background: var(--red);
+    opacity: 1;
+    animation: glow 1.4s ease-in-out infinite;
+  }
+  @keyframes glow {
+    50% {
+      opacity: 0.6;
+    }
+  }
+  .hit {
+    position: absolute;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+  .side {
+    display: grid;
+    gap: 14px;
+  }
+  .parts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .parts button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 8px;
+    background: var(--paper-3);
+    color: var(--ink-2);
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .parts .mono {
+    min-width: 1.4em;
+    padding: 0 4px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--ink) 9%, transparent);
+    font-size: 11.5px;
+    text-align: center;
+  }
+  .parts button[aria-selected="true"] {
+    border-color: var(--red);
+    background: var(--red);
+    color: #fff;
+  }
+  .parts button[aria-selected="true"] .mono {
+    background: rgb(255 255 255 / 0.22);
+  }
+  .info {
+    padding: 16px 18px;
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    background: var(--paper-3);
+    box-shadow: var(--shadow-sheet);
+  }
+  .info h4 {
+    font-family: var(--f-display);
+    font-weight: 400;
+    font-size: 22px;
+  }
+  .tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .tools li {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+  }
+  .tile {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 9px;
+    background: #1c1c17;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  }
+  .tile img {
+    image-rendering: pixelated;
+  }
+  .req {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+  }
+  .pill {
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    background: color-mix(in srgb, var(--ink) 9%, transparent);
+  }
+  .pill.know {
+    background: color-mix(in srgb, var(--amber) 22%, transparent);
+  }
+  .pill.nokey {
+    background: color-mix(in srgb, var(--olive) 22%, transparent);
+  }
+  .note {
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  .foot {
+    font-size: 12.5px;
+    color: var(--ink-3);
+  }
+  @media (max-width: 640px) {
+    .mech {
+      grid-template-columns: 1fr;
+      justify-items: center;
+    }
+    .side {
+      width: 100%;
+    }
+    .car {
+      width: min(180px, 52vw);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mask.on {
+      animation: none;
+    }
+  }
+</style>

@@ -1,0 +1,78 @@
+---
+import Icon from "./Icon.astro";
+import { keyLabel } from "../data/keys.mjs";
+
+// 단축키를 키캡으로 보여 준다. 마우스는 아이콘을 붙인다.
+// alt: 어느 키든 된다(/), range: 첫 키~끝 키, combo: 누른 채(+), double: 두 번 누르기(×2)
+interface Props {
+  keys: string[];
+  alt?: boolean;
+  range?: boolean;
+  combo?: boolean;
+  double?: boolean;
+  size?: "sm" | "lg";
+}
+const { keys, alt, range, combo, double, size } = Astro.props;
+const mouse: Record<string, string> = {
+  LMB: "mouse-left-click-01",
+  RMB: "mouse-right-click-01",
+  Wheel: "mouse-scroll-01",
+  Drag: "cursor-move-01",
+};
+const shown = range ? [keys[0], keys[keys.length - 1]] : keys;
+const sep = range ? "~" : alt ? "/" : combo ? "+" : "";
+---
+
+<span class:list={["keys", size]}>
+  {
+    shown.map((k, i) => (
+      <>
+        {i > 0 && sep && <span class="sep">{sep}</span>}
+        <kbd class:list={[mouse[k] && "mouse", k === "Space" && "wide"]}>
+          {mouse[k] && <Icon name={mouse[k]} size={size === "lg" ? 18 : 14} />}
+          {keyLabel(k)}
+        </kbd>
+      </>
+    ))
+  }
+  {double && <span class="sep">×2</span>}
+</span>
+
+<style>
+  .keys {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 3px;
+  }
+  kbd {
+    gap: 4px;
+    margin: 0;
+  }
+  kbd.mouse {
+    padding-left: 0.45em;
+    font-family: var(--f-body);
+  }
+  kbd.wide {
+    min-width: 4.2em;
+  }
+  .sep {
+    padding: 0 1px;
+    font-family: var(--f-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-3);
+  }
+  .lg kbd {
+    height: 2.1em;
+    min-width: 2.4em;
+    font-size: 15px;
+    border-radius: 9px;
+  }
+  .lg .sep {
+    font-size: 15px;
+  }
+  .sm kbd {
+    font-size: 11.5px;
+  }
+</style>

@@ -1,0 +1,23 @@
+---
+import Base from "../layouts/Base.astro";
+import Deck from "../components/Deck.astro";
+import HostSlides from "../components/guide/HostSlides.astro";
+import JoinSlides from "../components/guide/JoinSlides.astro";
+import { base } from "../lib/base-url.mjs";
+import { hostSteps, joinSteps } from "../data/guides.mjs";
+
+// 호스트·참가자 가이드를 한 페이지에 두고 위쪽 버튼으로 바꾼다. 주소는 #host-3, #join-0 처럼 남는다.
+const roles = [
+  { id: "host", label: "호스트", icon: "server-stack-01" },
+  { id: "join", label: "참가자", icon: "user-group" },
+];
+---
+
+<Base title="가이드" active="guide" deck description="호스트는 서버를 열고 친구를 초대하고, 참가자는 초대를 받아 접속합니다. 단계별 슬라이드 안내.">
+  <Deck id="host" name="호스트 가이드" icon="server-stack-01" minutes={hostSteps.minutes} steps={hostSteps.titles} roles={roles} finish={{ href: "#join-0", label: "참가자 가이드", role: "join" }}>
+    <HostSlides />
+  </Deck>
+  <Deck id="join" name="참가자 가이드" icon="user-group" minutes={joinSteps.minutes} steps={joinSteps.titles} roles={roles} hidden finish={{ href: base("tips/"), label: "플레이 팁" }}>
+    <JoinSlides />
+  </Deck>
+</Base>

@@ -1,0 +1,506 @@
+---
+import Icon from "./Icon.astro";
+import { keybinds, keyGroups, keyboardRows, keyLabel } from "../data/keys.mjs";
+
+// 키보드 그림. 쓰는 키는 갈래 색으로 칠하고, 누르거나 마우스를 올리면 아래에 하는 일을 보여 준다.
+// 위의 갈래 버튼으로 한 갈래만 밝게 볼 수 있다.
+
+const byKey = new Map<string, typeof keybinds>();
+for (const b of keybinds) for (const k of b.keys) byKey.set(k, [...(byKey.get(k) ?? []), b]);
+const groupLabel = Object.fromEntries(keyGroups.map((g) => [g.id, g.label]));
+// 키 위에 작게 적는 이름. 상황 없이 쓰는 기능을 먼저 적고, 긴 이름은 줄여 적는다.
+const SHORT: Record<string, string> = {
+  "단축키 칸 1~8": "단축 칸",
+  "생존 지침서 전환": "지침서",
+  "스크린샷 찍기": "스크린샷",
+  "화면 확대·축소": "확대·축소",
+  "조명 아이템 장착/켬/끔": "손전등",
+  "총기 장전 손잡이 당김": "장전",
+  "외치기 · 감정표현": "외치기",
+  "이곳으로 걸어가기": "걸어가기",
+  "히터/에어컨": "히터",
+  "옷 방어도 창 전환": "옷 방어도",
+  "대화 표시 전환": "대화 탭",
+  "탐색 모드 전환": "탐색 모드",
+  "취소 행동": "취소",
+  "공격/선택": "공격",
+};
+const capName = (k: string) => {
+  const list = byKey.get(k) ?? [];
+  const first = list.find((b) => !b.when) ?? list[0];
+  return first ? (SHORT[first.name] ?? first.name.replace(/ 창 전환| 열고 닫기| 전환$/, "")) : "";
+};
+const detail = Object.fromEntries(
+  [...byKey].map(([k, list]) => [k, list.map((b) => ({ n: b.name, g: b.group, gl: groupLabel[b.group], t: b.tip ?? "", w: b.when ?? "", m: !!b.mod }))]),
+);
+const mouseKeys = ["LMB", "RMB", "Wheel"].filter((k) => byKey.has(k));
+---
+
+<div class="km" data-keymap>
+  <div class="km-filter" role="group" aria-label="갈래별로 보기">
+    <button type="button" aria-pressed="true" data-km-group="all">전체</button>
+    {
+      keyGroups.map((g) => (
+        <button type="button" aria-pressed="false" data-km-group={g.id} class={`g-${g.id}`}>
+          <i class="dot" aria-hidden="true" />
+          {g.label}
+        </button>
+      ))
+    }
+  </div>
+
+  <div class="km-board" aria-label="키보드 그림. 키를 누르면 아래에 하는 일이 나옵니다">
+    <div class="km-keys">
+      {
+        keyboardRows.map((row) => (
+          <div class="km-row">
+            {row.map((c: any) =>
+              c.gap ? (
+                <span class="km-gap" style={`--w:${c.gap}`} />
+              ) : byKey.has(c.k) ? (
+                <button
+                  type="button"
+                  class={`km-key on g-${byKey.get(c.k)![0].group}`}
+                  style={`--w:${c.w ?? 1}`}
+                  data-km-key={c.k}
+                  data-groups={[...new Set(byKey.get(c.k)!.map((b) => b.group))].join(" ")}
+                  aria-label={`${c.label ?? keyLabel(c.k)}: ${byKey.get(c.k)!.map((b) => b.name).join(", ")}`}
+                >
+                  <span class="cap">{c.label ?? keyLabel(c.k)}</span>
+                  <span class="nm">{capName(c.k)}</span>
+                  {new Set(byKey.get(c.k)!.map((b) => b.group)).size > 1 && <span class="multi" aria-hidden="true" />}
+                </button>
+              ) : (
+                <span class="km-key off" style={`--w:${c.w ?? 1}`} aria-hidden="true">
+                  <span class="cap">{c.label ?? keyLabel(c.k)}</span>
+                </span>
+              ),
+            )}
+          </div>
+        ))
+      }
+    </div>
+    <div class="km-mouse" aria-label="마우스">
+      <div class="mouse-body" aria-hidden="true">
+        <span class="mb-l" />
+        <span class="mb-r" />
+        <span class="mb-w" />
+      </div>
+      <div class="mouse-btns">
+        {
+          mouseKeys.map((k) => (
+            <button type="button" class={`km-key on g-${byKey.get(k)![0].group}`} style="--w:2.4" data-km-key={k} data-groups={[...new Set(byKey.get(k)!.map((b) => b.group))].join(" ")}>
+              <span class="cap">
+                <Icon name={k === "LMB" ? "mouse-left-click-01" : k === "RMB" ? "mouse-right-click-01" : "mouse-scroll-01"} size={14} />
+                {keyLabel(k)}
+              </span>
+              <span class="nm">{capName(k)}</span>
+            </button>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="km-detail" aria-live="polite" data-km-detail>
+    <p class="km-hint">
+      <Icon name="cursor-pointer-01" size={18} />
+      색이 칠해진 키를 누르거나 마우스를 올려 보세요. 점이 두 개인 키는 상황에 따라 하는 일이 다릅니다.
+    </p>
+  </div>
+  <script type="application/json" data-km-data set:html={JSON.stringify(detail)} />
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>("[data-keymap]").forEach((root) => {
+    const data = JSON.parse(root.querySelector("[data-km-data]")!.textContent!) as Record<string, { n: string; g: string; gl: string; t: string; w: string; m: boolean }[]>;
+    const panel = root.querySelector<HTMLElement>("[data-km-detail]")!;
+    const hint = panel.innerHTML;
+    const keys = Array.from(root.querySelectorAll<HTMLButtonElement>("[data-km-key]"));
+    const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+    let pinned: HTMLButtonElement | null = null;
+    let group = "all";
+
+    function show(btn: HTMLButtonElement | null) {
+      keys.forEach((k) => k.classList.toggle("sel", k === btn));
+      if (!btn) {
+        panel.innerHTML = hint;
+        return;
+      }
+      const list = data[btn.dataset.kmKey!] ?? [];
+      const cap = btn.querySelector(".cap")!.textContent!.trim();
+      panel.innerHTML =
+        `<div class="kd-head"><kbd>${esc(cap)}</kbd><span>${list.length > 1 ? `하는 일 ${list.length}가지` : "하는 일"}</span></div>` +
+        `<ul class="kd-list">${list
+          .map(
+            (b) =>
+              `<li class="g-${b.g}${group !== "all" && b.g !== group ? " dim" : ""}"><span class="kd-g">${esc(b.gl)}</span><b>${esc(b.n)}</b>${b.w ? `<span class="kd-w">${esc(b.w)}</span>` : ""}${b.m ? `<span class="kd-w mod">모드</span>` : ""}${b.t ? `<p>${esc(b.t)}</p>` : ""}</li>`,
+          )
+          .join("")}</ul>`;
+    }
+
+    keys.forEach((k) => {
+      k.addEventListener("mouseenter", () => !pinned && show(k));
+      k.addEventListener("focus", () => show(k));
+      k.addEventListener("click", () => {
+        pinned = pinned === k ? null : k;
+        show(pinned ?? k);
+      });
+    });
+    root.querySelector(".km-board")!.addEventListener("mouseleave", () => show(pinned));
+
+    root.querySelectorAll<HTMLButtonElement>("[data-km-group]").forEach((b) =>
+      b.addEventListener("click", () => {
+        group = b.dataset.kmGroup!;
+        root.querySelectorAll("[data-km-group]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+        root.dataset.group = group;
+        keys.forEach((k) => k.classList.toggle("dim", group !== "all" && !k.dataset.groups!.split(" ").includes(group)));
+        show(pinned);
+      }),
+    );
+  });
+</script>
+
+<style>
+  .km {
+    min-width: 0;
+    --c-move: var(--olive);
+    --c-combat: var(--red);
+    --c-item: var(--amber);
+    --c-ui: var(--steel);
+    --c-vehicle: #7a4f8f;
+    --c-chat: #2d7a72;
+    display: grid;
+    gap: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    .km {
+      --c-vehicle: #b98fd0;
+      --c-chat: #6cc3b8;
+    }
+  }
+  .g-move {
+    --c: var(--c-move);
+  }
+  .g-combat {
+    --c: var(--c-combat);
+  }
+  .g-item {
+    --c: var(--c-item);
+  }
+  .g-ui {
+    --c: var(--c-ui);
+  }
+  .g-vehicle {
+    --c: var(--c-vehicle);
+  }
+  .g-chat {
+    --c: var(--c-chat);
+  }
+
+  .km-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .km-filter button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ink-2);
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .km-filter button[aria-pressed="true"] {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--paper-3);
+  }
+  .km-filter .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--c);
+  }
+
+  .km-board {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px;
+    align-items: end;
+    padding: clamp(12px, 2vw, 22px);
+    border-radius: 16px;
+    background: linear-gradient(180deg, #2b2a23, #1d1c17);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.06),
+      0 22px 40px -24px rgb(0 0 0 / 0.7);
+  }
+  .km-keys {
+    display: grid;
+    gap: 5px;
+    --u: calc((100% - 14 * 5px) / 15);
+  }
+  .km-row {
+    display: flex;
+    gap: 5px;
+    min-width: 0;
+  }
+  .km-row:first-child {
+    margin-bottom: 6px;
+  }
+  .km-gap {
+    flex: var(--w) 0 0;
+  }
+  .km-key {
+    position: relative;
+    display: grid;
+    align-content: space-between;
+    flex: var(--w) 0 0;
+    min-width: 0;
+    /* 좁은 화면에서 글자 때문에 키가 칸보다 넓어지지 않게 한다 */
+    overflow: hidden;
+    aspect-ratio: calc(var(--w) * 1.06) / 1;
+    max-height: 64px;
+    padding: 5px 6px;
+    border: 0;
+    border-radius: 7px;
+    background: linear-gradient(180deg, #3b3a31, #302f27);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.07),
+      0 2px 0 #121109;
+    color: #8d8672;
+    font: inherit;
+    text-align: left;
+  }
+  .km-row:first-child .km-key {
+    aspect-ratio: calc(var(--w) * 1.5) / 1;
+  }
+  .cap {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-family: var(--f-mono);
+    font-size: clamp(9px, 1.05vw, 13px);
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .nm {
+    overflow: hidden;
+    font-size: clamp(8px, 0.82vw, 11px);
+    font-weight: 600;
+    line-height: 1.15;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .km-key.on {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--c) 78%, #fff 6%), color-mix(in srgb, var(--c) 70%, #000 20%));
+    color: #fffaf0;
+    cursor: pointer;
+    transition:
+      transform 110ms ease,
+      box-shadow 110ms ease,
+      opacity 150ms ease,
+      filter 150ms ease;
+  }
+  .km-key.on:hover,
+  .km-key.on:focus-visible,
+  .km-key.sel {
+    transform: translateY(-2px);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.25),
+      0 4px 0 #121109,
+      0 0 0 2px #fffaf0;
+    outline: none;
+  }
+  .km-key.dim {
+    opacity: 0.28;
+    filter: saturate(0.3);
+  }
+  .multi {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fffaf0;
+    box-shadow: -8px 0 0 rgb(255 250 240 / 0.55);
+  }
+
+  .km-mouse {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+  }
+  .mouse-body {
+    position: relative;
+    width: 62px;
+    height: 92px;
+    border-radius: 31px 31px 28px 28px;
+    background: linear-gradient(180deg, #3b3a31, #2a2922);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
+    overflow: hidden;
+  }
+  .mb-l,
+  .mb-r {
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: 42%;
+    border-bottom: 2px solid #121109;
+  }
+  .mb-l {
+    left: 0;
+    background: color-mix(in srgb, var(--c-combat) 70%, #000 10%);
+    border-right: 1px solid #121109;
+  }
+  .mb-r {
+    right: 0;
+    background: color-mix(in srgb, var(--c-combat) 70%, #000 10%);
+    border-left: 1px solid #121109;
+  }
+  .mb-w {
+    position: absolute;
+    left: 50%;
+    top: 12%;
+    width: 8px;
+    height: 18px;
+    margin-left: -4px;
+    border-radius: 4px;
+    background: var(--c-ui);
+    box-shadow: 0 0 0 2px #121109;
+  }
+  .mouse-btns {
+    display: grid;
+    gap: 5px;
+    width: 104px;
+  }
+  .mouse-btns .km-key {
+    aspect-ratio: auto;
+    height: 44px;
+  }
+
+  .km-detail {
+    min-height: 92px;
+    padding: 14px 16px;
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    background: var(--paper-3);
+  }
+  .km-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ink-3);
+    font-size: 14px;
+  }
+  .km-detail :global(.kd-head) {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: var(--ink-3);
+  }
+  .km-detail :global(.kd-list) {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+    gap: 8px 18px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .km-detail :global(.kd-list li) {
+    padding-left: 12px;
+    border-left: 3px solid var(--c);
+    transition: opacity 150ms ease;
+  }
+  .km-detail :global(.kd-list li.dim) {
+    opacity: 0.4;
+  }
+  .km-detail :global(.kd-g) {
+    margin-right: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--c);
+  }
+  .km-detail :global(.kd-w) {
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    background: color-mix(in srgb, var(--ink) 9%, transparent);
+    color: var(--ink-2);
+  }
+  .km-detail :global(.kd-w.mod) {
+    background: color-mix(in srgb, var(--amber) 22%, transparent);
+  }
+  .km-detail :global(.kd-list p) {
+    margin-top: 2px;
+    font-size: 13.5px;
+    color: var(--ink-2);
+  }
+
+  @media (max-width: 760px) {
+    .km-board {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .nm {
+      display: none;
+    }
+    .km-key {
+      padding: 3px;
+      border-radius: 5px;
+      place-content: center;
+      text-align: center;
+    }
+    .km-keys,
+    .km-row {
+      gap: 3px;
+    }
+    .cap {
+      font-size: clamp(7px, 2.2vw, 11px);
+      justify-content: center;
+    }
+    .multi {
+      top: 2px;
+      right: 2px;
+      width: 4px;
+      height: 4px;
+      box-shadow: -5px 0 0 rgb(255 250 240 / 0.55);
+    }
+    .km-mouse {
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      justify-items: start;
+    }
+    .mouse-body {
+      width: 44px;
+      height: 66px;
+    }
+    .mouse-btns {
+      grid-template-columns: repeat(3, 1fr);
+      width: 100%;
+    }
+    .mouse-btns .km-key {
+      height: 36px;
+    }
+    .mouse-btns .nm {
+      display: block;
+      font-size: 10px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .km-key.on {
+      transition: none;
+    }
+  }
+</style>
