@@ -1,0 +1,41 @@
+---
+// 로고. 고무도장으로 찍은 Z 와 빌드 번호. 글자만으로 된 로고는
+// 종이 질감 위에서 묻혀 버려서 테두리 있는 도장 모양을 쓴다.
+interface Props {
+  size?: number;
+}
+const { size = 44 } = Astro.props;
+---
+
+<svg
+  class="logo"
+  width={size}
+  height={size}
+  viewBox="0 0 64 64"
+  aria-hidden="true"
+  focusable="false"
+>
+  <defs>
+    <filter id="logo-rough" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="2" seed="4" />
+      <feDisplacementMap in="SourceGraphic" scale="1.6" />
+    </filter>
+  </defs>
+  <g filter="url(#logo-rough)">
+    <rect x="5" y="5" width="54" height="54" rx="5" fill="none" stroke="currentColor" stroke-width="3.2" />
+    <rect x="10" y="10" width="44" height="44" rx="2" fill="none" stroke="currentColor" stroke-width="1.2" />
+    <path
+      d="M19 19h26v5.5L27.5 40.5H45V46H19v-5.5L36.5 24.5H19z"
+      fill="currentColor"
+    />
+    <path d="M31 19v5.5M33 40.5V46" stroke="var(--logo-gap, var(--paper))" stroke-width="2.2" />
+  </g>
+</svg>
+
+<style>
+  .logo {
+    color: var(--red);
+    flex: none;
+    rotate: -6deg;
+  }
+</style>

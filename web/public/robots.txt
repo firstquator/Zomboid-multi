@@ -1,0 +1,6 @@
+# 이 사이트는 GitHub Project Pages(https://firstquator.github.io/Zomboid-multi/)
+# 하위 경로로 나간다. 크롤러는 오리진 루트의 robots.txt 만 읽으므로 이 파일은
+# 실제로 닿지 않는다. 검색 색인을 막는 것은 각 페이지의
+# <meta name="robots" content="noindex, nofollow"> 태그다.
+User-agent: *
+Disallow: /

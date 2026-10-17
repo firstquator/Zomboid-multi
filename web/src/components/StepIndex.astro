@@ -1,0 +1,122 @@
+---
+import Icon from "./Icon.astro";
+
+// 표지 오른쪽의 전체 단계 목록. 누르면 그 단계로 바로 넘어간다(Deck 의 data-goto).
+interface Props {
+  title: string;
+  // 표지와 끝 장을 뺀 단계 제목들
+  steps: { title: string; icon: string; note?: string }[];
+}
+const { title, steps } = Astro.props;
+---
+
+<nav class="si" aria-label={title}>
+  <p class="si-title">
+    <Icon name="list-view" size={16} />
+    {title}
+  </p>
+  <ol>
+    {
+      steps.map((s, i) => (
+        <li style={`--i:${i}`}>
+          <button type="button" data-goto={i + 1}>
+            <span class="n mono">{String(i + 1).padStart(2, "0")}</span>
+            <span class="ic">
+              <Icon name={s.icon} size={18} />
+            </span>
+            <span class="t">
+              {s.title}
+              {s.note && <small>{s.note}</small>}
+            </span>
+            <Icon name="arrow-right-02" size={16} class="go" />
+          </button>
+        </li>
+      ))
+    }
+  </ol>
+</nav>
+
+<style>
+  .si {
+    padding: 22px 22px 14px;
+    border-radius: var(--radius-lg);
+    background: var(--night);
+    color: var(--night-ink);
+    box-shadow: var(--shadow-lift);
+  }
+  .si-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 12px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid rgb(235 226 200 / 0.12);
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .si-title :global(.icon) {
+    color: var(--sodium);
+  }
+  ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  li + li {
+    border-top: 1px dashed rgb(235 226 200 / 0.1);
+  }
+  button {
+    display: grid;
+    grid-template-columns: 26px 34px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 11px 6px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 150ms ease;
+  }
+  button:hover {
+    background: rgb(235 226 200 / 0.06);
+  }
+  .n {
+    color: var(--night-dim);
+    font-size: 12px;
+  }
+  .ic {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: rgb(240 169 58 / 0.12);
+    color: var(--sodium);
+  }
+  .t {
+    display: grid;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+  .t small {
+    color: var(--night-dim);
+    font-size: 12.5px;
+    font-weight: 400;
+  }
+  button :global(.go) {
+    color: var(--night-dim);
+    opacity: 0;
+    transform: translateX(-4px);
+    transition:
+      opacity 150ms ease,
+      transform 150ms ease;
+  }
+  button:hover :global(.go) {
+    opacity: 1;
+    transform: none;
+  }
+</style>

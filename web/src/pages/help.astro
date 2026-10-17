@@ -1,0 +1,233 @@
+---
+import Base from "../layouts/Base.astro";
+import PageHead from "../components/PageHead.astro";
+import Icon from "../components/Icon.astro";
+import { troubles } from "../data/troubles.mjs";
+
+const WHO: Record<string, string> = { all: "모두", host: "호스트", join: "참가자" };
+---
+
+<Base title="문제 해결" active="help">
+  <PageHead
+    kicker="FAQ"
+    title="문제 해결"
+    desc="자주 발생하는 문제와 해결 방법입니다. 목록에 없는 문제는 오류 화면을 캡처해 공유하면 원인을 찾기 쉽습니다."
+    icon="first-aid-kit"
+    seed={33}
+  />
+
+  <section class="wrap help">
+    <div class="who" role="group" aria-label="누구의 문제인지로 걸러 보기" data-who>
+      <button type="button" class="chip on" data-who-f="all-items" aria-pressed="true">전체</button>
+      <button type="button" class="chip" data-who-f="host" aria-pressed="false">
+        <Icon name="server-stack-01" size={15} />호스트
+      </button>
+      <button type="button" class="chip" data-who-f="join" aria-pressed="false">
+        <Icon name="user-group" size={15} />참가자
+      </button>
+    </div>
+
+    <div class="list">
+      {
+        troubles.map((t, i) => (
+          <details class="item reveal" id={t.id} data-who-of={t.who} style={`--i:${i % 4}`}>
+            <summary>
+              <span class="ic">
+                <Icon name={t.icon} size={22} />
+              </span>
+              <span class="q">{t.q}</span>
+              <span class={`tag ${t.who}`}>{WHO[t.who]}</span>
+              <span class="pm" aria-hidden="true" />
+            </summary>
+            <ol>
+              {t.steps.map((s) => (
+                <li>{s}</li>
+              ))}
+            </ol>
+          </details>
+        ))
+      }
+    </div>
+  </section>
+</Base>
+
+<script>
+  // 주소에 #id 가 있으면 그 항목을 펼친다. 슬라이드에서 "문제 해결" 로 넘어올 때 쓴다.
+  const open = () => {
+    const el = location.hash ? document.getElementById(location.hash.slice(1)) : null;
+    if (el instanceof HTMLDetailsElement) {
+      el.open = true;
+      el.classList.add("is-in", "flash");
+    }
+  };
+  open();
+  window.addEventListener("hashchange", open);
+
+  const bar = document.querySelector<HTMLElement>("[data-who]");
+  const items = Array.from(document.querySelectorAll<HTMLElement>("[data-who-of]"));
+  bar?.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-who-f]");
+    if (!btn) return;
+    const f = btn.dataset.whoF;
+    bar.querySelectorAll<HTMLButtonElement>("[data-who-f]").forEach((b) => {
+      b.classList.toggle("on", b === btn);
+      b.setAttribute("aria-pressed", String(b === btn));
+    });
+    items.forEach((it) => {
+      const w = it.dataset.whoOf;
+      it.hidden = !(f === "all-items" || w === f || w === "all");
+      it.classList.add("is-in");
+    });
+  });
+</script>
+
+<style>
+  .help {
+    padding-top: 40px;
+    max-width: 980px;
+  }
+  .who {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 28px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--paper-3);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .chip.on {
+    background: var(--ink);
+    color: var(--paper-3);
+  }
+  .list {
+    display: grid;
+    gap: 14px;
+  }
+  .item {
+    background: var(--paper-3);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sheet);
+    scroll-margin-top: 110px;
+  }
+  .item[hidden] {
+    display: none;
+  }
+  .item.flash {
+    animation: flash 1.6s ease-out;
+  }
+  @keyframes flash {
+    0%,
+    30% {
+      box-shadow:
+        0 0 0 4px color-mix(in srgb, var(--red) 45%, transparent),
+        var(--shadow-sheet);
+    }
+  }
+  summary {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    cursor: pointer;
+    list-style: none;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  .ic {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--red) 10%, transparent);
+    color: var(--red);
+  }
+  .q {
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+  .tag {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+    color: var(--ink-2);
+  }
+  .tag.host {
+    background: color-mix(in srgb, var(--red) 12%, transparent);
+    color: var(--red);
+  }
+  .tag.join {
+    background: color-mix(in srgb, var(--steel) 14%, transparent);
+    color: var(--steel);
+  }
+  .pm {
+    position: relative;
+    width: 18px;
+    height: 18px;
+  }
+  .pm::before,
+  .pm::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 14px;
+    height: 2px;
+    background: var(--ink-2);
+    translate: -50% -50%;
+    transition: rotate 250ms ease;
+  }
+  .pm::after {
+    rotate: 90deg;
+  }
+  .item[open] .pm::after {
+    rotate: 0deg;
+  }
+  ol {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 4px 22px 22px 80px;
+    color: var(--ink-2);
+  }
+  ol li::marker {
+    color: var(--red);
+    font-family: var(--f-mono);
+    font-weight: 600;
+  }
+  .item[open] ol {
+    animation: open 300ms ease-out;
+  }
+  @keyframes open {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+  }
+  @media (max-width: 640px) {
+    summary {
+      grid-template-columns: auto 1fr auto;
+    }
+    .tag {
+      display: none;
+    }
+    ol {
+      padding-left: 40px;
+    }
+  }
+</style>

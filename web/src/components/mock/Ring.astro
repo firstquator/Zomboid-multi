@@ -1,0 +1,14 @@
+---
+// 그림 속 눌러야 할 곳을 강조 상자로 감싸고 옆에 짧은 라벨을 붙인다.
+// 부모가 position:relative 여야 한다. 슬라이드가 화면에 들어온 뒤 나타난다(deck.css 의 .hl-*).
+interface Props {
+  note?: string;
+  // 라벨을 둘 자리. 강조 상자 기준.
+  at?: "right" | "left" | "top" | "bottom";
+  k?: number;
+}
+const { note, at = "right", k = 0 } = Astro.props;
+---
+
+<span class="hl-box" style={`--k:${k}`} aria-hidden="true"></span>
+{note && <span class={`hl-label at-${at}`} style={`--k:${k}`}>{note}</span>}

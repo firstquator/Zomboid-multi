@@ -1,0 +1,109 @@
+---
+import MockWindow from "./MockWindow.astro";
+import Ring from "./Ring.astro";
+import Icon from "../Icon.astro";
+import { SERVER_NAME } from "../../lib/site.mjs";
+
+// "서버 만들기" 를 누르면 나오는 서버 열기 화면. 항목 이름은 42.21 한국어 번역 그대로다.
+---
+
+<MockWindow title="Project Zomboid — 서버 열기" variant="pz" icon="server-stack-01">
+  <div class="host">
+    <p class="h">서버 열기</p>
+    <div class="rows">
+      <div class="row">
+        <span class="k">서버 이름 :</span>
+        <span class="sel">
+          {SERVER_NAME}
+          <Icon name="arrow-down-01" size={14} />
+          <Ring note="zomboid-multi" at="right" k={0} />
+        </span>
+      </div>
+      <div class="row">
+        <span class="k">서버 메모리 설정 :</span>
+        <span class="sel">
+          6 GB
+          <Icon name="arrow-down-01" size={14} />
+          <Ring note="5~8 GB" at="right" k={1} />
+        </span>
+      </div>
+      <div class="row">
+        <span class="k"></span>
+        <span class="btn-s">서버 설정</span>
+      </div>
+    </div>
+    <div class="btns">
+      <span class="b">뒤로</span>
+      <span class="b primary">
+        시작
+        <Ring note="시작" at="top" k={2} />
+      </span>
+    </div>
+  </div>
+</MockWindow>
+
+<style>
+  .host {
+    padding: 22px 24px 24px;
+    font-size: 13px;
+  }
+  .h {
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .rows {
+    display: grid;
+    gap: 14px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 130px auto;
+    justify-content: start;
+    align-items: center;
+    gap: 12px;
+  }
+  .k {
+    color: #a9a497;
+    text-align: right;
+  }
+  .sel {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    min-width: 170px;
+    padding: 6px 10px;
+    background: rgb(0 0 0 / 0.45);
+    border: 1px solid #4a4a40;
+    color: #e8e2d0;
+    font-family: var(--f-mono);
+    font-size: 12.5px;
+  }
+  .btn-s {
+    width: fit-content;
+    padding: 5px 12px;
+    border: 1px solid #4a4a40;
+    background: #24241f;
+    color: #c9c2ad;
+  }
+  .btns {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 40px;
+  }
+  .b {
+    position: relative;
+    padding: 7px 20px;
+    border: 1px solid #4a4a40;
+    background: #24241f;
+    color: #e8e2d0;
+  }
+  .b.primary {
+    border-color: #f0a93a;
+    color: #f0a93a;
+  }
+</style>

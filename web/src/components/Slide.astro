@@ -1,0 +1,46 @@
+---
+interface Props {
+  n: number;
+  total: number;
+  title: string;
+  kicker?: string;
+  // cover: 첫 장, done: 마지막 장. 나머지는 기본 단계.
+  tone?: "step" | "cover" | "done";
+}
+const { n, total, title, kicker, tone = "step" } = Astro.props;
+const pad = (v: number) => String(v).padStart(2, "0");
+const hasVisual = Astro.slots.has("visual");
+---
+
+<section
+  class={`slide ${tone} ${hasVisual ? "has-visual" : ""}`}
+  id={`step-${n}`}
+  aria-roledescription="단계"
+  aria-label={tone === "cover" ? title : `${n}단계 / ${total}: ${title}`}
+  data-title={title}
+>
+  <div class="slide-inner">
+    <div class="text">
+      {
+        tone === "step" && (
+          <div class="num" aria-hidden="true">
+            <span class="big">{pad(n)}</span>
+            <span class="of">/ {pad(total)}</span>
+          </div>
+        )
+      }
+      {kicker && <p class="kicker">{kicker}</p>}
+      <h2 class="display title">{title}</h2>
+      <div class="content">
+        <slot />
+      </div>
+    </div>
+    {
+      hasVisual && (
+        <div class="visual">
+          <slot name="visual" />
+        </div>
+      )
+    }
+  </div>
+</section>

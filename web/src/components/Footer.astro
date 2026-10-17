@@ -1,0 +1,108 @@
+---
+import Icon from "./Icon.astro";
+import Logo from "./Logo.astro";
+import { base } from "../lib/base-url.mjs";
+import { site, REPO_URL } from "../lib/site.mjs";
+---
+
+<footer class="foot">
+  <div class="wrap grid">
+    <div class="about">
+      <div class="brand">
+        <Logo size={36} />
+        <span class="display">좀보이드 멀티</span>
+      </div>
+      <p>
+        지인끼리 쓰는 비공식 안내 페이지입니다. Project Zomboid 는 The Indie Stone 의 게임이며,
+        각 모드의 저작권은 제작자에게 있습니다.
+      </p>
+    </div>
+
+    <nav class="links" aria-label="바닥 메뉴">
+      <a href={base("host/")}><Icon name="server-stack-01" size={16} />호스트 가이드</a>
+      <a href={base("join/")}><Icon name="user-group" size={16} />참가자 가이드</a>
+      <a href={base("mods/")}><Icon name="package" size={16} />모드 목록</a>
+      <a href={base("help/")}><Icon name="first-aid-kit" size={16} />문제 해결</a>
+      <a href={REPO_URL} rel="noopener"><Icon name="github" size={16} />저장소</a>
+    </nav>
+
+    <dl class="facts">
+      <div><dt>게임 버전</dt><dd class="mono">Build {site.build}</dd></div>
+      <div><dt>모드팩</dt><dd class="mono">{site.modpackVersion} · {site.modCount}개</dd></div>
+      <div><dt>마지막 확인</dt><dd class="mono">{site.checkedAt}</dd></div>
+    </dl>
+  </div>
+</footer>
+
+<style>
+  .foot {
+    margin-top: 120px;
+    border-top: 3px solid var(--red);
+    background: var(--night);
+    color: var(--night-dim);
+    --logo-gap: var(--night);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 40px;
+    padding-block: 56px 64px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    color: var(--night-ink);
+    font-size: 22px;
+  }
+  .about p {
+    max-width: 44ch;
+    font-size: 14px;
+  }
+  .links {
+    display: grid;
+    gap: 6px;
+    align-content: start;
+  }
+  .links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+    padding: 4px 0;
+    color: var(--night-ink);
+    text-decoration: none;
+    font-size: 15px;
+  }
+  .links a:hover {
+    color: var(--sodium);
+  }
+  .facts {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    align-content: start;
+  }
+  .facts div {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #3a3a2e;
+  }
+  .facts dt {
+    font-size: 13px;
+  }
+  .facts dd {
+    margin: 0;
+    color: var(--night-ink);
+    font-size: 13px;
+  }
+  @media (max-width: 860px) {
+    .grid {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+  }
+</style>

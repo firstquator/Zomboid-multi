@@ -1,0 +1,314 @@
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scroll-padding-top: 96px;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 16px;
+  line-height: 1.72;
+  /* 한국어는 어절 단위로 끊어야 읽힌다. 영문 긴 경로만 아무 데서나 끊는다. */
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  line-break: strict;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+}
+
+/* 종이 결. 화면 전체에 고정해 두면 스크롤해도 결이 따라오지 않아 진짜
+   종이 위를 움직이는 느낌이 난다. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .12  0 0 0 0 .09  0 0 0 0 .04  0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  opacity: 0.32;
+  mix-blend-mode: multiply;
+}
+
+/* 가장자리가 살짝 바랜 얼룩. 화면 정중앙은 건드리지 않는다. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 80% at 50% 40%, transparent 55%, rgb(120 90 40 / 0.16) 100%),
+    radial-gradient(28% 22% at 92% 12%, rgb(150 110 50 / 0.09), transparent 70%),
+    radial-gradient(22% 18% at 6% 88%, rgb(150 110 50 / 0.08), transparent 70%);
+}
+
+@media (prefers-color-scheme: dark) {
+  body::before {
+    mix-blend-mode: screen;
+    opacity: 0.08;
+    filter: invert(1);
+  }
+  body::after {
+    background:
+      radial-gradient(120% 80% at 50% 30%, transparent 50%, rgb(0 0 0 / 0.5) 100%),
+      radial-gradient(40% 30% at 50% 0%, rgb(240 169 58 / 0.05), transparent 70%);
+  }
+}
+
+::selection {
+  background: var(--red);
+  color: var(--paper-3);
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+code,
+kbd,
+.mono {
+  font-family: var(--f-mono);
+  font-size: 0.92em;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.9em;
+  padding: 0.05em 0.5em 0.12em;
+  border: 1px solid var(--rule-strong);
+  border-bottom-width: 3px;
+  border-radius: 5px;
+  background: var(--paper-3);
+  font-size: 0.82em;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--ink);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.wrap {
+  width: 100%;
+  max-width: 1240px;
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* 섹션 머리말. 등사판 안내서의 항목 번호처럼 보이게 한다. */
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--f-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+.kicker::before {
+  content: "";
+  width: 28px;
+  height: 2px;
+  background: currentColor;
+}
+
+.display {
+  font-family: var(--f-display);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* 버튼. 활판 인쇄처럼 그림자를 흐리지 않고 딱 떨어지게 민다. */
+.btn {
+  --btn-bg: var(--ink);
+  --btn-fg: var(--paper-3);
+  --btn-shadow: var(--red);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 12px 22px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 5px 5px 0 0 var(--btn-shadow);
+  transition:
+    transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0 0 var(--btn-shadow);
+}
+.btn:active {
+  transform: translate(4px, 4px);
+  box-shadow: 1px 1px 0 0 var(--btn-shadow);
+}
+.btn .icon {
+  transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.btn:hover .icon:last-child {
+  transform: translateX(3px);
+}
+.btn-red {
+  --btn-bg: var(--red);
+  --btn-fg: #fff7ea;
+  --btn-shadow: var(--ink);
+  border-color: var(--ink);
+}
+.btn-ghost {
+  --btn-bg: transparent;
+  --btn-fg: var(--ink);
+  --btn-shadow: var(--rule-strong);
+}
+
+@media (prefers-color-scheme: dark) {
+  .btn {
+    border-color: var(--ink);
+  }
+  .btn-red {
+    --btn-shadow: #000;
+    border-color: #000;
+  }
+}
+
+/* 종이 한 장. 카드 대신 이것을 쓴다. */
+.sheet {
+  position: relative;
+  background: var(--paper-3);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  box-shadow: var(--shadow-sheet);
+}
+
+/* 명령어 복사 줄 */
+.cmdline {
+  display: flex;
+  align-items: stretch;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--night);
+  box-shadow: 5px 5px 0 var(--red);
+  overflow: hidden;
+}
+.cmdline code {
+  flex: 1;
+  min-width: 0;
+  padding: 14px 16px;
+  color: #f4ecd5;
+  font-size: 13.5px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+.cmdline code::before {
+  content: "PS>";
+  margin-right: 10px;
+  color: var(--sodium);
+}
+.cmdline .copybtn {
+  border-radius: 0;
+  border-width: 0 0 0 2px;
+  box-shadow: none;
+}
+.cmdline .copybtn:hover,
+.cmdline .copybtn:active {
+  transform: none;
+  box-shadow: none;
+}
+
+/* 스크롤하면 드러나는 요소. JS 가 없으면 처음부터 보인다. */
+.js .reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity 700ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: calc(var(--i, 0) * 90ms);
+}
+.js .reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+  .js .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -1,0 +1,335 @@
+---
+// 밤의 녹스 카운티 지평선. 집, 급수탑, 전봇대, 가로등, 그리고 지평선을
+// 따라 느릿느릿 걷는 좀비들. 전부 도형으로 그려서 그림 파일이 필요 없다.
+//
+// 좀비는 <use> 로 돌려 쓰지 않고 하나씩 그린다. <use> 로 복제하면 다리
+// 움직임 박자가 전원 똑같아져 행진하는 것처럼 보인다.
+
+const GROUND = 330;
+
+const houses = [
+  { x: 40, w: 150, h: 70, roof: 34, wins: [[70, 1], [140, 0]] },
+  { x: 215, w: 110, h: 58, roof: 30, wins: [[245, 0]] },
+  { x: 470, w: 190, h: 84, roof: 40, wins: [[505, 1], [560, 0], [615, 1]], chimney: true },
+  { x: 690, w: 120, h: 62, roof: 28, wins: [[722, 0], [770, 2]] },
+  { x: 905, w: 170, h: 76, roof: 38, wins: [[940, 0], [1020, 1]] },
+  { x: 1250, w: 130, h: 66, roof: 32, wins: [[1282, 2], [1335, 0]], chimney: true },
+  { x: 1500, w: 150, h: 72, roof: 34, wins: [[1530, 1], [1600, 0]] },
+];
+
+const poles = [355, 845, 1185];
+
+// 각 좀비: 출발 위치, 이동 시간, 크기, 걸음 박자, 방향
+const zombieSeeds = [
+  { delay: -12, dur: 140, s: 1.05, gait: 1.7, dir: 1 },
+  { delay: -64, dur: 170, s: 0.86, gait: 2.1, dir: 1 },
+  { delay: -30, dur: 155, s: 0.95, gait: 1.9, dir: -1 },
+  { delay: -98, dur: 190, s: 0.78, gait: 2.3, dir: 1 },
+  { delay: -120, dur: 160, s: 1.12, gait: 1.6, dir: -1 },
+  { delay: -5, dur: 210, s: 0.7, gait: 2.4, dir: 1 },
+];
+
+// 움직임을 줄이도록 설정한 사람에게는 걷기 애니메이션 대신, 애니메이션이
+// 지금 있었을 자리에 멈춰 세운다. 다 같이 왼쪽 끝에 몰려 있으면 이상하다.
+const zombies = zombieSeeds.map((z) => {
+  const p = (-z.delay % z.dur) / z.dur;
+  const x = z.dir > 0 ? -80 + p * 1760 : 1680 - p * 1760;
+  return { ...z, x: Math.round(x) };
+});
+---
+
+<svg class="skyline" viewBox="0 0 1600 360" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="sky-cone" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f0a93a" stop-opacity="0.5" />
+      <stop offset="1" stop-color="#f0a93a" stop-opacity="0" />
+    </linearGradient>
+    <radialGradient id="sky-pool" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#f0a93a" stop-opacity="0.45" />
+      <stop offset="1" stop-color="#f0a93a" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- 먼 숲 -->
+  <path
+    class="far"
+    d="M0 262 C40 240 70 252 98 236 C130 220 160 246 200 232 C240 218 262 238 300 226 C340 212 380 240 420 230 C470 218 500 236 540 224 C590 210 620 240 668 232 C720 222 748 244 800 234 C850 224 880 210 930 226 C980 240 1010 222 1060 228 C1110 234 1150 214 1200 226 C1250 238 1290 220 1340 230 C1390 240 1430 220 1480 232 C1530 244 1570 230 1600 236 L1600 360 L0 360 Z"
+  />
+
+  <!-- 급수탑 -->
+  <g class="mid">
+    <path d="M1072 330 L1090 214 M1128 330 L1110 214 M1081 280 L1119 280 M1086 250 L1114 250" stroke-width="4" />
+    <rect x="1062" y="168" width="76" height="48" rx="6" />
+    <path d="M1058 170 L1100 140 L1142 170 Z" />
+    <rect x="1097" y="128" width="6" height="14" />
+    <text x="1100" y="198" class="tower-text">KNOX</text>
+  </g>
+
+  <!-- 전봇대와 전선 -->
+  <g class="poles">
+    {
+      poles.map((x) => (
+        <>
+          <path d={`M${x} ${GROUND} L${x} 196 M${x - 20} 206 L${x + 20} 206`} stroke-width="4" />
+        </>
+      ))
+    }
+    <path
+      class="wire"
+      d={`M0 214 Q 180 236 ${poles[0] - 18} 207 M${poles[0] + 18} 207 Q 600 236 ${poles[1] - 18} 207 M${poles[1] + 18} 207 Q 1015 230 ${poles[2] - 18} 207 M${poles[2] + 18} 207 Q 1400 236 1600 214`}
+      stroke-width="1.4"
+    />
+  </g>
+
+  <!-- 집 -->
+  <g class="houses">
+    {
+      houses.map((h) => (
+        <g>
+          {h.chimney && <rect x={h.x + h.w * 0.7} y={GROUND - h.h - h.roof + 4} width="14" height={h.roof} />}
+          <path
+            d={`M${h.x - 8} ${GROUND - h.h} L${h.x + h.w / 2} ${GROUND - h.h - h.roof} L${h.x + h.w + 8} ${GROUND - h.h} Z`}
+          />
+          <rect x={h.x} y={GROUND - h.h} width={h.w} height={h.h} />
+          {h.wins.map(([wx, lit]) => (
+            <rect
+              class={lit === 1 ? "win lit" : lit === 2 ? "win lit flicker" : "win"}
+              x={wx}
+              y={GROUND - h.h + 18}
+              width="18"
+              height="20"
+            />
+          ))}
+        </g>
+      ))
+    }
+  </g>
+
+  <!-- 가로등 -->
+  <g class="lamp">
+    <path class="lamp-post" d="M1452 330 L1452 186 Q1452 172 1438 172 L1418 172" stroke-width="5" fill="none" />
+    <rect class="lamp-head" x="1404" y="170" width="20" height="7" rx="2" />
+    <g class="lamp-light">
+      <polygon points="1406,178 1422,178 1520,330 1300,330" fill="url(#sky-cone)" />
+      <ellipse cx="1412" cy="332" rx="130" ry="12" fill="url(#sky-pool)" />
+      <circle cx="1414" cy="179" r="5" fill="#ffd28a" />
+    </g>
+  </g>
+
+  <!-- 땅 -->
+  <rect class="ground" x="0" y={GROUND} width="1600" height="30" />
+  <path class="road" d={`M0 ${GROUND + 14} L1600 ${GROUND + 14}`} stroke-dasharray="26 22" stroke-width="2" />
+
+  <!-- 좀비 -->
+  <g class="zombies">
+    {
+      zombies.map((z) => (
+        <g transform={`translate(0 ${GROUND + 1})`}>
+          <g
+            class={`z ${z.dir < 0 ? "rev" : ""}`}
+            style={`--dur:${z.dur}s;--delay:${z.delay}s;--gait:${z.gait}s;--x:${z.x}px`}
+          >
+            <g transform={`scale(${z.dir * z.s} ${z.s})`}>
+              <g class="z-body">
+                <circle cx="4" cy="-41" r="4.8" />
+                <path d="M1 -35 L-1.5 -16" stroke-width="8" />
+                <path class="arm a1" d="M2 -31 L15 -28" stroke-width="3" />
+                <path class="arm a2" d="M1 -28 L13 -23" stroke-width="3" />
+              </g>
+              <path class="leg l1" d="M-2 -17 L-5 0" stroke-width="3.8" />
+              <path class="leg l2" d="M-1 -17 L3 0" stroke-width="3.8" />
+            </g>
+          </g>
+        </g>
+      ))
+    }
+  </g>
+</svg>
+
+<style>
+  .skyline {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: clamp(190px, 23vw, 330px);
+    pointer-events: none;
+  }
+  .far {
+    fill: #191b14;
+  }
+  .mid,
+  .poles {
+    fill: #10110d;
+    stroke: #10110d;
+  }
+  .tower-text {
+    fill: #2a2b21;
+    stroke: none;
+    font-family: var(--f-stencil);
+    font-size: 15px;
+    letter-spacing: 3px;
+    text-anchor: middle;
+  }
+  .wire {
+    fill: none;
+    stroke: #22231b;
+  }
+  .houses {
+    fill: #0c0d0a;
+  }
+  .win {
+    fill: #1d1e17;
+  }
+  .win.lit {
+    fill: #f0a93a;
+    opacity: 0.75;
+    filter: drop-shadow(0 0 6px rgb(240 169 58 / 0.6));
+  }
+  .win.flicker {
+    animation: win-flicker 7s steps(1) infinite;
+  }
+  @keyframes win-flicker {
+    0%,
+    100% {
+      opacity: 0.75;
+    }
+    41% {
+      opacity: 0.1;
+    }
+    43% {
+      opacity: 0.7;
+    }
+    44% {
+      opacity: 0.08;
+    }
+    47% {
+      opacity: 0.75;
+    }
+    80% {
+      opacity: 0.12;
+    }
+    92% {
+      opacity: 0.75;
+    }
+  }
+  .lamp-post {
+    stroke: #0e0f0b;
+  }
+  .lamp-head {
+    fill: #0e0f0b;
+  }
+  .lamp-light {
+    animation: lamp-flicker 9s steps(1) infinite;
+  }
+  @keyframes lamp-flicker {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    62% {
+      opacity: 0.25;
+    }
+    63% {
+      opacity: 0.9;
+    }
+    64.5% {
+      opacity: 0.15;
+    }
+    66% {
+      opacity: 1;
+    }
+    88% {
+      opacity: 0.6;
+    }
+    89% {
+      opacity: 1;
+    }
+  }
+  .ground {
+    fill: #0a0b08;
+  }
+  .road {
+    stroke: #2a2a20;
+  }
+
+  .zombies {
+    fill: #070806;
+    stroke: #070806;
+    stroke-linecap: round;
+  }
+  .z {
+    animation: z-walk var(--dur) linear var(--delay) infinite;
+  }
+  .z.rev {
+    animation-name: z-walk-rev;
+  }
+  @keyframes z-walk {
+    from {
+      transform: translateX(-80px);
+    }
+    to {
+      transform: translateX(1680px);
+    }
+  }
+  @keyframes z-walk-rev {
+    from {
+      transform: translateX(1680px);
+    }
+    to {
+      transform: translateX(-80px);
+    }
+  }
+  .z-body {
+    animation: z-bob calc(var(--gait) / 2) ease-in-out infinite alternate;
+  }
+  @keyframes z-bob {
+    to {
+      transform: translateY(1.6px) rotate(2.5deg);
+    }
+  }
+  .leg {
+    transform-box: fill-box;
+    transform-origin: 50% 0%;
+    animation: z-leg var(--gait) ease-in-out infinite alternate;
+  }
+  .l2 {
+    animation-delay: calc(var(--gait) / -1);
+  }
+  @keyframes z-leg {
+    from {
+      transform: rotate(-16deg);
+    }
+    to {
+      transform: rotate(18deg);
+    }
+  }
+  .arm {
+    transform-box: fill-box;
+    transform-origin: 0% 50%;
+    animation: z-arm calc(var(--gait) * 1.3) ease-in-out infinite alternate;
+  }
+  .a2 {
+    animation-delay: calc(var(--gait) * -0.6);
+  }
+  @keyframes z-arm {
+    to {
+      transform: rotate(9deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .z {
+      animation: none;
+      transform: translateX(var(--x));
+    }
+    .z-body,
+    .leg,
+    .arm,
+    .lamp-light,
+    .win.flicker {
+      animation: none;
+    }
+  }
+</style>

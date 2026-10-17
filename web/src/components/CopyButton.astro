@@ -1,0 +1,142 @@
+---
+import Icon from "./Icon.astro";
+
+interface Props {
+  value: string;
+  label?: string;
+  // 어두운 배경(터미널, 히어로) 위에 놓일 때 색을 뒤집는다.
+  tone?: "paper" | "night";
+  size?: "md" | "lg";
+  class?: string;
+}
+const { value, label = "복사", tone = "paper", size = "md", class: klass = "" } = Astro.props;
+---
+
+<button
+  class={`copybtn ${tone} ${size} ${klass}`}
+  type="button"
+  data-copy={value}
+  aria-label={`${label}: ${value}`}
+>
+  <span class="ic ic-copy"><Icon name="copy-01" size={size === "lg" ? 20 : 16} /></span>
+  <span class="ic ic-done"><Icon name="tick-02" size={size === "lg" ? 20 : 16} /></span>
+  <span class="copy-label" aria-live="polite">{label}</span>
+</button>
+
+<script>
+  import { createCopyFeedback } from "../lib/copy-feedback.mjs";
+
+  // 버튼마다 피드백 컨트롤러 하나. 연타해도 되돌리기 타이머가 하나만
+  // 살아 있게 하는 책임은 copy-feedback.mjs 가 진다.
+  const feedbacks = new WeakMap<HTMLElement, ReturnType<typeof createCopyFeedback>>();
+
+  function feedbackFor(btn: HTMLElement) {
+    let fb = feedbacks.get(btn);
+    if (!fb) {
+      const span = btn.querySelector(".copy-label") as HTMLElement;
+      fb = createCopyFeedback({
+        defaultLabel: span.textContent ?? "복사",
+        applyLabel: (t: string) => {
+          span.textContent = t;
+        },
+        applyDoneClass: (on: boolean) => btn.classList.toggle("done", on),
+        setTimer: (fn: () => void, ms: number) => window.setTimeout(fn, ms),
+        clearTimer: (id: number) => window.clearTimeout(id),
+      });
+      feedbacks.set(btn, fb);
+    }
+    return fb;
+  }
+
+  document.addEventListener("click", async (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>(".copybtn");
+    if (!btn) return;
+    const fb = feedbackFor(btn);
+    try {
+      await navigator.clipboard.writeText(btn.dataset.copy ?? "");
+      fb.show("복사됨", 1600, { done: true });
+    } catch {
+      // 클립보드 권한이 없으면 같은 묶음 안의 값을 선택해 수동 복사를 돕는다.
+      const target = btn.closest("[data-copy-scope]")?.querySelector("[data-copy-text]");
+      if (target) {
+        const r = document.createRange();
+        r.selectNodeContents(target);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(r);
+      }
+      fb.show("선택됨, Ctrl+C 로 복사", 2400);
+    }
+  });
+</script>
+
+<style>
+  .copybtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+    padding: 8px 14px;
+    border: 1.5px solid var(--ink);
+    border-radius: var(--radius);
+    background: var(--paper-3);
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 var(--ink);
+    transition:
+      transform 140ms ease,
+      box-shadow 140ms ease,
+      background 140ms ease,
+      color 140ms ease;
+  }
+  .copybtn:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .copybtn:active {
+    transform: translate(3px, 3px);
+    box-shadow: 0 0 0 var(--ink);
+  }
+  .copybtn.lg {
+    padding: 12px 20px;
+    font-size: 16px;
+  }
+  .copybtn.night {
+    border-color: var(--sodium);
+    background: transparent;
+    color: var(--sodium);
+    box-shadow: 3px 3px 0 #000;
+  }
+  .copybtn.night:hover {
+    background: color-mix(in srgb, var(--sodium) 14%, transparent);
+  }
+  .ic {
+    display: inline-flex;
+  }
+  .ic-done {
+    display: none;
+  }
+  .copybtn.done {
+    background: var(--olive);
+    border-color: var(--olive);
+    color: #f6f1df;
+  }
+  .copybtn.night.done {
+    background: var(--sodium);
+    color: var(--night);
+  }
+  .copybtn.done .ic-copy {
+    display: none;
+  }
+  .copybtn.done .ic-done {
+    display: inline-flex;
+    animation: pop 320ms cubic-bezier(0.3, 1.8, 0.5, 1);
+  }
+  @keyframes pop {
+    from {
+      scale: 0.4;
+    }
+  }
+</style>

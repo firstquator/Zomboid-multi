@@ -1,0 +1,179 @@
+---
+import Base from "../layouts/Base.astro";
+import Deck from "../components/Deck.astro";
+import Slide from "../components/Slide.astro";
+import Icon from "../components/Icon.astro";
+import Shot from "../components/Shot.astro";
+import MockSteamBeta from "../components/mock/MockSteamBeta.astro";
+import MockPZMenu from "../components/mock/MockPZMenu.astro";
+import MockSteamInvite from "../components/mock/MockSteamInvite.astro";
+import MockWorkshopItems from "../components/mock/MockWorkshopItems.astro";
+import StepIndex from "../components/StepIndex.astro";
+import { base } from "../lib/base-url.mjs";
+import { site, mods } from "../lib/site.mjs";
+import { joinSteps } from "../data/guides.mjs";
+
+const T = joinSteps.titles;
+const N = T.length - 2;
+const index = [
+  { icon: "game-controller-03", note: "호스트와 Steam 친구 · 베타 없음" },
+  { icon: "translate", note: "설정 → UI → 언어 선택" },
+  { icon: "home-01", note: "초대는 메인 메뉴에서만 받음" },
+  { icon: "user-add-01", note: "Steam 채팅 → 게임 참가" },
+  { icon: "cloud-download", note: "창작마당 아이템 → 설치" },
+].map((s, i) => ({ ...s, title: T[i + 1] }));
+
+// 마지막 장의 모드 사용법. workshopId 로 찾아서, 모드가 빠지면 같이 사라지게 한다.
+const tip = (id: string, text: string, icon: string) => {
+  const m = mods.find((x: any) => x.workshopId === id);
+  return m ? { text, icon, name: m.nameKo } : null;
+};
+const tips = [
+  tip("2847184718", "인벤토리 왼쪽 지구본 탭: 주변 상자·바닥 아이템을 한 화면에서 확인", "maps-global-01"),
+  tip("2544353492", "책 아이콘의 ? 표시: 아직 읽지 않은 책, ! 표시: 읽다 만 책", "book-open-01"),
+  tip("3780552862", "채팅 한글 입력: 윈도우 입력기는 영문 상태로 두고 \\ 키로 한/영 전환", "keyboard"),
+  tip("3750253491", "쇠지렛대를 든 채 잠긴 문·창문 우클릭: 따고 들어가기", "hand-grip"),
+].filter(Boolean);
+---
+
+<Base title="참가자 가이드" active="join" deck>
+  <Deck
+    id="join"
+    name="참가자 가이드"
+    icon="user-group"
+    minutes={joinSteps.minutes}
+    steps={T}
+    finish={{ href: base("mods/"), label: "모드 목록" }}
+  >
+    <Slide n={0} total={N} title={T[0]} tone="cover" kicker="호스트 서버에 접속하는 사람">
+      <p class="lede">
+        호스트의 Steam 초대를 수락하면 접속됩니다. IP 입력이나 모드 구독은 필요 없고,
+        모드 {site.modCount}개는 접속할 때 게임이 자동으로 받습니다.
+      </p>
+      <ul class="need">
+        <li><Icon name="game-controller-03" size={22} /><span>Project Zomboid<small>Steam 정품, Build {site.build}</small></span></li>
+        <li><Icon name="user-multiple-02" size={22} /><span>호스트와 Steam 친구<small>초대는 Steam 으로 옴</small></span></li>
+        <li><Icon name="timer-01" size={22} /><span>약 {joinSteps.minutes}분<small>모드 다운로드 포함</small></span></li>
+      </ul>
+      <p>
+        <button type="button" class="btn btn-red" data-goto="1">
+          <span>1단계부터 보기</span>
+          <Icon name="arrow-right-02" size={20} />
+        </button>
+      </p>
+      <StepIndex slot="visual" title="진행 순서" steps={index} />
+    </Slide>
+
+    <Slide n={1} total={N} title={T[1]} kicker="버전과 Steam 친구">
+      <ol class="do">
+        <li>호스트와 <b>Steam 친구</b>인지 확인</li>
+        <li>Steam 라이브러리 → Project Zomboid 우클릭 → <b>속성 → 게임 버전 및 베타 → 없음</b></li>
+        <li>업데이트가 있으면 완료될 때까지 대기</li>
+      </ol>
+      <div class="success">
+        <Icon name="checkmark-circle-02" size={20} />
+        <span><b>확인:</b> 게임 첫 화면 구석의 버전 표기가 <code>{site.build}</code></span>
+      </div>
+      <Shot id="steam-beta" slot="visual" labels={["없음"]}><MockSteamBeta /></Shot>
+    </Slide>
+
+    <Slide n={2} total={N} title={T[2]} kicker="처음 한 번">
+      <ol class="do">
+        <li>메인 메뉴 → <b>설정</b></li>
+        <li><b>사용자 인터페이스 (UI) → 언어 선택 → 한국어</b> <span class="sub">바로 적용, 재시작 불필요</span></li>
+      </ol>
+      <div class="callout tip">
+        <Icon name="translate" size={20} />
+        <span><b>모드 한국어</b>서버 모드팩에 통합 번역 모드가 포함되어 모드 메뉴도 한국어로 표시됩니다.</span>
+      </div>
+      <Shot id="pz-language" slot="visual" labels={["한국어"]}><MockPZMenu highlight="options" note="설정 → UI → 언어 선택" /></Shot>
+    </Slide>
+
+    <Slide n={3} total={N} title={T[3]} kicker="초대를 받을 수 있는 상태">
+      <p>초대는 <b>메인 메뉴 화면</b>에서만 받을 수 있습니다. 게임 중이거나 다른 화면에 있으면 수락이 막힙니다.</p>
+      <ol class="do">
+        <li>게임 실행 → 메인 메뉴에서 대기</li>
+        <li>호스트에게 준비됐다고 알리기</li>
+      </ol>
+      <Shot id="pz-main-menu" slot="visual" labels={["메인 메뉴"]}><MockPZMenu highlight="join" note="메인 메뉴에서 대기" /></Shot>
+    </Slide>
+
+    <Slide n={4} total={N} title={T[4]} kicker="Steam 알림">
+      <ol class="do">
+        <li>Steam 채팅에 온 Project Zomboid 초대 → <b>게임 참가</b></li>
+        <li>게임이 서버 접속을 시작합니다</li>
+      </ol>
+      <div class="callout tip">
+        <Icon name="information-circle" size={20} />
+        <span><b>초대가 안 올 때</b>호스트에게 <kbd>Esc</kbd> → 친구 초대 → 초대를 다시 눌러 달라고 합니다. 초대는 서버를 열 때마다 새로 필요합니다.</span>
+      </div>
+      <Shot id="steam-invite-accept" slot="visual" labels={["게임 참가"]}><MockSteamInvite /></Shot>
+    </Slide>
+
+    <Slide n={5} total={N} title={T[5]} kicker="첫 접속 때 한 번">
+      <ol class="do">
+        <li><b>서버에 적용된 창작마당 아이템</b> 화면 → <b>설치</b></li>
+        <li>다운로드가 끝나면 접속이 이어집니다</li>
+        <li>캐릭터 생성 (시작 지역은 호스트와 같은 곳으로)</li>
+      </ol>
+      <div class="callout warn">
+        <Icon name="hourglass" size={20} />
+        <span><b>오래 걸릴 때</b>번역 모드 용량이 커서 몇 분 걸릴 수 있습니다. 10분 이상 멈춰 있으면 <a href={base("help/#download")}>문제 해결</a>을 확인하세요.</span>
+      </div>
+      <Shot id="pz-server-workshop-items" slot="visual" labels={["설치"]}><MockWorkshopItems /></Shot>
+    </Slide>
+
+    <Slide n={N + 1} total={N} title={T[N + 1]} tone="done" kicker="모드 사용법">
+      <span class="done-mark" aria-hidden="true"><Icon name="tick-02" size={44} /></span>
+      <ul class="tips">
+        {
+          tips.map((t: any) => (
+            <li>
+              <Icon name={t.icon} size={22} />
+              <span>
+                {t.text}
+                <small>{t.name}</small>
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+    </Slide>
+  </Deck>
+</Base>
+
+<style>
+  .lede {
+    font-size: clamp(17px, 1.5vw, 19px);
+    color: var(--ink-2);
+    max-width: 32em;
+  }
+  .tips {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .tips li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    align-items: start;
+    padding: 14px 16px;
+    background: var(--paper-3);
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--olive);
+    border-radius: 4px 8px 8px 4px;
+  }
+  .tips li :global(.icon) {
+    color: var(--olive);
+    margin-top: 2px;
+  }
+  .tips small {
+    display: block;
+    margin-top: 2px;
+    color: var(--ink-3);
+    font-size: 12.5px;
+  }
+</style>

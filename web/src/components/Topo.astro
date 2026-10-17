@@ -1,0 +1,55 @@
+---
+import { topoPaths } from "../lib/topo.mjs";
+
+interface Props {
+  seed?: number;
+  hills?: number;
+  levels?: number;
+  class?: string;
+  // 선이 천천히 흘러가게 할지. 히어로처럼 오래 머무는 화면에만 켠다.
+  drift?: boolean;
+}
+
+const { seed = 7, hills = 3, levels = 9, class: klass = "", drift = false } = Astro.props;
+const W = 1600;
+const H = 900;
+const paths = topoPaths({ seed, width: W, height: H, hills, levels });
+---
+
+<svg
+  class={`topo ${drift ? "drift" : ""} ${klass}`}
+  viewBox={`0 0 ${W} ${H}`}
+  preserveAspectRatio="xMidYMid slice"
+  aria-hidden="true"
+  focusable="false"
+>
+  <g fill="none" stroke="currentColor" vector-effect="non-scaling-stroke">
+    {
+      paths.map((p) => (
+        <path d={p.d} stroke-width={p.major ? 1.6 : 0.8} opacity={p.major ? 0.9 : 0.55} />
+      ))
+    }
+  </g>
+</svg>
+
+<style>
+  .topo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  .drift g {
+    transform-origin: 50% 50%;
+    animation: topo-drift 60s ease-in-out infinite alternate;
+  }
+  @keyframes topo-drift {
+    from {
+      transform: scale(1.04) translate(-1.5%, -1%) rotate(-0.6deg);
+    }
+    to {
+      transform: scale(1.1) translate(1.5%, 1.2%) rotate(0.8deg);
+    }
+  }
+</style>

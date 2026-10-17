@@ -1,0 +1,242 @@
+---
+import Icon from "./Icon.astro";
+
+export interface TermLine {
+  text: string;
+  tone?: "dim" | "ok" | "warn" | "accent" | "plain";
+  // 오른쪽 끝에 붙는 상태 글자. 점선으로 이어 준다.
+  status?: string;
+}
+
+interface Props {
+  title?: string;
+  prompt?: string;
+  command: string;
+  lines: TermLine[];
+  // 화면에 들어오면 한 글자씩 타이핑한다. 끄면 처음부터 다 보인다.
+  animate?: boolean;
+  class?: string;
+}
+
+const {
+  title = "Windows PowerShell",
+  prompt = "PS C:\\Users\\survivor>",
+  command,
+  lines,
+  animate = true,
+  class: klass = "",
+} = Astro.props;
+---
+
+<figure class={`term ${klass}`} data-term={animate ? "" : undefined}>
+  <div class="bar">
+    <span class="tab">
+      <Icon name="command-line" size={14} />
+      <span>{title}</span>
+    </span>
+    <span class="wc" aria-hidden="true"><i></i><i></i><i></i></span>
+  </div>
+  <pre class="screen" aria-label={`${prompt} ${command}`}><code><span class="prompt">{prompt}</span> <span class="cmd" data-cmd={command}>{command}</span><span class="caret" aria-hidden="true"></span>
+{lines.map((l, i) => (
+  <span class={`ln ${l.tone ?? "plain"}`} style={`--n:${i}`}>{l.status ? <><span class="lt">{l.text}</span><span class="dots" aria-hidden="true"></span><span class="st">{l.status}</span></> : l.text}{"\n"}</span>
+))}</code></pre>
+</figure>
+
+<script>
+  // 터미널 타이핑 연출. 화면에 처음 들어왔을 때 한 번만 돈다.
+  // 움직임 줄이기를 켠 사람이나 JS 가 없는 경우엔 처음부터 전부 보인다.
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.querySelectorAll<HTMLElement>("[data-term]").forEach((term) => {
+    if (reduce || !("IntersectionObserver" in window)) return;
+    const cmd = term.querySelector<HTMLElement>(".cmd");
+    if (!cmd) return;
+    const full = cmd.dataset.cmd ?? "";
+    term.classList.add("is-armed");
+    cmd.textContent = "";
+
+    const run = () => {
+      term.classList.add("is-typing");
+      let i = 0;
+      const step = () => {
+        i += Math.random() < 0.2 ? 2 : 1;
+        cmd.textContent = full.slice(0, i);
+        if (i < full.length) {
+          setTimeout(step, 18 + Math.random() * 40);
+        } else {
+          setTimeout(() => {
+            term.classList.remove("is-typing");
+            term.classList.add("is-done");
+          }, 380);
+        }
+      };
+      setTimeout(step, 450);
+    };
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          io.disconnect();
+          run();
+        }
+      },
+      { threshold: 0.45 },
+    );
+    io.observe(term);
+  });
+</script>
+
+<style>
+  .term {
+    margin: 0;
+    overflow: hidden;
+    border-radius: 10px;
+    background: #0c1220;
+    border: 1px solid #000;
+    box-shadow:
+      0 40px 80px -40px rgb(0 0 0 / 0.9),
+      0 0 0 1px rgb(255 255 255 / 0.04) inset;
+    color: #cfd6e4;
+  }
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 38px;
+    padding-left: 10px;
+    background: #1c2233;
+  }
+  .tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 30px;
+    margin-top: 8px;
+    padding: 0 14px;
+    border-radius: 8px 8px 0 0;
+    background: #0c1220;
+    font-size: 12.5px;
+    color: #c8d0e0;
+  }
+  .wc {
+    display: flex;
+    height: 100%;
+  }
+  .wc i {
+    width: 44px;
+    height: 100%;
+    position: relative;
+  }
+  .wc i::before {
+    content: "";
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: 10px;
+    height: 1px;
+    background: #9aa3b5;
+    translate: -50% 0;
+  }
+  .wc i:nth-child(2)::before {
+    height: 9px;
+    background: none;
+    border: 1px solid #9aa3b5;
+    translate: -50% -50%;
+  }
+  .wc i:nth-child(3)::before {
+    width: 12px;
+    background: #9aa3b5;
+    rotate: 45deg;
+    box-shadow: 0 0 0 0 #9aa3b5;
+  }
+  .wc i:nth-child(3)::after {
+    content: "";
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: 12px;
+    height: 1px;
+    background: #9aa3b5;
+    translate: -50% 0;
+    rotate: -45deg;
+  }
+  .screen {
+    margin: 0;
+    padding: 20px 22px 24px;
+    min-height: 260px;
+    font-family: var(--f-mono);
+    font-size: clamp(12px, 1.25vw, 14px);
+    line-height: 1.75;
+    white-space: pre-wrap;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+  }
+  .prompt {
+    color: #8fa1c4;
+  }
+  .cmd {
+    color: #f4f0e2;
+  }
+  .caret {
+    display: inline-block;
+    width: 0.6em;
+    height: 1.15em;
+    margin-left: 2px;
+    vertical-align: -0.2em;
+    background: var(--sodium);
+    animation: caret 1s steps(1) infinite;
+  }
+  .is-done .caret {
+    display: none;
+  }
+  @keyframes caret {
+    50% {
+      opacity: 0;
+    }
+  }
+  .ln {
+    display: inline-flex;
+    width: 100%;
+    gap: 0;
+  }
+  .ln.dim {
+    color: #7f8aa3;
+  }
+  .ln.ok .st {
+    color: #8fd18a;
+  }
+  .ln.warn {
+    color: #f2c76b;
+  }
+  .ln.accent {
+    color: var(--sodium);
+    font-weight: 600;
+  }
+  .lt {
+    flex: none;
+  }
+  .dots {
+    flex: 1;
+    margin: 0 10px;
+    border-bottom: 1px dotted #3c4660;
+    translate: 0 -0.45em;
+  }
+  .st {
+    flex: none;
+    color: #8fd18a;
+  }
+
+  /* JS 가 붙으면 결과 줄을 숨겼다가 명령 입력이 끝난 뒤 한 줄씩 보여 준다. */
+  .is-armed .ln {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  .is-done .ln {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 260ms ease,
+      transform 260ms ease;
+    transition-delay: calc(var(--n) * 320ms);
+  }
+  .is-typing .caret {
+    animation: none;
+  }
+</style>

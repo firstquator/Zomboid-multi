@@ -1,0 +1,102 @@
+---
+import "../styles/global.css";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import { base } from "../lib/base-url.mjs";
+
+interface Props {
+  title: string;
+  description?: string;
+  active?: "home" | "host" | "join" | "mods" | "help";
+  // 슬라이드 화면은 바닥글 없이 화면 한 장을 꽉 채운다.
+  deck?: boolean;
+}
+
+const {
+  title,
+  description = "친구 PC 에 좀보이드 멀티 서버를 열고 함께 접속하는 안내서. 모드팩과 한 번에 설치 명령을 담았습니다.",
+  active = "home",
+  deck = false,
+} = Astro.props;
+const fullTitle = title === "좀보이드 멀티" ? title : `${title} · 좀보이드 멀티`;
+---
+
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <!-- 친구들끼리 쓰는 안내서라 검색엔진에 올리지 않는다. -->
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#12130f" />
+    <link rel="icon" type="image/svg+xml" href={base("favicon.svg")} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Saira+Stencil+One&display=swap"
+    />
+    <!-- 스크롤 등장 효과는 JS 가 있을 때만 숨겼다가 보여 준다. -->
+    <script is:inline>document.documentElement.classList.add("js");</script>
+  </head>
+  <body class={deck ? "is-deck" : ""}>
+    <a class="skip" href="#main">본문으로 건너뛰기</a>
+    <Header active={active} />
+    <main id="main">
+      <slot />
+    </main>
+    {!deck && <Footer />}
+
+    <script>
+      // 화면에 들어온 .reveal 요소에 is-in 을 붙인다. 한 번 드러난 것은 다시
+      // 숨기지 않는다. 위아래로 오갈 때마다 깜빡이면 읽기 방해만 된다.
+      const els = document.querySelectorAll(".reveal");
+      if ("IntersectionObserver" in window) {
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const e of entries) {
+              if (e.isIntersecting) {
+                e.target.classList.add("is-in");
+                io.unobserve(e.target);
+              }
+            }
+          },
+          { rootMargin: "0px 0px -8% 0px", threshold: 0.12 },
+        );
+        els.forEach((el) => io.observe(el));
+      } else {
+        els.forEach((el) => el.classList.add("is-in"));
+      }
+    </script>
+  </body>
+</html>
+
+<style>
+  .skip {
+    position: absolute;
+    left: 12px;
+    top: -60px;
+    z-index: 200;
+    padding: 10px 16px;
+    background: var(--ink);
+    color: var(--paper-3);
+    border-radius: var(--radius);
+    text-decoration: none;
+    font-weight: 700;
+  }
+  .skip:focus {
+    top: 12px;
+  }
+  .is-deck {
+    height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .is-deck main {
+    flex: 1;
+    min-height: 0;
+  }
+</style>

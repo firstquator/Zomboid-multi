@@ -1,0 +1,174 @@
+---
+import Icon from "./Icon.astro";
+import Logo from "./Logo.astro";
+import { base } from "../lib/base-url.mjs";
+import { site } from "../lib/site.mjs";
+
+interface Props {
+  active?: "home" | "host" | "join" | "mods" | "help";
+}
+const { active = "home" } = Astro.props;
+
+const nav = [
+  { id: "host", href: base("host/"), label: "호스트 가이드", icon: "server-stack-01" },
+  { id: "join", href: base("join/"), label: "참가자 가이드", icon: "user-group" },
+  { id: "mods", href: base("mods/"), label: "모드 목록", icon: "package" },
+  { id: "help", href: base("help/"), label: "문제 해결", icon: "first-aid-kit" },
+];
+---
+
+<header class="masthead">
+  <div class="wrap bar">
+    <a class="brand" href={base("")} aria-label="좀보이드 멀티 처음 화면">
+      <Logo size={40} />
+      <span class="brand-text">
+        <span class="brand-name display">좀보이드 멀티</span>
+        <span class="brand-sub">BUILD 42 MULTIPLAYER</span>
+      </span>
+    </a>
+
+    <nav class="nav" aria-label="주요 메뉴">
+      {
+        nav.map((n) => (
+          <a href={n.href} aria-current={active === n.id ? "page" : undefined}>
+            <Icon name={n.icon} size={18} />
+            <span>{n.label}</span>
+          </a>
+        ))
+      }
+    </nav>
+
+    <p class="ver" title={`확인한 날짜 ${site.checkedAt}`}>
+      <span class="dot" aria-hidden="true"></span>
+      <span class="mono">B{site.build}</span>
+      <span class="sep" aria-hidden="true"></span>
+      <span class="mono">모드팩 {site.modpackVersion}</span>
+    </p>
+  </div>
+</header>
+
+<style>
+  .masthead {
+    position: sticky;
+    top: 0;
+    z-index: 25;
+    background: color-mix(in srgb, var(--paper) 88%, transparent);
+    backdrop-filter: blur(10px) saturate(1.1);
+    -webkit-backdrop-filter: blur(10px) saturate(1.1);
+    border-bottom: 1px solid var(--rule);
+  }
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    min-height: 66px;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    --logo-gap: var(--paper);
+  }
+  .brand-text {
+    display: grid;
+    line-height: 1.1;
+  }
+  .brand-name {
+    font-size: 21px;
+  }
+  .brand-sub {
+    font-family: var(--f-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--ink-3);
+  }
+
+  .nav {
+    display: flex;
+    gap: 2px;
+    margin-left: auto;
+  }
+  .nav a {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 13px;
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink-2);
+    text-decoration: none;
+    transition:
+      color 150ms ease,
+      background 150ms ease;
+  }
+  .nav a:hover {
+    color: var(--ink);
+    background: color-mix(in srgb, var(--ink) 7%, transparent);
+  }
+  .nav a[aria-current="page"] {
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .nav a[aria-current="page"]::after {
+    content: "";
+    position: absolute;
+    left: 13px;
+    right: 13px;
+    bottom: 2px;
+    height: 2px;
+    background: var(--red);
+  }
+
+  .ver {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--olive);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--olive) 22%, transparent);
+  }
+  .sep {
+    width: 1px;
+    height: 12px;
+    background: var(--rule-strong);
+  }
+
+  @media (max-width: 1100px) {
+    .ver {
+      display: none;
+    }
+  }
+  @media (max-width: 760px) {
+    .bar {
+      flex-wrap: wrap;
+      gap: 6px 12px;
+      padding-block: 10px 6px;
+    }
+    .nav {
+      order: 3;
+      margin-left: calc(var(--gutter) * -1);
+      padding-inline: var(--gutter);
+      width: calc(100% + var(--gutter) * 2);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .nav a {
+      flex: none;
+      padding: 8px 11px;
+      font-size: 14px;
+    }
+  }
+</style>

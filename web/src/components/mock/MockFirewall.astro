@@ -1,0 +1,127 @@
+---
+import MockWindow from "./MockWindow.astro";
+import Ring from "./Ring.astro";
+import Icon from "../Icon.astro";
+
+interface Props {
+  app?: string;
+}
+// 서버 만들기로 연 서버는 게임 폴더의 jre64in\java.exe 로 돈다. 그래서 확인 창에는
+// 게임 이름 대신 이 이름이 뜰 가능성이 높다(docs/research/hosting.md 6절).
+const { app = "Zulu Platform x64 Architecture" } = Astro.props;
+---
+
+<MockWindow title="Windows 보안 경고" variant="win" icon="shield-01">
+  <div class="fw">
+    <div class="head">
+      <span class="shield"><Icon name="shield-01" size={26} /></span>
+      <p>Windows Defender 방화벽에서 이 앱의 일부 기능을 차단했습니다</p>
+    </div>
+    <dl class="info">
+      <div><dt>이름</dt><dd>{app}</dd></div>
+      <div><dt>경로</dt><dd>...\ProjectZomboid\jre64in\java.exe</dd></div>
+    </dl>
+    <p class="q">다음 네트워크에서 통신하도록 허용:</p>
+    <ul class="checks">
+      <li><span class="cb on"><Icon name="tick-02" size={12} /></span>개인 네트워크(예: 홈 또는 회사 네트워크)</li>
+      <li><span class="cb"></span>공용 네트워크(예: 공항, 커피숍)</li>
+    </ul>
+    <div class="btns">
+      <span class="b primary">
+        액세스 허용
+        <Ring note="액세스 허용" at="left" />
+      </span>
+      <span class="b">취소</span>
+    </div>
+  </div>
+</MockWindow>
+
+<style>
+  .fw {
+    padding: 18px 20px 20px;
+    font-size: 13px;
+  }
+  .head {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #dfe3ea;
+  }
+  .head p {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .shield {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    flex: none;
+    border-radius: 8px;
+    background: #0f6cbd;
+    color: #fff;
+  }
+  .info {
+    display: grid;
+    gap: 2px;
+    margin: 12px 0;
+  }
+  .info div {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+  }
+  .info dt {
+    color: #6b7280;
+  }
+  .info dd {
+    margin: 0;
+  }
+  .q {
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .checks {
+    display: grid;
+    gap: 8px;
+    margin: 0 0 18px;
+    padding: 0;
+    list-style: none;
+  }
+  .checks li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cb {
+    display: grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid #6b7280;
+    border-radius: 3px;
+    color: #fff;
+  }
+  .cb.on {
+    background: #0f6cbd;
+    border-color: #0f6cbd;
+  }
+  .btns {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .b {
+    position: relative;
+    padding: 7px 18px;
+    border: 1px solid #c9ced6;
+    border-radius: 5px;
+    background: #fff;
+  }
+  .b.primary {
+    background: #0f6cbd;
+    border-color: #0f6cbd;
+    color: #fff;
+  }
+</style>

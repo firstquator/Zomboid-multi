@@ -1,0 +1,267 @@
+---
+import Icon from "./Icon.astro";
+import { base } from "../lib/base-url.mjs";
+import { findShot } from "../lib/shots.mjs";
+
+// 실제 화면 사진 위에 눌러야 할 곳을 표시한다.
+// shots.json 에 해당 사진이 없으면 슬롯(단순화한 그림)을 대신 보여 준다.
+interface Props {
+  id: string;
+  // 사진에 이미 있는 targets 의 라벨 대신 쓸 문구. 순서대로 덮어쓴다.
+  labels?: string[];
+  tilt?: number;
+}
+const { id, labels = [], tilt = -1 } = Astro.props;
+const shot = findShot(id);
+const targets = (shot?.targets ?? []).map((t: any, i: number) => ({ ...t, label: labels[i] ?? t.label }));
+const many = targets.length > 1;
+
+// 라벨을 상자 오른쪽에 둘지 왼쪽에 둘지. 사진 밖으로 나가지 않게 고른다.
+const side = (t: any) => (t.x + t.w > 62 ? "left" : "right");
+---
+
+{
+  shot ? (
+    <figure class="shot" style={`--tilt:${tilt}deg`}>
+      <button
+        type="button"
+        class="photo"
+        style={`aspect-ratio:${shot.width}/${shot.height}`}
+        data-shot-open={id}
+        aria-label={`${shot.caption} 크게 보기`}
+      >
+        <img
+          src={base(shot.file)}
+          alt={shot.caption}
+          width={shot.width}
+          height={shot.height}
+          loading="lazy"
+          decoding="async"
+        />
+        {targets.map((t: any, i: number) => (
+          <span
+            class="mark"
+            style={`left:${t.x}%;top:${t.y}%;width:${t.w}%;height:${t.h}%`}
+            aria-hidden="true"
+          >
+            <span class="hl-box" style={`--k:${i}`} />
+            {many && <span class="badge mono">{i + 1}</span>}
+            {t.label && (
+              <span class={`hl-label at-${side(t)}`} style={`--k:${i}`}>
+                {t.label}
+              </span>
+            )}
+          </span>
+        ))}
+        <span class="zoom" aria-hidden="true">
+          <Icon name="search-01" size={16} />
+          크게 보기
+        </span>
+      </button>
+      <figcaption>
+        <span class="cap">{shot.caption}</span>
+        <span class="credit">
+          {shot.build !== "해당없음" && <span class={`build ${shot.build === "B42" ? "ok" : "old"}`}>{shot.build}</span>}
+          출처{" "}
+          <a href={shot.source} target="_blank" rel="noopener">
+            {shot.credit}
+          </a>
+        </span>
+      </figcaption>
+
+      <dialog class="lightbox" data-shot-dialog={id} aria-label={shot.caption}>
+        <div class="lb-photo" style={`aspect-ratio:${shot.width}/${shot.height}`}>
+          <img src={base(shot.file)} alt="" width={shot.width} height={shot.height} loading="lazy" decoding="async" />
+          {targets.map((t: any, i: number) => (
+            <span class="lb-box" style={`left:${t.x}%;top:${t.y}%;width:${t.w}%;height:${t.h}%`} aria-hidden="true">
+              {many && <span class="badge mono">{i + 1}</span>}
+            </span>
+          ))}
+        </div>
+        {targets.length > 0 && (
+          <ol class="lb-list">
+            {targets.map((t: any) => (
+              <li>{t.label}</li>
+            ))}
+          </ol>
+        )}
+        <form method="dialog">
+          <button class="lb-close" aria-label="닫기">
+            <Icon name="cancel-01" size={22} />
+          </button>
+        </form>
+      </dialog>
+    </figure>
+  ) : (
+    <slot />
+  )
+}
+
+<script>
+  // 사진을 누르면 크게 보여 준다. dialog 는 Esc 와 바깥 클릭으로 닫힌다.
+  document.addEventListener("click", (e) => {
+    const t = e.target as HTMLElement;
+    const opener = t.closest<HTMLElement>("[data-shot-open]");
+    if (opener) {
+      const dlg = document.querySelector<HTMLDialogElement>(`[data-shot-dialog="${opener.dataset.shotOpen}"]`);
+      dlg?.showModal();
+      return;
+    }
+    if (t instanceof HTMLDialogElement && t.matches("[data-shot-dialog]")) t.close();
+  });
+</script>
+
+<style>
+  .shot {
+    margin: 0;
+  }
+  .photo {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 6px solid var(--paper-3);
+    border-radius: 10px;
+    background: #111;
+    cursor: zoom-in;
+    box-shadow:
+      0 40px 70px -36px rgb(20 14 4 / 0.7),
+      0 8px 16px -8px rgb(20 14 4 / 0.35);
+    transition:
+      scale 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .photo:hover {
+    scale: 1.01;
+  }
+  .photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .mark {
+    position: absolute;
+    pointer-events: none;
+  }
+  .badge {
+    position: absolute;
+    z-index: 2;
+    left: -18px;
+    top: -18px;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--red);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.4);
+  }
+  .zoom {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgb(0 0 0 / 0.7);
+    color: #fff;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 200ms ease;
+  }
+  .photo:hover .zoom,
+  .photo:focus-visible .zoom {
+    opacity: 1;
+  }
+  figcaption {
+    display: grid;
+    gap: 4px;
+    margin-top: 16px;
+    text-align: center;
+  }
+  .cap {
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  .credit {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .credit a {
+    color: inherit;
+  }
+  .build {
+    padding: 0 6px;
+    border-radius: 3px;
+    font-family: var(--f-mono);
+    font-weight: 600;
+    font-size: 11px;
+  }
+  .build.ok {
+    background: color-mix(in srgb, var(--olive) 18%, transparent);
+    color: var(--olive);
+  }
+  .build.old {
+    background: color-mix(in srgb, var(--amber) 18%, transparent);
+    color: var(--amber);
+  }
+
+  .lightbox {
+    width: min(1280px, 94vw);
+    max-height: 94dvh;
+    padding: 18px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--night);
+    color: var(--night-ink);
+    overflow: auto;
+  }
+  .lightbox::backdrop {
+    background: rgb(8 8 6 / 0.85);
+    backdrop-filter: blur(4px);
+  }
+  .lb-photo {
+    position: relative;
+    width: 100%;
+  }
+  .lb-photo img {
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+  }
+  .lb-box {
+    position: absolute;
+    border: 3px solid var(--red);
+    border-radius: 8px;
+    box-shadow: 0 0 0 9999px rgb(0 0 0 / 0.25);
+  }
+  .lb-list {
+    display: grid;
+    gap: 6px;
+    margin: 16px 0 0;
+    padding-left: 22px;
+    font-size: 15px;
+  }
+  .lb-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(0 0 0 / 0.6);
+    color: #fff;
+    cursor: pointer;
+  }
+</style>

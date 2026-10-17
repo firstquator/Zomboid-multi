@@ -1,0 +1,75 @@
+/* 디자인 토큰.
+ *
+ * 콘셉트는 "1993년 녹스 카운티 생존 매뉴얼"이다. 낮에는 바랜 종이에 찍은
+ * 등사판 안내서, 밤에는 손전등으로 비춘 같은 종이다. 색은 종이와 잉크가
+ * 대부분을 차지하고, 비상 빨강과 경고 호박색은 정말 봐야 할 곳에만 쓴다.
+ */
+
+:root {
+  --f-display: "Black Han Sans", "IBM Plex Sans KR", sans-serif;
+  --f-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --f-stencil: "Saira Stencil One", "Black Han Sans", sans-serif;
+  /* 고정폭 글꼴에는 한글이 없다. 한글 글자만 본문 글꼴로 넘어가게 바로 뒤에 둔다. */
+  --f-mono: "IBM Plex Mono", "IBM Plex Sans KR", Consolas, monospace;
+
+  --paper: #ece2cb;
+  --paper-2: #e2d5b7;
+  --paper-3: #f5eedd;
+  --ink: #1d1b16;
+  --ink-2: #4a4537;
+  --ink-3: #7b735f;
+  --rule: #c7b994;
+  --rule-strong: #a8986f;
+
+  --red: #b02a1c;
+  --red-ink: #8f1f14;
+  --amber: #c4870f;
+  --olive: #4c5a2c;
+  --steel: #2f4a63;
+
+
+  /* 밤 장면(히어로, 터미널, 게임 화면 그림)은 테마와 관계없이 늘 어둡다. */
+  --night: #12130f;
+  --night-2: #1b1c16;
+  --night-3: #26271f;
+  --night-ink: #ebe2c8;
+  --night-dim: #a59d86;
+  --sodium: #f0a93a;
+
+  --radius: 6px;
+  --radius-lg: 14px;
+  --shadow-sheet: 0 1px 0 rgb(255 255 255 / 0.45) inset, 0 18px 40px -22px rgb(40 30 10 / 0.55),
+    0 2px 6px -2px rgb(40 30 10 / 0.25);
+  --shadow-lift: 0 30px 60px -30px rgb(30 20 5 / 0.6), 0 6px 14px -6px rgb(30 20 5 / 0.3);
+
+  --gutter: clamp(16px, 4vw, 48px);
+  --measure: 62ch;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #16150f;
+    --paper-2: #1f1d16;
+    --paper-3: #26241c;
+    --ink: #ece3cb;
+    --ink-2: #bfb59b;
+    --ink-3: #888069;
+    --rule: #3a362a;
+    --rule-strong: #575038;
+
+    --red: #e2553f;
+    --red-ink: #f07a62;
+    --amber: #e9ad3d;
+    --olive: #a3b16c;
+    --steel: #8fb0cf;
+
+
+    --shadow-sheet: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 18px 40px -22px rgb(0 0 0 / 0.8),
+      0 2px 6px -2px rgb(0 0 0 / 0.5);
+    --shadow-lift: 0 30px 60px -30px rgb(0 0 0 / 0.9), 0 6px 14px -6px rgb(0 0 0 / 0.6);
+
+    color-scheme: dark;
+  }
+}

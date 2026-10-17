@@ -1,0 +1,148 @@
+---
+import Icon from "../Icon.astro";
+
+// 단순화한 프로그램 창 틀. 실제 화면을 그대로 베끼지 않고, 어디를 눌러야
+// 하는지 알아볼 만큼만 닮게 그린다. 그래서 아래에 늘 그 사실을 적는다.
+interface Props {
+  title: string;
+  variant?: "steam" | "win" | "pz";
+  icon?: string;
+  caption?: string | false;
+  class?: string;
+}
+const {
+  title,
+  variant = "win",
+  icon,
+  caption = "실제 화면을 알아보기 쉽게 단순화한 그림이에요",
+  class: klass = "",
+} = Astro.props;
+---
+
+<figure class={`mock ${variant} ${klass}`}>
+  <div class="frame">
+    <div class="titlebar">
+      {icon && <Icon name={icon} size={14} />}
+      <span class="tt">{title}</span>
+      <span class="wc" aria-hidden="true"><i></i><i></i><i></i></span>
+    </div>
+    <div class="body">
+      <slot />
+    </div>
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .mock {
+    position: relative;
+    margin: 0;
+  }
+  .frame {
+    position: relative;
+    overflow: visible;
+    border-radius: 10px;
+    box-shadow:
+      0 50px 80px -40px rgb(20 14 4 / 0.65),
+      0 10px 20px -10px rgb(20 14 4 / 0.35);
+  }
+  .titlebar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding-left: 12px;
+    border-radius: 10px 10px 0 0;
+    font-size: 12.5px;
+  }
+  .tt {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .wc {
+    display: flex;
+    height: 100%;
+  }
+  .wc i {
+    position: relative;
+    width: 38px;
+  }
+  .wc i::before,
+  .wc i::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 10px;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.7;
+    translate: -50% 0;
+  }
+  .wc i::after {
+    display: none;
+  }
+  .wc i:nth-child(2)::before {
+    height: 8px;
+    background: none;
+    border: 1px solid currentColor;
+    translate: -50% -50%;
+  }
+  .wc i:nth-child(3)::before {
+    rotate: 45deg;
+  }
+  .wc i:nth-child(3)::after {
+    display: block;
+    rotate: -45deg;
+  }
+  .body {
+    position: relative;
+    border-radius: 0 0 10px 10px;
+  }
+
+  .win .titlebar {
+    background: #e9edf3;
+    color: #1f2328;
+  }
+  .win .body {
+    background: #f7f9fc;
+    color: #1f2328;
+  }
+  .steam .titlebar {
+    background: #171d25;
+    color: #b8c4d1;
+  }
+  .steam .body {
+    background: linear-gradient(180deg, #1b2838, #16202d);
+    color: #c7d5e0;
+  }
+  .pz .titlebar {
+    background: #0e0e0d;
+    color: #a9a497;
+  }
+  .pz .body {
+    background:
+      radial-gradient(120% 90% at 70% 30%, #2a2a24 0%, #121210 70%),
+      #121210;
+    color: #e8e2d0;
+  }
+
+  figcaption {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 18px;
+    font-size: 12.5px;
+    color: var(--ink-3);
+    justify-content: center;
+  }
+  figcaption::before {
+    content: "";
+    width: 14px;
+    height: 1px;
+    background: currentColor;
+  }
+</style>

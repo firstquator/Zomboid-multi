@@ -1,0 +1,258 @@
+---
+import "../styles/deck.css";
+import Icon from "./Icon.astro";
+
+interface Props {
+  // localStorage 키와 진행 기록에 쓴다. 가이드마다 달라야 한다.
+  id: string;
+  name: string;
+  icon: string;
+  minutes: number;
+  // 슬라이드 제목. 순서가 슬롯 안 Slide 순서와 같아야 한다.
+  steps: string[];
+  finish: { href: string; label: string };
+}
+const { id, name, icon, minutes, steps, finish } = Astro.props;
+const last = steps.length - 1;
+
+// 경로 선. 핀이 놓이는 자리마다 사인 곡선이 가운데 선을 지나도록
+// 주기를 핀 간격에 맞춘다. 그래야 구불구불한 길 위에 핀이 정확히 앉는다.
+const W = 1000;
+const seg = W / last;
+let d = "M0 20";
+for (let i = 0; i < last; i++) {
+  const x0 = i * seg;
+  const dir = i % 2 === 0 ? -1 : 1;
+  d += ` C${(x0 + seg * 0.36).toFixed(1)} ${20 + dir * 9} ${(x0 + seg * 0.64).toFixed(1)} ${20 + dir * 9} ${(x0 + seg).toFixed(1)} 20`;
+}
+---
+
+<div class="deck" data-deck={id} data-last={last}>
+  <div class="deck-top">
+    <p class="deck-name">
+      <Icon name={icon} size={18} />
+      <span>{name}</span>
+      <span class="deck-time"><Icon name="timer-01" size={14} />약 {minutes}분</span>
+    </p>
+    <p class="deck-now" aria-live="polite" data-deck-now></p>
+    <details class="toc">
+      <summary>
+        <Icon name="list-view" size={18} />
+        <span>목차</span>
+      </summary>
+      <ol>
+        {
+          steps.map((s, i) => (
+            <li>
+              <a href={`#step-${i}`} data-goto={i}>
+                <span class="toc-n mono">{i === 0 ? "시작" : i === last ? "끝" : String(i).padStart(2, "0")}</span>
+                <span>{s}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </details>
+  </div>
+
+  <div class="track" data-track>
+    <slot />
+  </div>
+
+  <div class="resume" data-resume hidden>
+    <Icon name="bookmark-01" size={18} />
+    <span data-resume-text>지난번 보던 단계가 있어요</span>
+    <button type="button" data-resume-go>이어서 보기</button>
+    <button type="button" class="x" data-resume-close aria-label="닫기"><Icon name="cancel-01" size={16} /></button>
+  </div>
+
+  <nav class="deck-nav" aria-label="단계 이동">
+    <button class="nav-btn prev" type="button" data-prev aria-label="이전 단계">
+      <Icon name="arrow-left-02" size={22} />
+      <span class="nav-label">이전</span>
+    </button>
+
+    <div class="route" style={`--last:${last}`}>
+      <svg class="route-line" viewBox={`0 0 ${W} 40`} preserveAspectRatio="none" aria-hidden="true">
+        <path class="route-bg" d={d} pathLength="1" />
+        <path class="route-fg" d={d} pathLength="1" data-route />
+      </svg>
+      <ol class="pins">
+        {
+          steps.map((s, i) => (
+            <li style={`--x:${(i / last) * 100}%`}>
+              <button type="button" class="pin" data-goto={i} aria-label={`${i === 0 ? "시작" : i === last ? "끝" : i + "단계"}: ${s}`}>
+                {i === 0 ? (
+                  <Icon name="flag-02" size={14} />
+                ) : i === last ? (
+                  <Icon name="home-01" size={14} />
+                ) : (
+                  <span class="mono">{i}</span>
+                )}
+              </button>
+              <span class="pin-tip" aria-hidden="true">{s}</span>
+            </li>
+          ))
+        }
+      </ol>
+      <span class="marker" aria-hidden="true" data-marker>
+        <Icon name="location-01" size={26} />
+      </span>
+      <p class="route-mobile mono" aria-hidden="true" data-count>시작</p>
+      <div class="route-bar" aria-hidden="true"><i data-bar></i></div>
+    </div>
+
+    <button class="nav-btn next" type="button" data-next aria-label="다음 단계">
+      <span class="nav-label">다음</span>
+      <Icon name="arrow-right-02" size={22} />
+    </button>
+    <a class="nav-btn next finish" href={finish.href} data-finish hidden>
+      <span class="nav-label">{finish.label}</span>
+      <Icon name="arrow-right-02" size={22} />
+    </a>
+  </nav>
+</div>
+
+<script>
+  const deck = document.querySelector<HTMLElement>("[data-deck]");
+  if (deck) initDeck(deck);
+
+  function initDeck(deck: HTMLElement) {
+    const track = deck.querySelector<HTMLElement>("[data-track]")!;
+    const slides = Array.from(track.querySelectorAll<HTMLElement>(".slide"));
+    const last = slides.length - 1;
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const storeKey = `zm-deck:${deck.dataset.deck}`;
+
+    const prev = deck.querySelector<HTMLButtonElement>("[data-prev]")!;
+    const next = deck.querySelector<HTMLButtonElement>("[data-next]")!;
+    const finish = deck.querySelector<HTMLElement>("[data-finish]")!;
+    const now = deck.querySelector<HTMLElement>("[data-deck-now]")!;
+    const route = deck.querySelector<SVGPathElement>("[data-route]")!;
+    const marker = deck.querySelector<HTMLElement>("[data-marker]")!;
+    const count = deck.querySelector<HTMLElement>("[data-count]")!;
+    const bar = deck.querySelector<HTMLElement>("[data-bar]")!;
+    const pins = Array.from(deck.querySelectorAll<HTMLElement>(".pin"));
+    const toc = deck.querySelector<HTMLDetailsElement>(".toc");
+
+    let cur = -1;
+
+    const save = (i: number) => {
+      try {
+        localStorage.setItem(storeKey, String(i));
+      } catch {
+        // 사생활 보호 모드 등에서 막혀도 진행 기록만 못 남길 뿐이다.
+      }
+    };
+    const load = () => {
+      try {
+        return Number(localStorage.getItem(storeKey) ?? "0") || 0;
+      } catch {
+        return 0;
+      }
+    };
+
+    function setActive(i: number) {
+      if (i === cur) return;
+      cur = i;
+      slides.forEach((s, k) => {
+        const on = k === i;
+        s.classList.toggle("is-active", on);
+        s.classList.toggle("is-past", k < i);
+        // 화면 밖 슬라이드에 Tab 이 들어가면 보이지 않는 버튼을 누르게 된다.
+        s.toggleAttribute("inert", !on);
+      });
+      pins.forEach((p, k) => {
+        p.classList.toggle("done", k < i);
+        p.classList.toggle("here", k === i);
+        if (k === i) p.setAttribute("aria-current", "step");
+        else p.removeAttribute("aria-current");
+      });
+      const frac = last ? i / last : 0;
+      route.style.strokeDashoffset = String(1 - frac);
+      marker.style.setProperty("--x", `${frac * 100}%`);
+      bar.style.width = `${frac * 100}%`;
+      // 표지와 끝 장은 단계 수에 넣지 않는다. 실제 단계는 last - 1 개다.
+      count.textContent = i === 0 ? "시작" : i === last ? "완료" : `${i} / ${last - 1}`;
+      now.textContent = i === 0 ? "" : i === last ? "끝" : `${i}단계 · ${slides[i].dataset.title}`;
+
+      prev.disabled = i === 0;
+      const atEnd = i === last;
+      next.hidden = atEnd;
+      finish.hidden = !atEnd;
+
+      history.replaceState(null, "", `#step-${i}`);
+      save(i);
+    }
+
+    function go(i: number, smooth = true) {
+      const k = Math.max(0, Math.min(last, i));
+      track.scrollTo({ left: slides[k].offsetLeft, behavior: smooth && !reduce ? "smooth" : "auto" });
+      setActive(k);
+    }
+
+    // 손가락으로 밀어서 넘긴 경우에도 현재 단계를 따라간다.
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) setActive(slides.indexOf(e.target as HTMLElement));
+        }
+      },
+      { root: track, threshold: 0.6 },
+    );
+    slides.forEach((s) => io.observe(s));
+
+    prev.addEventListener("click", () => go(cur - 1));
+    next.addEventListener("click", () => go(cur + 1));
+    deck.addEventListener("click", (e) => {
+      const t = (e.target as HTMLElement).closest<HTMLElement>("[data-goto]");
+      if (!t) return;
+      e.preventDefault();
+      go(Number(t.dataset.goto));
+      if (toc) toc.open = false;
+    });
+
+    document.addEventListener("keydown", (e) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (["INPUT", "TEXTAREA", "SELECT"].includes(tag) || e.altKey || e.ctrlKey || e.metaKey) return;
+      if (e.key === "ArrowRight" || e.key === "PageDown") {
+        e.preventDefault();
+        go(cur + 1);
+      } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+        e.preventDefault();
+        go(cur - 1);
+      } else if (e.key === "Home") {
+        go(0);
+      } else if (e.key === "End") {
+        go(last);
+      } else if (e.key === "Escape" && toc?.open) {
+        toc.open = false;
+      }
+    });
+
+    window.addEventListener("resize", () => go(cur, false));
+
+    // 처음 열 때: 주소에 단계가 있으면 거기로, 없으면 지난번 기록을 제안한다.
+    const fromHash = Number(/^#step-(\d+)$/.exec(location.hash)?.[1] ?? NaN);
+    if (Number.isFinite(fromHash)) {
+      requestAnimationFrame(() => go(fromHash, false));
+    } else {
+      go(0, false);
+      const saved = load();
+      if (saved > 0 && saved <= last) {
+        const box = deck.querySelector<HTMLElement>("[data-resume]")!;
+        deck.querySelector<HTMLElement>("[data-resume-text]")!.textContent =
+          `지난번에 ${saved === last ? "끝까지" : saved + "단계까지"} 봤어요`;
+        box.hidden = false;
+        deck.querySelector("[data-resume-go]")!.addEventListener("click", () => {
+          box.hidden = true;
+          go(saved);
+        });
+        deck.querySelector("[data-resume-close]")!.addEventListener("click", () => {
+          box.hidden = true;
+        });
+        setTimeout(() => (box.hidden = true), 12000);
+      }
+    }
+  }
+</script>

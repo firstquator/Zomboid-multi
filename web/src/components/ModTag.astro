@@ -1,0 +1,343 @@
+---
+import Icon from "./Icon.astro";
+import { categoryLabel, modById } from "../lib/site.mjs";
+
+interface Props {
+  mod: any;
+  // compact: 첫 화면용 짧은 꼬리표. full: 모드팩 화면용, 넣은 이유와 의존까지.
+  variant?: "compact" | "full";
+  index?: number;
+}
+const { mod, variant = "compact", index = 0 } = Astro.props;
+
+const CAT_ICON: Record<string, string> = {
+  lib: "puzzle",
+  ui: "heart-check",
+  inventory: "backpack-01",
+  interaction: "hand-grip",
+  map: "maps-location-01",
+  korean: "translate",
+};
+const KOREAN: Record<string, { label: string; tone: string }> = {
+  native: { label: "한국어 내장", tone: "ok" },
+  "via-pack": { label: "번역 팩으로 한국어", tone: "ok" },
+  none: { label: "영어만", tone: "dim" },
+};
+const ko = KOREAN[mod.korean?.status] ?? KOREAN.none;
+const deps = (mod.dependsOn ?? []).map((id: string) => modById(id)).filter(Boolean);
+const tilt = [-1.6, 1.2, -0.6, 1.8, -1.1, 0.7][index % 6];
+---
+
+<article
+  class={`tag-wrap ${variant} reveal`}
+  style={`--tilt:${tilt}deg;--i:${index % 6}`}
+  data-cat={mod.category}
+  id={variant === "full" ? `mod-${mod.workshopId}` : undefined}
+>
+<div class="tag">
+  <span class="hole" aria-hidden="true"></span>
+
+  <div class="thumb">
+    {
+      mod.thumbnail ? (
+        <img
+          src={mod.thumbnail}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          referrerpolicy="no-referrer"
+          width="320"
+          height="320"
+        />
+      ) : (
+        <span class="thumb-fallback">
+          <Icon name={CAT_ICON[mod.category] ?? "package"} size={42} />
+        </span>
+      )
+    }
+    <span class="cat">
+      <Icon name={CAT_ICON[mod.category] ?? "package"} size={13} />
+      {categoryLabel(mod.category)}
+    </span>
+    <span class="no mono">No.{String(mod.loadOrder).padStart(2, "0")}</span>
+  </div>
+
+  <div class="body">
+    <h3 class="name">{mod.nameKo}</h3>
+    <p class="orig mono">{mod.name}</p>
+    <p class="summary">{mod.summary}</p>
+
+    {
+      variant === "full" && (
+        <>
+          <p class="why">
+            <Icon name="sticky-note-01" size={15} />
+            <span>{mod.why}</span>
+          </p>
+          {deps.length > 0 && (
+            <p class="deps">
+              <Icon name="link-01" size={15} />
+              <span>
+                필요한 모드:{" "}
+                {deps.map((d: any, i: number) => (
+                  <>
+                    <a href={`#mod-${d.workshopId}`}>{d.nameKo}</a>
+                    {i < deps.length - 1 ? ", " : ""}
+                  </>
+                ))}
+              </span>
+            </p>
+          )}
+          <dl class="ids">
+            <div>
+              <dt>Workshop ID</dt>
+              <dd class="mono">{mod.workshopId}</dd>
+            </div>
+            <div>
+              <dt>Mod ID</dt>
+              <dd class="mono">{mod.modIds.join(", ")}</dd>
+            </div>
+          </dl>
+        </>
+      )
+    }
+
+    <div class="meta">
+      <span class={`chip ${ko.tone}`}><Icon name="translate" size={13} />{ko.label}</span>
+      {
+        mod.b42?.supported && (
+          <span class="chip ok" title={mod.b42.note}>
+            <Icon name="checkmark-circle-02" size={13} />
+            B42 · {mod.b42.lastUpdated}
+          </span>
+        )
+      }
+    </div>
+
+    {
+      variant === "full" && (
+        <a class="ws" href={mod.url} target="_blank" rel="noopener">
+          <span>창작마당에서 보기</span>
+          <Icon name="arrow-up-right-01" size={16} />
+        </a>
+      )
+    }
+  </div>
+</div>
+</article>
+
+<style>
+  /* 그림자와 기울기는 바깥 껍데기가 맡는다. 안쪽은 clip-path 로 모서리를
+     잘라 꼬리표 모양을 내는데, clip-path 는 자기 그림자까지 잘라 버린다. */
+  .tag-wrap {
+    display: flex;
+    filter: drop-shadow(0 14px 18px rgb(40 30 10 / 0.28)) drop-shadow(0 2px 3px rgb(40 30 10 / 0.18));
+    transition:
+      translate 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      filter 260ms ease;
+  }
+  .tag-wrap:hover {
+    translate: 0 -6px;
+    filter: drop-shadow(0 28px 30px rgb(30 20 5 / 0.38)) drop-shadow(0 4px 6px rgb(30 20 5 / 0.2));
+  }
+  .tag {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background: var(--paper-3);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    clip-path: polygon(34px 0, 100% 0, 100% 100%, 0 100%, 0 34px);
+  }
+  .hole {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 3;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--paper);
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--amber) 55%, var(--paper-3)),
+      inset 0 1px 2px rgb(0 0 0 / 0.4);
+  }
+
+  .thumb {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background:
+      repeating-linear-gradient(45deg, transparent 0 8px, color-mix(in srgb, var(--ink) 5%, transparent) 8px 9px),
+      var(--paper-2);
+    border-bottom: 1px dashed var(--rule-strong);
+  }
+  .thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* 평소엔 바랜 사진처럼, 손을 올리면 원래 색이 돌아온다. */
+    filter: sepia(0.55) saturate(0.8) contrast(1.05) brightness(0.95);
+    transition:
+      filter 400ms ease,
+      scale 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .tag-wrap:hover .thumb img {
+    filter: none;
+    scale: 1.05;
+  }
+  .thumb-fallback {
+    display: grid;
+    place-items: center;
+    height: 100%;
+    color: var(--ink-3);
+  }
+  .cat {
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    background: rgb(18 19 15 / 0.82);
+    color: #efe6cc;
+    font-size: 12px;
+    font-weight: 600;
+    backdrop-filter: blur(4px);
+  }
+  .no {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    padding: 1px 7px;
+    border-radius: 4px;
+    background: rgb(18 19 15 / 0.82);
+    color: #efe6cc;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    padding: 16px 18px 18px;
+  }
+  .name {
+    font-family: var(--f-display);
+    font-weight: 400;
+    font-size: 22px;
+    line-height: 1.2;
+  }
+  .orig {
+    font-size: 12px;
+    color: var(--ink-3);
+    word-break: break-word;
+  }
+  .summary {
+    margin-top: 4px;
+    font-size: 14.5px;
+    color: var(--ink-2);
+  }
+  .compact .summary {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .why,
+  .deps {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+    padding: 10px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .why {
+    background: color-mix(in srgb, var(--amber) 13%, transparent);
+    color: var(--ink);
+  }
+  .deps {
+    background: color-mix(in srgb, var(--steel) 12%, transparent);
+    color: var(--ink-2);
+  }
+  .why :global(.icon),
+  .deps :global(.icon) {
+    margin-top: 3px;
+  }
+  .deps a {
+    color: var(--steel);
+    font-weight: 600;
+  }
+  .ids {
+    display: grid;
+    gap: 4px;
+    margin: 8px 0 0;
+    font-size: 12.5px;
+  }
+  .ids div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 4px;
+    border-bottom: 1px dotted var(--rule);
+  }
+  .ids dt {
+    color: var(--ink-3);
+  }
+  .ids dd {
+    margin: 0;
+    text-align: right;
+    word-break: break-all;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: auto;
+    padding-top: 12px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid currentColor;
+  }
+  .chip.ok {
+    color: var(--olive);
+  }
+  .chip.dim {
+    color: var(--ink-3);
+  }
+  .ws {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 10px 14px;
+    border: 1.5px solid var(--ink);
+    border-radius: var(--radius);
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    transition:
+      background 150ms ease,
+      color 150ms ease;
+  }
+  .ws:hover {
+    background: var(--ink);
+    color: var(--paper-3);
+  }
+</style>

@@ -1,0 +1,114 @@
+---
+import MockWindow from "./MockWindow.astro";
+import Ring from "./Ring.astro";
+
+// 좀보이드 메인 메뉴. 42.21 한국어 번역 이름이 확인된 항목만 글자로 쓰고,
+// 나머지 항목은 회색 막대로 둔다. 확인하지 않은 메뉴 이름을 지어내지 않으려는 것이다.
+interface Props {
+  highlight: "host" | "join" | "options";
+  note?: string;
+}
+const { highlight, note } = Astro.props;
+const items = [
+  { id: "skel", w: 56 },
+  { id: "skel", w: 70 },
+  { id: "join", ko: "여러 명이서 하기", en: "JOIN" },
+  { id: "host", ko: "서버 만들기", en: "HOST" },
+  { id: "skel", w: 48 },
+  { id: "options", ko: "설정", en: "OPTIONS" },
+  { id: "skel", w: 40 },
+  { id: "skel", w: 52 },
+];
+---
+
+<MockWindow title="Project Zomboid" variant="pz" icon="game-controller-03">
+  <div class="menu">
+    <p class="logo">PROJECT<br />ZOMBOID</p>
+    <ul>
+      {
+        items.map((i) =>
+          i.id === "skel" ? (
+            <li class="skel" aria-hidden="true">
+              <i style={`width:${i.w}%`} />
+            </li>
+          ) : (
+            <li class={i.id === highlight ? "hl" : ""}>
+              <span class="ko">{i.ko}</span>
+              <span class="en">{i.en}</span>
+              {i.id === highlight && <Ring note={note} at="right" />}
+            </li>
+          ),
+        )
+      }
+    </ul>
+    <span class="ver mono">42.21.0</span>
+  </div>
+</MockWindow>
+
+<style>
+  .menu {
+    position: relative;
+    min-height: 360px;
+    padding: 28px 32px;
+    overflow: hidden;
+    border-radius: 0 0 10px 10px;
+  }
+  .logo {
+    margin-bottom: 22px;
+    font-family: var(--f-stencil);
+    font-size: 28px;
+    line-height: 0.95;
+    letter-spacing: 0.04em;
+    color: #b71c1c;
+  }
+  ul {
+    display: grid;
+    gap: 9px;
+    width: 220px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  li {
+    position: relative;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    width: fit-content;
+    color: #a9a497;
+  }
+  .ko {
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .en {
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    color: #6a665c;
+    letter-spacing: 0.08em;
+  }
+  li.hl {
+    color: #fff;
+  }
+  li.hl .en {
+    color: #f0a93a;
+  }
+  .skel {
+    width: 100%;
+    height: 22px;
+    align-items: center;
+  }
+  .skel i {
+    display: block;
+    height: 9px;
+    border-radius: 3px;
+    background: #2e2e28;
+  }
+  .ver {
+    position: absolute;
+    right: 14px;
+    bottom: 10px;
+    font-size: 11px;
+    color: #6a665c;
+  }
+</style>

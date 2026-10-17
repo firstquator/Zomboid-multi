@@ -1,0 +1,128 @@
+---
+import Icon from "./Icon.astro";
+import Topo from "./Topo.astro";
+
+interface Props {
+  kicker: string;
+  title: string;
+  desc?: string;
+  icon: string;
+  stamp?: string;
+  seed?: number;
+}
+const { kicker, title, desc, icon, stamp, seed = 3 } = Astro.props;
+---
+
+<header class="ph">
+  <Topo seed={seed} hills={2} levels={8} class="ph-topo" />
+  <div class="wrap ph-in">
+    <span class="ph-ic" aria-hidden="true"><Icon name={icon} size={34} /></span>
+    <div>
+      <p class="kicker">{kicker}</p>
+      <h1 class="display">{title}</h1>
+      {desc && <p class="ph-desc">{desc}</p>}
+      <slot />
+    </div>
+    {stamp && <p class="ph-stamp" aria-hidden="true">{stamp}</p>}
+  </div>
+</header>
+
+<style>
+  .ph {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding-block: clamp(56px, 8vw, 104px) clamp(40px, 5vw, 64px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .ph :global(.ph-topo) {
+    z-index: -1;
+    color: var(--ink);
+    opacity: 0.07;
+    mask-image: linear-gradient(90deg, transparent 20%, #000 80%);
+  }
+  .ph-in {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: clamp(18px, 3vw, 32px);
+    align-items: start;
+  }
+  .ph-ic {
+    display: grid;
+    place-items: center;
+    width: 76px;
+    height: 76px;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    background: var(--paper-3);
+    color: var(--red);
+    box-shadow: 5px 5px 0 var(--ink);
+    animation: ph-pop 700ms 100ms both cubic-bezier(0.3, 1.5, 0.5, 1);
+  }
+  @keyframes ph-pop {
+    from {
+      scale: 0.4;
+      rotate: -30deg;
+      opacity: 0;
+    }
+  }
+  h1 {
+    margin-top: 10px;
+    font-size: clamp(40px, 6vw, 76px);
+    line-height: 1.05;
+    animation: ph-rise 700ms 160ms both cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .ph-desc {
+    max-width: 40em;
+    margin-top: 16px;
+    font-size: clamp(16px, 1.3vw, 18px);
+    color: var(--ink-2);
+    animation: ph-rise 700ms 260ms both cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  @keyframes ph-rise {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+  }
+  .ph-stamp {
+    position: absolute;
+    right: var(--gutter);
+    top: -10px;
+    padding: 6px 14px;
+    border: 4px double var(--red);
+    border-radius: 6px;
+    color: var(--red);
+    font-family: var(--f-display);
+    font-size: clamp(18px, 2vw, 26px);
+    letter-spacing: 0.08em;
+    rotate: 9deg;
+    opacity: 0.8;
+    mix-blend-mode: multiply;
+    animation: ph-stamp 450ms 600ms both cubic-bezier(0.3, 1.6, 0.5, 1);
+  }
+  @keyframes ph-stamp {
+    from {
+      opacity: 0;
+      scale: 2.4;
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    .ph-stamp {
+      mix-blend-mode: normal;
+    }
+  }
+  @media (max-width: 640px) {
+    .ph-in {
+      grid-template-columns: 1fr;
+    }
+    .ph-ic {
+      width: 60px;
+      height: 60px;
+    }
+    .ph-stamp {
+      display: none;
+    }
+  }
+</style>

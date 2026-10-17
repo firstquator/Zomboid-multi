@@ -1,0 +1,267 @@
+---
+import Base from "../layouts/Base.astro";
+import PageHead from "../components/PageHead.astro";
+import ModTag from "../components/ModTag.astro";
+import Icon from "../components/Icon.astro";
+import CopyButton from "../components/CopyButton.astro";
+import { base } from "../lib/base-url.mjs";
+import { site, mods, categories, vanilla } from "../lib/site.mjs";
+import { manualLines } from "../lib/server-config.mjs";
+
+const used = categories.filter((c) => mods.some((m) => m.category === c.id));
+const counts = Object.fromEntries(used.map((c) => [c.id, mods.filter((m) => m.category === c.id).length]));
+const [wsLine, modsLine] = manualLines(mods);
+---
+
+<Base title="모드 목록" active="mods">
+  <PageHead
+    kicker={`모드팩 ${site.modpackVersion} · Build ${site.build}`}
+    title={`모드 목록 · ${site.modCount}개`}
+    desc="편의 기능 위주로 구성했습니다. 참가자는 따로 설치할 필요 없이 서버 접속 시 자동으로 받습니다."
+    icon="package"
+    seed={21}
+  >
+    <ul class="sum">
+      <li><Icon name="translate" size={16} /><b>{site.koreanCount}</b>개 한국어 지원</li>
+      <li><Icon name="checkmark-circle-02" size={16} />전부 B42 대응 확인 <span class="mono">{site.checkedAt}</span></li>
+      <li><Icon name="link-01" size={16} />의존 모드 없음 (단독 동작)</li>
+    </ul>
+  </PageHead>
+
+  <section class="wrap list" aria-label="모드 목록">
+    <div class="filters" role="group" aria-label="종류별로 보기" data-filters>
+      <button type="button" class="chip on" data-filter="all" aria-pressed="true">
+        전체 <span class="mono">{mods.length}</span>
+      </button>
+      {
+        used.map((c) => (
+          <button type="button" class="chip" data-filter={c.id} aria-pressed="false">
+            {c.label} <span class="mono">{counts[c.id]}</span>
+          </button>
+        ))
+      }
+    </div>
+
+    <div class="grid" data-grid>
+      {mods.map((m, i) => <ModTag mod={m} variant="full" index={i} />)}
+    </div>
+  </section>
+
+  {
+    vanilla.length > 0 && (
+      <section class="wrap vanilla reveal" aria-labelledby="vanilla-title">
+        <h2 id="vanilla-title" class="display">
+          <Icon name="settings-02" size={26} />
+          서버 설정으로 켜는 기본 기능
+        </h2>
+        <ul>
+          {vanilla.map((v) => (
+            <li>
+              <b>{v.feature}</b>
+              <code>
+                {v.sandboxKey} = {v.value}
+              </code>
+              <span>{v.why}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+
+  <section class="wrap manual reveal" id="manual" aria-labelledby="manual-title">
+    <div class="manual-head">
+      <h2 id="manual-title" class="display">
+        <Icon name="wrench-01" size={26} />
+        수동 설정
+      </h2>
+      <p>
+        설치 명령을 쓸 수 없는 경우, <code>Zomboid\Server\(설정 이름).ini</code> 에서 아래 두 줄을 찾아 교체합니다.
+        일반적으로는 <a href={base("host/#step-3")}>설치 명령</a>을 권장합니다.
+      </p>
+    </div>
+    <div class="lines">
+      <div class="line" data-copy-scope>
+        <code data-copy-text>{wsLine}</code>
+        <CopyButton value={wsLine} label="복사" />
+      </div>
+      <div class="line" data-copy-scope>
+        <code data-copy-text>{modsLine}</code>
+        <CopyButton value={modsLine} label="복사" />
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  // 종류별 필터. JS 가 없으면 버튼만 안 먹고 목록은 전부 보인다.
+  const bar = document.querySelector<HTMLElement>("[data-filters]");
+  const cards = Array.from(document.querySelectorAll<HTMLElement>("[data-grid] > [data-cat]"));
+  bar?.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-filter]");
+    if (!btn) return;
+    const f = btn.dataset.filter;
+    bar.querySelectorAll<HTMLButtonElement>("[data-filter]").forEach((b) => {
+      const on = b === btn;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-pressed", String(on));
+    });
+    cards.forEach((c) => {
+      const show = f === "all" || c.dataset.cat === f;
+      c.hidden = !show;
+      if (show) c.classList.add("is-in");
+    });
+  });
+</script>
+
+<style>
+  .sum {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    margin: 24px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 14.5px;
+    color: var(--ink-2);
+  }
+  .sum li {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .sum :global(.icon) {
+    color: var(--olive);
+  }
+
+  .list {
+    padding-top: 40px;
+  }
+  .filters {
+    position: sticky;
+    top: 78px;
+    z-index: 5;
+    display: flex;
+    gap: 8px;
+    margin-bottom: 40px;
+    padding: 10px 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    background: linear-gradient(var(--paper) 70%, transparent);
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+    padding: 8px 14px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--paper-3);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      background 150ms ease,
+      color 150ms ease;
+  }
+  .chip .mono {
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .chip.on {
+    background: var(--ink);
+    color: var(--paper-3);
+  }
+  .chip.on .mono {
+    color: var(--paper-2);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 40px 30px;
+    align-items: start;
+  }
+  .grid > :global([hidden]) {
+    display: none;
+  }
+
+  .vanilla,
+  .manual {
+    margin-top: 110px;
+  }
+  .vanilla h2,
+  .manual h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: clamp(26px, 3vw, 36px);
+  }
+  .vanilla ul {
+    display: grid;
+    gap: 12px;
+    margin: 24px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .vanilla li {
+    display: grid;
+    grid-template-columns: minmax(140px, auto) auto 1fr;
+    gap: 8px 20px;
+    align-items: center;
+    padding: 14px 18px;
+    background: var(--paper-3);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+  }
+  .vanilla code {
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--paper-2);
+  }
+  .vanilla span {
+    color: var(--ink-2);
+    font-size: 14.5px;
+  }
+
+  .manual-head p {
+    max-width: 44em;
+    margin-top: 12px;
+    color: var(--ink-2);
+  }
+  .manual-head a {
+    color: var(--red);
+    font-weight: 600;
+  }
+  .lines {
+    display: grid;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  .line {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 12px 12px 16px;
+    background: var(--night);
+    border-radius: 8px;
+  }
+  .line code {
+    flex: 1;
+    min-width: 0;
+    color: #efe6cc;
+    font-size: 12.5px;
+    line-height: 1.6;
+    word-break: break-all;
+  }
+
+  @media (max-width: 720px) {
+    .vanilla li {
+      grid-template-columns: 1fr;
+    }
+    .line {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+</style>

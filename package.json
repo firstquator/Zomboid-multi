@@ -1,0 +1,11 @@
+{
+  "name": "zomboid-multi",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "npm --prefix web test",
+    "build": "npm --prefix web run build",
+    "dev": "npm --prefix web run dev",
+    "mods:verify": "node scripts/verify-workshop.mjs"
+  }
+}
