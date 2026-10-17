@@ -1,6 +1,7 @@
 ---
 import { base } from "../lib/base-url.mjs";
 import { mechParts, toolNames } from "../data/vehicles.mjs";
+import { keyify } from "../lib/keytext.mjs";
 
 // 게임 정비 화면의 차 그림(4door_base)과 부품별 흰색 마스크로 만든 정비 안내.
 // 부품을 고르면 그 부분이 칠해지고 필요한 도구·레벨이 나온다.
@@ -99,7 +100,7 @@ const level = (p: any) => (p.level ? `차량정비 ${p.level}` : "기술 필요 
             {p.know && <span class="pill know">정비 지식 필요</span>}
             {p.nokey && <span class="pill nokey">열쇠 없이 뗌</span>}
           </p>
-          {p.note && <p class="note">{p.note}</p>}
+          {p.note && <p class="note" set:html={keyify(p.note)} />}
         </div>
       ))
     }

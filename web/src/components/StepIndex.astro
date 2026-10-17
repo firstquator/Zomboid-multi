@@ -1,4 +1,5 @@
 ---
+import { keyify } from "../lib/keytext.mjs";
 import Icon from "./Icon.astro";
 
 // 표지 오른쪽의 전체 단계 목록. 누르면 그 단계로 바로 넘어간다(Deck 의 data-goto).
@@ -26,7 +27,7 @@ const { title, steps } = Astro.props;
             </span>
             <span class="t">
               {s.title}
-              {s.note && <small>{s.note}</small>}
+              {s.note && <small set:html={keyify(s.note)} />}
             </span>
             <Icon name="arrow-right-02" size={16} class="go" />
           </button>

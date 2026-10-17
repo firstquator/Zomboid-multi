@@ -1,6 +1,7 @@
 ---
 import { base } from "../lib/base-url.mjs";
 import { dashboardSpots } from "../data/vehicles.mjs";
+import { keyify } from "../lib/keytext.mjs";
 
 // 게임 계기판 그림(cardashboard) 위에 번호를 찍고, 번호를 누르거나 아래 설명에 마우스를 올리면 서로 강조한다.
 ---
@@ -23,7 +24,7 @@ import { dashboardSpots } from "../data/vehicles.mjs";
           <span class="n mono">{i + 1}</span>
           <span>
             <b>{s.label}</b>
-            {s.text}
+            <Fragment set:html={keyify(s.text)} />
           </span>
         </li>
       ))

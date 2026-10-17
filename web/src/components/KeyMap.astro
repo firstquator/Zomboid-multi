@@ -112,6 +112,8 @@ const mouseKeys = ["LMB", "RMB", "Wheel"].filter((k) => byKey.has(k));
 </div>
 
 <script>
+  import { keyify } from "../lib/keytext.mjs";
+
   document.querySelectorAll<HTMLElement>("[data-keymap]").forEach((root) => {
     const data = JSON.parse(root.querySelector("[data-km-data]")!.textContent!) as Record<string, { n: string; g: string; gl: string; t: string; w: string; m: boolean }[]>;
     const panel = root.querySelector<HTMLElement>("[data-km-detail]")!;
@@ -134,7 +136,7 @@ const mouseKeys = ["LMB", "RMB", "Wheel"].filter((k) => byKey.has(k));
         `<ul class="kd-list">${list
           .map(
             (b) =>
-              `<li class="g-${b.g}${group !== "all" && b.g !== group ? " dim" : ""}"><span class="kd-g">${esc(b.gl)}</span><b>${esc(b.n)}</b>${b.w ? `<span class="kd-w">${esc(b.w)}</span>` : ""}${b.m ? `<span class="kd-w mod">모드</span>` : ""}${b.t ? `<p>${esc(b.t)}</p>` : ""}</li>`,
+              `<li class="g-${b.g}${group !== "all" && b.g !== group ? " dim" : ""}"><span class="kd-g">${esc(b.gl)}</span><b>${esc(b.n)}</b>${b.w ? `<span class="kd-w">${esc(b.w)}</span>` : ""}${b.m ? `<span class="kd-w mod">모드</span>` : ""}${b.t ? `<p>${keyify(b.t)}</p>` : ""}</li>`,
           )
           .join("")}</ul>`;
     }

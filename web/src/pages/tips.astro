@@ -9,6 +9,7 @@ import Dashboard from "../components/Dashboard.astro";
 import MechDiagram from "../components/MechDiagram.astro";
 import SubNext from "../components/SubNext.astro";
 import { base } from "../lib/base-url.mjs";
+import { keyify } from "../lib/keytext.mjs";
 import { site } from "../lib/site.mjs";
 import { keybinds, keyGroups, essentials, inventoryMoves } from "../data/keys.mjs";
 import {
@@ -109,7 +110,7 @@ const nextSub = (id: string) => order[order.findIndex((o) => o.id === id) + 1] ?
           <li class="reveal" style={`--i:${i % 4}`}>
             <Keys keys={e.keys} combo={e.combo} size="lg" />
             <b>{e.title}</b>
-            <span>{e.text}</span>
+            <span><Fragment set:html={keyify(e.text)} /></span>
           </li>
         ))
       }
@@ -150,7 +151,7 @@ const nextSub = (id: string) => order[order.findIndex((o) => o.id === id) + 1] ?
                     {b.when && <span class="when">{b.when}</span>}
                     {b.mod && <span class="when mod">모드</span>}
                   </span>
-                  {b.tip && <span class="kg-tip">{b.tip}</span>}
+                  {b.tip && <span class="kg-tip"><Fragment set:html={keyify(b.tip)} /></span>}
                 </li>
               ))}
           </ul>
@@ -170,7 +171,7 @@ const nextSub = (id: string) => order[order.findIndex((o) => o.id === id) + 1] ?
                 <Keys keys={m.keys} combo={m.combo} double={m.double} />
                 <span>
                   <b>{m.title}</b>
-                  {m.text}
+                  <Fragment set:html={keyify(m.text)} />
                 </span>
               </li>
             ))
@@ -184,7 +185,7 @@ const nextSub = (id: string) => order[order.findIndex((o) => o.id === id) + 1] ?
             controlTips.map((c) => (
               <li>
                 <Keys keys={c.keys} range={c.range} />
-                <span>{c.text}</span>
+                <span><Fragment set:html={keyify(c.text)} /></span>
               </li>
             ))
           }
@@ -234,8 +235,8 @@ const nextSub = (id: string) => order[order.findIndex((o) => o.id === id) + 1] ?
             <span class="st-n mono">{i + 1}</span>
             <b>{s.title}</b>
             {s.keys && <Keys keys={s.keys} />}
-            <p>{s.text}</p>
-            <p class="st-note">{s.note}</p>
+            <p><Fragment set:html={keyify(s.text)} /></p>
+            <p class="st-note"><Fragment set:html={keyify(s.note)} /></p>
           </li>
         ))
       }
@@ -244,7 +245,7 @@ const nextSub = (id: string) => order[order.findIndex((o) => o.id === id) + 1] ?
       <Icon name="alert-02" size={20} />
       <p>
         <b>{alarm.title}</b>
-        {alarm.text}
+        <Fragment set:html={keyify(alarm.text)} />
       </p>
     </div>
     <SubNext next={nextSub("car-start")} />
@@ -284,7 +285,7 @@ const nextSub = (id: string) => order[order.findIndex((o) => o.id === id) + 1] ?
             </div>
             <b>{f.title}</b>
             <span class="menu-chip">V → {f.menu}</span>
-            <p>{f.text}</p>
+            <p><Fragment set:html={keyify(f.text)} /></p>
           </article>
         ))
       }
@@ -299,7 +300,7 @@ const nextSub = (id: string) => order[order.findIndex((o) => o.id === id) + 1] ?
           }
         </div>
         <b>{powerCut.title}</b>
-        <p>{powerCut.text}</p>
+        <p><Fragment set:html={keyify(powerCut.text)} /></p>
       </article>
     </div>
 
@@ -347,7 +348,7 @@ const nextSub = (id: string) => order[order.findIndex((o) => o.id === id) + 1] ?
         mechOpen.map((m, i) => (
           <>
             {i > 0 && ", "}
-            <span class="nowrap">{m.text}</span>
+            <span class="nowrap"><Fragment set:html={keyify(m.text)} /></span>
           </>
         ))
       }
@@ -388,7 +389,7 @@ const nextSub = (id: string) => order[order.findIndex((o) => o.id === id) + 1] ?
             </span>
             <span>
               <b>{d.title}</b>
-              {d.text}
+              <Fragment set:html={keyify(d.text)} />
             </span>
           </li>
         ))
@@ -399,7 +400,7 @@ const nextSub = (id: string) => order[order.findIndex((o) => o.id === id) + 1] ?
       <div>
         <h3 class="sub">같이 탈 때</h3>
         <ul class="checks">
-          {together.map((t) => <li>{t}</li>)}
+          {together.map((t) => <li><Fragment set:html={keyify(t)} /></li>)}
         </ul>
       </div>
       <div>
@@ -408,7 +409,7 @@ const nextSub = (id: string) => order[order.findIndex((o) => o.id === id) + 1] ?
           {
             carTips.map((t) => (
               <li>
-                {t.text}
+                <Fragment set:html={keyify(t.text)} />
                 <small>
                   {t.url ? (
                     <a href={t.url} target="_blank" rel="noopener noreferrer">
@@ -470,7 +471,7 @@ const nextSub = (id: string) => order[order.findIndex((o) => o.id === id) + 1] ?
                     {tip.title}
                     {tip.keys && <Keys keys={tip.keys} size="sm" />}
                   </b>
-                  <p>{tip.text}</p>
+                  <p><Fragment set:html={keyify(tip.text)} /></p>
                   {tip.mod && <span class="mod-chip">모드 · {tip.mod}</span>}
                 </li>
               ))}

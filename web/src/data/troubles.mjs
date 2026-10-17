@@ -21,7 +21,7 @@ export const troubles = [
     q: "초대가 오지 않거나 수락해도 들어가지지 않음",
     steps: [
       "참가자는 게임 메인 메뉴에 있어야 함. 게임 중이면 \"게임 플레이 중에는 초대를 받을 수 없습니다\"",
-      "호스트가 서버에 들어간 상태에서 Esc → 친구 초대 → 해당 친구 초대",
+      "호스트가 서버에 들어간 상태에서 <kbd>Esc</kbd> → 친구 초대 → 해당 친구 초대",
       "서버를 다시 열면 초대 허용 목록이 비므로 매번 다시 초대",
       "호스트와 Steam 친구인지 확인",
     ],
@@ -32,7 +32,7 @@ export const troubles = [
     icon: "shield-01",
     q: "방화벽 확인 창에서 취소를 누름",
     steps: [
-      "Win → '방화벽' 검색 → 'Windows Defender 방화벽을 통해 앱 허용'",
+      "<kbd>Win</kbd> → '방화벽' 검색 → 'Windows Defender 방화벽을 통해 앱 허용'",
       "'설정 변경' → 'Zulu Platform x64 Architecture'와 'Project Zomboid' 항목의 '개인' 칸 체크",
       "목록에 없으면 '다른 앱 허용' → 게임 폴더의 jre64\\bin\\java.exe 추가",
     ],
