@@ -2,12 +2,13 @@
 import MockWindow from "./MockWindow.astro";
 import Ring from "./Ring.astro";
 
-// 게임 중 ESC → "친구 초대" 창. 친구마다 초대 / 수락 / 거절 버튼이 있다.
-// 이름은 예시다.
+// 게임 중 Esc → "친구 초대" 창. 실제 화면처럼 친구 줄을 골라 오른쪽 아래 초대를 누르고,
+// 줄마다 있는 버튼은 거절이다. 이름은 예시다.
 const friends = [
-  { n: "친구 A", s: "온라인 · 메인 메뉴" },
-  { n: "친구 B", s: "온라인 · 메인 메뉴" },
-  { n: "친구 C", s: "자리 비움" },
+  { n: "친구 A", s: "온라인", on: true },
+  { n: "친구 B", s: "온라인" },
+  { n: "친구 C", s: "온라인" },
+  { n: "친구 D", s: "자리 비움" },
 ];
 ---
 
@@ -16,87 +17,96 @@ const friends = [
     <p class="h">친구 초대</p>
     <ul>
       {
-        friends.map((f, i) => (
-          <li>
+        friends.map((f) => (
+          <li class={f.on ? "on" : ""}>
             <span class="av">{f.n.slice(-1)}</span>
-            <span class="who">
-              <b>{f.n}</b>
-              <small>{f.s}</small>
-            </span>
-            <span class="acts">
-              <span class="b primary">
-                초대
-                {i === 0 && <Ring note="친구마다 초대" at="left" />}
-              </span>
-              <span class="b">수락</span>
-              <span class="b">거절</span>
-            </span>
+            <span class="who">{f.n}</span>
+            <span class="st">{f.s}</span>
+            <span class="deny">거절</span>
+            {f.on && <Ring note="친구 선택" at="top" k={0} />}
           </li>
         ))
       }
     </ul>
+    <div class="btns">
+      <span class="b">뒤로</span>
+      <span class="b primary">
+        초대
+        <Ring note="초대" at="top" k={1} />
+      </span>
+    </div>
   </div>
 </MockWindow>
 
 <style>
   .inv {
-    padding: 22px 24px 24px;
+    padding: 20px 20px 22px;
     font-size: 13px;
   }
   .h {
-    margin-bottom: 16px;
-    font-size: 18px;
+    margin-bottom: 40px;
+    font-size: 16px;
     font-weight: 700;
     color: #fff;
+    text-align: center;
   }
   ul {
     display: grid;
-    gap: 8px;
     margin: 0;
     padding: 0;
     list-style: none;
+    border-top: 1px solid #3a3a32;
   }
   li {
+    position: relative;
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
     align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
-    background: rgb(0 0 0 / 0.35);
-    border: 1px solid #3a3a32;
+    gap: 10px;
+    padding: 7px 10px;
+    border-bottom: 1px solid #3a3a32;
+  }
+  li.on {
+    background: rgb(200 100 20 / 0.35);
   }
   .av {
     display: grid;
     place-items: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 3px;
     background: #3d4a5c;
     color: #fff;
+    font-size: 11px;
     font-weight: 700;
   }
   .who {
-    display: grid;
-    line-height: 1.3;
-  }
-  .who b {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     color: #e8e2d0;
   }
-  .who small {
-    color: #8e8a7e;
-    font-size: 11.5px;
+  .st {
+    color: #6fd36a;
+    font-size: 12px;
   }
-  .acts {
+  .deny {
+    padding: 2px 8px;
+    background: #3a3a32;
+    color: #a9a497;
+    font-size: 11px;
+  }
+  .btns {
     display: flex;
-    gap: 6px;
+    justify-content: space-between;
+    margin-top: 44px;
   }
   .b {
     position: relative;
-    padding: 5px 12px;
+    padding: 6px 16px;
     border: 1px solid #4a4a40;
     background: #24241f;
-    color: #c9c2ad;
-    font-size: 12px;
+    color: #e8e2d0;
   }
   .b.primary {
     border-color: #f0a93a;

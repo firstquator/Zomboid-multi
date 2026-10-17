@@ -9,14 +9,15 @@ import MockPZMenu from "../components/mock/MockPZMenu.astro";
 import MockSteamInvite from "../components/mock/MockSteamInvite.astro";
 import MockWorkshopItems from "../components/mock/MockWorkshopItems.astro";
 import StepIndex from "../components/StepIndex.astro";
+import Menu from "../components/Menu.astro";
 import { base } from "../lib/base-url.mjs";
-import { site, mods } from "../lib/site.mjs";
+import { site, mods, vanilla } from "../lib/site.mjs";
 import { joinSteps } from "../data/guides.mjs";
 
 const T = joinSteps.titles;
 const N = T.length - 2;
 const index = [
-  { icon: "game-controller-03", note: "호스트와 Steam 친구 · 베타 없음" },
+  { icon: "game-controller-03", note: "호스트와 Steam 친구 · 베타 선택 안 함" },
   { icon: "translate", note: "설정 → UI → 언어 선택" },
   { icon: "home-01", note: "초대는 메인 메뉴에서만 받음" },
   { icon: "user-add-01", note: "Steam 채팅 → 게임 참가" },
@@ -24,15 +25,24 @@ const index = [
 ].map((s, i) => ({ ...s, title: T[i + 1] }));
 
 // 마지막 장의 모드 사용법. workshopId 로 찾아서, 모드가 빠지면 같이 사라지게 한다.
-const tip = (id: string, text: string, icon: string) => {
+// key 가 있으면 문장 끝에 키캡으로 붙인다.
+const tip = (id: string, label: string, text: string, icon: string, key?: string) => {
   const m = mods.find((x: any) => x.workshopId === id);
-  return m ? { text, icon, name: m.nameKo } : null;
+  return m ? { label, text, icon, key, name: m.nameKo } : null;
 };
 const tips = [
-  tip("2847184718", "인벤토리 왼쪽 지구본 탭: 주변 상자·바닥 아이템을 한 화면에서 확인", "maps-global-01"),
-  tip("2544353492", "책 아이콘의 ? 표시: 아직 읽지 않은 책, ! 표시: 읽다 만 책", "book-open-01"),
-  tip("3780552862", "채팅 한글 입력: 윈도우 입력기는 영문 상태로 두고 \\ 키로 한/영 전환", "keyboard"),
-  tip("3750253491", "쇠지렛대를 든 채 잠긴 문·창문 우클릭: 따고 들어가기", "hand-grip"),
+  tip("2847184718", "지구본 탭", "인벤토리 왼쪽 탭에서 주변 상자·바닥 아이템을 한 화면에 확인", "maps-global-01"),
+  tip("2544353492", "책 아이콘 표시", "? 는 아직 읽지 않은 책, ! 는 읽다 만 책", "book-open-01"),
+  tip("3780552862", "채팅 한글 입력", "윈도우 입력기는 영문 상태로 두고 채팅창에서 한/영 전환", "keyboard", "\\"),
+  tip("3750253491", "쇠지렛대", "든 채로 잠긴 문·창문 우클릭 → 따고 들어가기", "hand-grip"),
+  tip("2503622437", "스킬 보존 일지", "살아 있을 때 일지에 기록해 두어야 죽은 뒤 새 캐릭터가 읽고 스킬을 되찾음", "book-02"),
+].filter(Boolean);
+
+// 모드가 아니라 서버 설정으로 켠 기능. 설정 값이 빠지면 같이 사라진다.
+const has = (key: string) => vanilla.some((v: any) => v.key === key);
+const basics = [
+  has("MapRemotePlayerVisibility") && { label: "친구 위치", text: "지도에서 같이 하는 사람 위치 확인", icon: "maps-location-01", key: "M" },
+  has("MinutesPerPage") && { label: "책 읽기", text: "기술 서적이 거의 바로 읽힘 (한 쪽당 0.1분)", icon: "book-open-01" },
 ].filter(Boolean);
 ---
 
@@ -52,7 +62,7 @@ const tips = [
       </p>
       <ul class="need">
         <li><Icon name="game-controller-03" size={22} /><span>Project Zomboid<small>Steam 정품, Build {site.build}</small></span></li>
-        <li><Icon name="user-multiple-02" size={22} /><span>호스트와 Steam 친구<small>초대는 Steam 으로 옴</small></span></li>
+        <li><Icon name="user-multiple-02" size={22} /><span>호스트와 Steam 친구<small>초대는 Steam으로 옴</small></span></li>
         <li><Icon name="timer-01" size={22} /><span>약 {joinSteps.minutes}분<small>모드 다운로드 포함</small></span></li>
       </ul>
       <p>
@@ -67,71 +77,90 @@ const tips = [
     <Slide n={1} total={N} title={T[1]} kicker="버전과 Steam 친구">
       <ol class="do">
         <li>호스트와 <b>Steam 친구</b>인지 확인</li>
-        <li>Steam 라이브러리 → Project Zomboid 우클릭 → <b>속성 → 게임 버전 및 베타 → 없음</b></li>
-        <li>업데이트가 있으면 완료될 때까지 대기</li>
+        <li><Menu app="Steam" path={["Project Zomboid 우클릭", "속성", "게임 버전 및 베타", "Default Public Version"]} /></li>
+        <li>업데이트가 있으면 <b>완료될 때까지 대기</b></li>
       </ol>
       <div class="success">
         <Icon name="checkmark-circle-02" size={20} />
         <span><b>확인:</b> 게임 첫 화면 구석의 버전 표기가 <code>{site.build}</code></span>
       </div>
-      <Shot id="steam-beta" slot="visual" labels={["없음"]}><MockSteamBeta /></Shot>
+      <Shot id="steam-beta" slot="visual" labels={["게임 버전 및 베타", "Default Public Version"]}><MockSteamBeta /></Shot>
     </Slide>
 
     <Slide n={2} total={N} title={T[2]} kicker="처음 한 번">
       <ol class="do">
-        <li>메인 메뉴 → <b>설정</b></li>
-        <li><b>사용자 인터페이스 (UI) → 언어 선택 → 한국어</b> <span class="sub">바로 적용, 재시작 불필요</span></li>
+        <li><Menu path={["메인 메뉴", "설정"]} /></li>
+        <li><Menu path={["사용자 인터페이스 (UI)", "언어 선택", "한국어"]} /> <span class="sub">바로 적용, 재시작 불필요</span></li>
       </ol>
       <div class="callout tip">
         <Icon name="translate" size={20} />
         <span><b>모드 한국어</b>서버 모드팩에 통합 번역 모드가 포함되어 모드 메뉴도 한국어로 표시됩니다.</span>
       </div>
-      <Shot id="pz-language" slot="visual" labels={["한국어"]}><MockPZMenu highlight="options" note="설정 → UI → 언어 선택" /></Shot>
+      <Shot id="pz-language" slot="visual" labels={["사용자 인터페이스 (UI)", "Language → 한국어", "ACCEPT"]}><MockPZMenu highlight="options" note="설정 → UI → 언어 선택" /></Shot>
     </Slide>
 
     <Slide n={3} total={N} title={T[3]} kicker="초대를 받을 수 있는 상태">
       <p>초대는 <b>메인 메뉴 화면</b>에서만 받을 수 있습니다. 게임 중이거나 다른 화면에 있으면 수락이 막힙니다.</p>
       <ol class="do">
-        <li>게임 실행 → 메인 메뉴에서 대기</li>
+        <li>게임 실행 → <b>메인 메뉴에서 대기</b></li>
         <li>호스트에게 준비됐다고 알리기</li>
       </ol>
-      <Shot id="pz-main-menu" slot="visual" labels={["메인 메뉴"]}><MockPZMenu highlight="join" note="메인 메뉴에서 대기" /></Shot>
+      <div class="callout tip">
+        <Icon name="information-circle" size={20} />
+        <span><b>게임 중에 초대가 오면</b>"게임 플레이 중에는 초대를 받을 수 없습니다" 문구가 뜹니다. 메인 메뉴로 나와서 다시 초대를 받으세요.</span>
+      </div>
+      <Shot id="pz-main-menu" slot="visual" pick={[]}><MockPZMenu /></Shot>
     </Slide>
 
     <Slide n={4} total={N} title={T[4]} kicker="Steam 알림">
       <ol class="do">
-        <li>Steam 채팅에 온 Project Zomboid 초대 → <b>게임 참가</b></li>
-        <li>게임이 서버 접속을 시작합니다</li>
+        <li>Steam 채팅에 온 Project Zomboid 초대 → <span class="ui">게임 참가</span></li>
+        <li>게임이 <b>서버 접속을 시작</b>합니다</li>
       </ol>
       <div class="callout tip">
         <Icon name="information-circle" size={20} />
-        <span><b>초대가 안 올 때</b>호스트에게 <kbd>Esc</kbd> → 친구 초대 → 초대를 다시 눌러 달라고 합니다. 초대는 서버를 열 때마다 새로 필요합니다.</span>
+        <span><b>초대가 안 올 때</b>호스트에게 <kbd>Esc</kbd> → 친구 초대 → <span class="ui">초대</span>를 다시 눌러 달라고 합니다. 초대는 서버를 열 때마다 새로 필요합니다.</span>
       </div>
-      <Shot id="steam-invite-accept" slot="visual" labels={["게임 참가"]}><MockSteamInvite /></Shot>
+      <Shot id="steam-invite-accept" slot="visual" labels={["게임 참가 (Play Game)"]}><MockSteamInvite /></Shot>
     </Slide>
 
     <Slide n={5} total={N} title={T[5]} kicker="첫 접속 때 한 번">
       <ol class="do">
-        <li><b>서버에 적용된 창작마당 아이템</b> 화면 → <b>설치</b></li>
-        <li>다운로드가 끝나면 접속이 이어집니다</li>
-        <li>캐릭터 생성 (시작 지역은 호스트와 같은 곳으로)</li>
+        <li><b>서버에 적용된 창작마당 아이템</b> 화면 → <span class="ui">설치</span></li>
+        <li>다운로드가 끝나면 <b>접속이 이어집니다</b></li>
+        <li>캐릭터 생성 <span class="sub">시작 지역은 호스트와 같은 곳으로</span></li>
       </ol>
       <div class="callout warn">
         <Icon name="hourglass" size={20} />
         <span><b>오래 걸릴 때</b>번역 모드 용량이 커서 몇 분 걸릴 수 있습니다. 10분 이상 멈춰 있으면 <a href={base("help/#download")}>문제 해결</a>을 확인하세요.</span>
       </div>
-      <Shot id="pz-server-workshop-items" slot="visual" labels={["설치"]}><MockWorkshopItems /></Shot>
+      <Shot id="pz-server-workshop-items" slot="visual" pick={[1, 2]} labels={["아직 안 받은 모드", "설치 (INSTALL)"]}><MockWorkshopItems /></Shot>
     </Slide>
 
     <Slide n={N + 1} total={N} title={T[N + 1]} tone="done" kicker="모드 사용법">
       <span class="done-mark" aria-hidden="true"><Icon name="tick-02" size={44} /></span>
       <ul class="tips">
         {
+          basics.map((t: any) => (
+            <li class="basic">
+              <Icon name={t.icon} size={22} />
+              <span>
+                <b class="tl">{t.label}</b>
+                {t.text}
+                {t.key && <kbd>{t.key}</kbd>}
+                <small>서버 설정</small>
+              </span>
+            </li>
+          ))
+        }
+        {
           tips.map((t: any) => (
             <li>
               <Icon name={t.icon} size={22} />
               <span>
+                <b class="tl">{t.label}</b>
                 {t.text}
+                {t.key && <kbd>{t.key}</kbd>}
                 <small>{t.name}</small>
               </span>
             </li>
@@ -150,6 +179,7 @@ const tips = [
   }
   .tips {
     display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
     gap: 12px;
     margin: 0;
     padding: 0;
@@ -169,6 +199,19 @@ const tips = [
   .tips li :global(.icon) {
     color: var(--olive);
     margin-top: 2px;
+  }
+  .tips li.basic {
+    border-left-color: var(--steel);
+  }
+  .tips li.basic :global(.icon) {
+    color: var(--steel);
+  }
+  .tips .tl {
+    display: block;
+    margin-bottom: 2px;
+    color: var(--ink);
+    background: none;
+    padding: 0;
   }
   .tips small {
     display: block;

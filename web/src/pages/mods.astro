@@ -24,7 +24,7 @@ const [wsLine, modsLine] = manualLines(mods);
     <ul class="sum">
       <li><Icon name="translate" size={16} /><b>{site.koreanCount}</b>개 한국어 지원</li>
       <li><Icon name="checkmark-circle-02" size={16} />전부 B42 대응 확인 <span class="mono">{site.checkedAt}</span></li>
-      <li><Icon name="link-01" size={16} />의존 모드 없음 (단독 동작)</li>
+      <li><Icon name="link-01" size={16} />필요한 라이브러리까지 포함</li>
     </ul>
   </PageHead>
 
@@ -54,14 +54,19 @@ const [wsLine, modsLine] = manualLines(mods);
           <Icon name="settings-02" size={26} />
           서버 설정으로 켜는 기본 기능
         </h2>
+        <p class="vanilla-lede">설치 명령이 아래 값을 자동으로 넣습니다. 바꾸려면 서버 만들기 → 서버 설정 → 선택한 서버 설정 수정하기에서 해당 위치를 찾습니다.</p>
         <ul>
           {vanilla.map((v) => (
             <li>
               <b>{v.feature}</b>
-              <code>
-                {v.sandboxKey} = {v.value}
-              </code>
-              <span>{v.why}</span>
+              <span class="val">
+                <code>{v.key}</code>
+                <span class="from mono">{v.default}</span>
+                <Icon name="arrow-right-01" size={14} />
+                <span class="to mono">{v.value}</span>
+              </span>
+              <span class="where">{v.where}</span>
+              <span class="why">{v.why}</span>
             </li>
           ))}
         </ul>
@@ -76,7 +81,7 @@ const [wsLine, modsLine] = manualLines(mods);
         수동 설정
       </h2>
       <p>
-        설치 명령을 쓸 수 없는 경우, <code>Zomboid\Server\(설정 이름).ini</code> 에서 아래 두 줄을 찾아 교체합니다.
+        설치 명령을 쓸 수 없는 경우, <code>Zomboid\Server\(설정 이름).ini</code>에서 아래 두 줄을 찾아 교체합니다.
         일반적으로는 <a href={base("host/#step-3")}>설치 명령</a>을 권장합니다.
       </p>
     </div>
@@ -204,24 +209,62 @@ const [wsLine, modsLine] = manualLines(mods);
     padding: 0;
     list-style: none;
   }
+  .vanilla-lede {
+    max-width: 52em;
+    margin-top: 12px;
+    color: var(--ink-2);
+  }
   .vanilla li {
     display: grid;
-    grid-template-columns: minmax(140px, auto) auto 1fr;
-    gap: 8px 20px;
-    align-items: center;
-    padding: 14px 18px;
+    grid-template-columns: minmax(150px, 0.55fr) 340px minmax(0, 1.6fr);
+    gap: 6px 22px;
+    align-items: start;
+    padding: 16px 20px;
     background: var(--paper-3);
     border: 1px solid var(--rule);
-    border-radius: 6px;
+    border-radius: 8px;
   }
-  .vanilla code {
+  .vanilla li > b {
+    font-size: 16px;
+  }
+  .val {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ink-3);
+  }
+  .val code {
     padding: 2px 8px;
-    border-radius: 4px;
-    background: var(--paper-2);
+    border-radius: 5px;
+    background: color-mix(in srgb, var(--steel) 13%, transparent);
+    color: var(--steel);
+    font-weight: 600;
+    font-size: 13px;
   }
-  .vanilla span {
+  .from {
+    font-size: 13px;
+    color: var(--ink-3);
+    text-decoration: line-through;
+  }
+  .to {
+    padding: 1px 8px;
+    border-radius: 5px;
+    background: var(--olive);
+    color: #f6f1df;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .where {
+    grid-column: 3;
+    grid-row: 1;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .why {
+    grid-column: 3;
     color: var(--ink-2);
-    font-size: 14.5px;
+    font-size: 14px;
   }
 
   .manual-head p {
@@ -258,6 +301,11 @@ const [wsLine, modsLine] = manualLines(mods);
   @media (max-width: 720px) {
     .vanilla li {
       grid-template-columns: 1fr;
+    }
+    .where,
+    .why {
+      grid-column: 1;
+      grid-row: auto;
     }
     .line {
       flex-direction: column;

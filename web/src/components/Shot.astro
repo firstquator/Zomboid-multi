@@ -5,15 +5,28 @@ import { findShot } from "../lib/shots.mjs";
 
 // 실제 화면 사진 위에 눌러야 할 곳을 표시한다.
 // shots.json 에 해당 사진이 없으면 슬롯(단순화한 그림)을 대신 보여 준다.
+interface Target {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  label?: string;
+}
 interface Props {
   id: string;
-  // 사진에 이미 있는 targets 의 라벨 대신 쓸 문구. 순서대로 덮어쓴다.
+  // 사진에 이미 있는 targets 중 이 단계에서 보여 줄 것의 순서 번호. 없으면 전부, 빈 배열이면 표시 없음.
+  pick?: number[];
+  // 사진의 targets 대신 쓸 상자. 같은 사진을 다른 단계에서 다른 곳을 짚을 때 쓴다.
+  targets?: Target[];
+  // 고른 상자들의 라벨 대신 쓸 문구. 순서대로 덮어쓴다.
   labels?: string[];
   tilt?: number;
 }
-const { id, labels = [], tilt = -1 } = Astro.props;
+const { id, pick, targets: own, labels = [], tilt = -1 } = Astro.props;
 const shot = findShot(id);
-const targets = (shot?.targets ?? []).map((t: any, i: number) => ({ ...t, label: labels[i] ?? t.label }));
+const base_targets: Target[] = own ?? shot?.targets ?? [];
+const chosen = pick ? pick.map((i) => base_targets[i]).filter(Boolean) : base_targets;
+const targets = chosen.map((t: any, i: number) => ({ ...t, label: labels[i] ?? t.label }));
 const many = targets.length > 1;
 
 // 라벨을 상자 오른쪽에 둘지 왼쪽에 둘지. 사진 밖으로 나가지 않게 고른다.

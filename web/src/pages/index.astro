@@ -21,14 +21,14 @@ const flow = [
     who: "모두",
     icon: "game-controller-03",
     title: "게임 버전 확인",
-    desc: `Steam 속성 → 게임 버전 및 베타 → 없음. 게임 첫 화면 버전이 ${site.build} 인지 확인합니다.`,
+    desc: `Steam 속성 → 게임 버전 및 베타 → <span class="ui">Default Public Version</span>. 게임 첫 화면 버전이 <code>${site.build}</code>인지 확인합니다.`,
   },
   {
     n: "02",
     who: "호스트",
     icon: "server-stack-01",
     title: "서버 열기",
-    desc: `설치 명령 한 줄 → 서버 만들기 → 서버 이름 ${SERVER_NAME} → 시작 → Esc → 친구 초대.`,
+    desc: `설치 명령 한 줄 → <span class="ui">서버 만들기</span> → <code>${SERVER_NAME}</code> → <span class="ui">시작</span> → <kbd>Esc</kbd> → <span class="ui">친구 초대</span>`,
     href: base("host/"),
     cta: "호스트 가이드",
   },
@@ -37,7 +37,7 @@ const flow = [
     who: "참가자",
     icon: "user-group",
     title: "초대 수락",
-    desc: "메인 메뉴에서 Steam 초대 수락 → 창작마당 아이템 설치. 모드는 자동으로 받습니다.",
+    desc: `메인 메뉴에서 Steam 초대 <span class="ui">게임 참가</span> → 창작마당 아이템 <span class="ui">설치</span>. 모드는 자동으로 받습니다.`,
     href: base("join/"),
     cta: "참가자 가이드",
   },
@@ -49,8 +49,8 @@ const flow = [
 
   <section class="flow wrap" aria-labelledby="flow-title">
     <header class="sec-head reveal">
-      <p class="kicker">진행 순서</p>
-      <h2 id="flow-title" class="display">세 단계면 같이 플레이할 수 있어요</h2>
+      <p class="kicker">01</p>
+      <h2 id="flow-title" class="display">진행 순서</h2>
     </header>
     <ol class="flow-list">
       {
@@ -62,7 +62,7 @@ const flow = [
             </span>
             <span class="flow-who">{f.who}</span>
             <h3>{f.title}</h3>
-            <p>{f.desc}</p>
+            <p set:html={f.desc} />
             {f.href && (
               <a class="flow-link" href={f.href}>
                 {f.cta}
@@ -77,9 +77,9 @@ const flow = [
 
   <section class="roles wrap" aria-labelledby="roles-title">
     <header class="sec-head reveal">
-      <p class="kicker">가이드</p>
-      <h2 id="roles-title" class="display">역할에 맞는 가이드를 고르세요</h2>
-      <p class="sec-lede">화면 그림과 함께 한 단계씩 넘겨 보는 슬라이드입니다. 키보드 ← → 로도 넘길 수 있어요.</p>
+      <p class="kicker">02</p>
+      <h2 id="roles-title" class="display">가이드</h2>
+      <p class="sec-lede">단계별 슬라이드입니다. 키보드 <kbd>←</kbd> <kbd>→</kbd> 로 넘길 수 있습니다.</p>
     </header>
 
     <div class="folders">
@@ -87,7 +87,7 @@ const flow = [
         tab="HOST"
         icon="server-stack-01"
         title="호스트 가이드"
-        desc="자기 PC 에서 서버를 여는 1명. 설치 명령, 서버 만들기, 방화벽, 친구 초대까지 다룹니다."
+        desc="자기 PC에서 서버를 여는 1명. 설치 명령, 서버 만들기, 방화벽, 친구 초대까지 다룹니다."
         minutes={hostSteps.minutes}
         steps={hostSteps.titles.length - 2}
         href={base("host/")}
@@ -115,10 +115,10 @@ const flow = [
     <Topo seed={11} hills={3} levels={10} class="install-topo" />
     <div class="wrap install-grid">
       <div class="install-copy reveal">
-        <p class="kicker night">호스트용 설치 명령</p>
-        <h2 id="install-title" class="display">명령 한 줄로<br />서버 설정 설치</h2>
+        <p class="kicker night">03 · 호스트용</p>
+        <h2 id="install-title" class="display">설치 명령</h2>
         <p class="sec-lede">
-          모드 {site.modCount}개가 등록된 서버 설정 <b>{SERVER_NAME}</b> 을 게임 폴더에 만듭니다.
+          모드 {site.modCount}개가 등록된 서버 설정 <b>{SERVER_NAME}</b>을 게임 폴더에 만듭니다.
           설치 후 게임에서 서버 만들기 → <b>{SERVER_NAME}</b> → 시작 순서로 서버를 엽니다.
         </p>
 
@@ -154,10 +154,10 @@ const flow = [
 
   <section class="pack wrap" aria-labelledby="pack-title">
     <header class="sec-head reveal">
-      <p class="kicker">모드팩 {site.modpackVersion}</p>
-      <h2 id="pack-title" class="display">모드 {site.modCount}개</h2>
+      <p class="kicker">04 · 모드팩 {site.modpackVersion}</p>
+      <h2 id="pack-title" class="display">모드 목록</h2>
       <p class="sec-lede">
-        편의 기능 위주로 골랐습니다. 모두 Build {site.build} 에서 동작을 확인했고, 서로 의존하는 모드가 없어 따로 받을 라이브러리가 없습니다.
+        편의 기능 위주로 골랐습니다. 모두 Build {site.build}에서 동작을 확인했고, 필요한 라이브러리까지 포함했습니다.
       </p>
     </header>
     <div class="tags">
@@ -176,8 +176,8 @@ const flow = [
     site.changes.length > 0 && (
       <section class="log wrap" aria-labelledby="log-title">
         <header class="sec-head reveal">
-          <p class="kicker">변경 기록</p>
-          <h2 id="log-title" class="display">모드팩 업데이트</h2>
+          <p class="kicker">05</p>
+          <h2 id="log-title" class="display">변경 기록</h2>
         </header>
         <ol class="entries">
           {site.changes.map((c, i) => (
@@ -210,7 +210,7 @@ const flow = [
     line-height: 1.1;
   }
   .sec-lede {
-    max-width: 42em;
+    max-width: 52em;
     font-size: clamp(16px, 1.25vw, 18px);
     color: var(--ink-2);
   }

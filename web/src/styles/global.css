@@ -20,9 +20,10 @@ body {
   font-family: var(--f-body);
   font-size: 16px;
   line-height: 1.72;
-  /* 한국어는 어절 단위로 끊어야 읽힌다. 영문 긴 경로만 아무 데서나 끊는다. */
+  /* 한국어는 어절 단위로 끊어야 읽힌다. anywhere 를 쓰면 칸의 최소 폭이 글자 하나로
+     줄어 카드·격자 안에서 아무 글자에서나 끊긴다. 넘칠 때만 끊는 break-word 를 쓴다. */
   word-break: keep-all;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   line-break: strict;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -111,24 +112,128 @@ p {
 }
 
 code,
-kbd,
 .mono {
   font-family: var(--f-mono);
   font-size: 0.92em;
 }
 
+/* 키보드 키. 실제 키캡처럼 위가 밝고 아래로 두께가 보이게 한다. */
 kbd {
-  display: inline-block;
-  min-width: 1.9em;
-  padding: 0.05em 0.5em 0.12em;
-  border: 1px solid var(--rule-strong);
-  border-bottom-width: 3px;
-  border-radius: 5px;
-  background: var(--paper-3);
-  font-size: 0.82em;
-  line-height: 1.5;
-  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2em;
+  height: 1.8em;
+  margin: 0 0.12em;
+  padding: 0 0.55em;
+  border: 1px solid #b8aa84;
+  border-radius: 7px;
+  background: linear-gradient(180deg, #fffdf6 0%, #f1e8d1 70%, #e6dbbd 100%);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 2px 0 #b8aa84,
+    0 3px 5px rgb(40 30 10 / 0.22);
   color: var(--ink);
+  font-family: var(--f-mono);
+  font-size: 0.78em;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  vertical-align: 0.12em;
+  translate: 0 -1px;
+}
+
+/* 메뉴 경로 칩(Menu.astro). 게임 메뉴처럼 어둡게, 마지막 칸만 빨갛게. */
+.menu-path {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px;
+  vertical-align: 0.05em;
+}
+.menu-path .m {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12em 0.6em;
+  border-radius: 6px;
+  background: #24231c;
+  color: #efe6cc;
+  font-size: 0.88em;
+  font-weight: 600;
+  line-height: 1.55;
+  white-space: nowrap;
+  box-shadow: inset 0 -1px 0 rgb(0 0 0 / 0.4);
+}
+.menu-path .m.app {
+  background: transparent;
+  color: var(--ink-2);
+  box-shadow: inset 0 0 0 1px var(--rule-strong);
+}
+.menu-path .m.end {
+  background: var(--red);
+  color: #fff;
+  box-shadow:
+    inset 0 -1px 0 rgb(0 0 0 / 0.25),
+    0 0 0 3px color-mix(in srgb, var(--red) 16%, transparent);
+}
+.menu-path .sep {
+  display: inline-flex;
+  color: var(--ink-3);
+}
+
+/* 화면 속 버튼 이름. 누르는 대상이라는 걸 버튼 모양으로 보여 준다. */
+.ui {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.05em 0.6em;
+  border: 1.5px solid var(--ink);
+  border-radius: 6px;
+  background: var(--paper-3);
+  color: var(--ink);
+  font-size: 0.9em;
+  font-weight: 700;
+  line-height: 1.55;
+  white-space: nowrap;
+  box-shadow: 1.5px 1.5px 0 var(--ink);
+  vertical-align: 0.05em;
+}
+
+/* 안내문 속 값(설정 이름, 버전 등). 슬라이드·카드·도움말 본문에만 적용한다. */
+:where(.content, .flow-item, .tips, .need, .help, .callout, .success, .sec-lede) code {
+  padding: 0.1em 0.45em;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--steel) 13%, transparent);
+  color: var(--steel);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* 핵심 단어 강조. 형광펜으로 아랫부분만 칠한 모양. */
+:where(.content, .flow-item, .help) :where(b, strong) {
+  color: var(--ink);
+  font-weight: 700;
+  background: linear-gradient(transparent 58%, color-mix(in srgb, var(--amber) 34%, transparent) 58%);
+  padding: 0 0.08em;
+}
+
+@media (prefers-color-scheme: dark) {
+  kbd {
+    border-color: #5c5540;
+    background: linear-gradient(180deg, #4a4636 0%, #36332a 70%, #2d2b23 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.12),
+      0 2px 0 #1a1913,
+      0 3px 5px rgb(0 0 0 / 0.5);
+  }
+  .menu-path .m {
+    background: #3a382d;
+  }
+  /* 밝은 테두리에 밝은 그림자를 그대로 쓰면 다크 모드에서 칩이 무거워 보인다. */
+  .ui {
+    border-color: rgb(236 227 203 / 0.55);
+    background: #2c2a22;
+    box-shadow: 0 2px 0 rgb(0 0 0 / 0.7);
+  }
 }
 
 .sr-only {
@@ -159,7 +264,6 @@ kbd {
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--red);
 }
 .kicker::before {

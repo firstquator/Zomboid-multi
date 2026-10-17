@@ -29,9 +29,13 @@ Project Zomboid Build 42 멀티 서버 안내 사이트와 호스트용 설치 �
 
 `%USERPROFILE%\Zomboid\Server` 에 `zomboid-multi` 설정 파일 4개를 다룬다.
 
-- `zomboid-multi.ini` : `WorkshopItems`, `Mods`, `PVP=false`, `Public=false`, `PauseEmpty=true`
-- `zomboid-multi_SandboxVars.lua` : 미니맵 켜기
+- `zomboid-multi.ini` : `WorkshopItems`, `Mods`, `PVP=false`, `Public=false`, `PauseEmpty=true`,
+  `MapRemotePlayerVisibility=4`(지도에 플레이어 위치 모두 표시)
+- `zomboid-multi_SandboxVars.lua` : 미니맵 켜기, `MinutesPerPage=0.1`(기술 서적 거의 바로 읽기)
 - `zomboid-multi_spawnregions.lua`, `_spawnpoints.lua` : 42.21 기본 11개 도시
+
+서버 옵션과 샌드박스 값은 `data/mods.json` 의 `vanilla` 에 적는다. 화면 이름과 위치(`where`),
+기본값(`default`)도 같이 적어 두면 사이트의 모드 목록과 호스트 가이드에 그대로 나온다.
 
 이미 있는 파일은 `*.<시각>.bak` 으로 백업한 뒤 우리 값만 바꾼다. 호스트가 게임 안에서
 바꾼 다른 설정은 남는다. 게임이 켜져 있으면 아무것도 쓰지 않고 멈춘다.
@@ -41,7 +45,8 @@ Project Zomboid Build 42 멀티 서버 안내 사이트와 호스트용 설치 �
 
 ## 모드 바꾸기
 
-1. `data/mods.json` 을 고친다. 의존 모드는 별도 항목으로 넣고 `dependsOn` 에 적는다
+1. `data/mods.json` 을 고친다. 의존 모드는 별도 항목으로 넣고 `dependsOn` 에 적는다.
+   두 모드가 서로를 필수로 지정하면 양쪽 모두 적는다(검사기가 순서 검사에서 뺀다)
 2. `npm run mods:verify` 로 창작마당 실물과 대조한다(B42 태그, Required items, Mod ID)
 3. `modpack.changes` 맨 앞에 변경 내용을 적는다
 4. `main` 에 푸시하면 사이트와 설치 스크립트가 함께 갱신된다

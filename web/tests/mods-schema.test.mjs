@@ -22,6 +22,24 @@ describe("validateMods", () => {
     expect(validateMods(d).errors.join("\n")).toContain("loadOrder 가 더 앞서야");
   });
 
+  it("두 모드가 서로를 필수로 지정한 경우는 순서와 관계없이 통과한다", () => {
+    const d = fixtureData();
+    d.mods.find((m) => m.workshopId === "2000000001").dependsOn = ["2000000002"];
+    expect(validateMods(d)).toEqual({ ok: true });
+  });
+
+  it("기본 기능 설정의 샌드박스 값이 Lua 를 깨뜨릴 수 있으면 막는다", () => {
+    const d = fixtureData();
+    d.vanilla = [{ feature: "f", file: "sandbox", key: "Map.AllowMiniMap", value: "true}", where: "w", why: "y" }];
+    expect(validateMods(d).errors.join("\n")).toContain("샌드박스 키나 값 형식");
+  });
+
+  it("기본 기능 설정의 ini 값에 = 가 있으면 막는다", () => {
+    const d = fixtureData();
+    d.vanilla = [{ feature: "f", file: "ini", key: "Foo", value: "a=b", where: "w", why: "y" }];
+    expect(validateMods(d).errors.join("\n")).toContain("ini 키나 값 형식");
+  });
+
   it("Mod ID 에 세미콜론이나 역슬래시가 있으면 막는다", () => {
     const d = fixtureData();
     d.mods[0].modIds = ["A;B"];

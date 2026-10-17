@@ -38,6 +38,8 @@ function validateChanges(changes) {
  *
  * 의존 모드가 목록에 없으면 서버가 시작하지 못하거나 모드가 조용히 꺼진다.
  * 또 의존 모드는 쓰는 쪽보다 먼저 불러와야 하므로 loadOrder 가 앞서야 한다.
+ * 단 두 모드가 서로를 필수로 지정한 경우(errorMagnifier 와 Alert System 처럼)는
+ * 어느 쪽도 먼저일 수 없으니 순서는 보지 않고 둘 다 있는지만 본다.
  */
 function validateDependencies(mods) {
   const errors = [];
@@ -54,9 +56,38 @@ function validateDependencies(mods) {
         errors.push(`${at} 가 필요로 하는 모드 ${dep} 가 목록에 없습니다`);
       } else if (dep === m.workshopId) {
         errors.push(`${at} 가 자기 자신을 의존합니다`);
-      } else if (!(d.loadOrder < m.loadOrder)) {
+      } else if (!(d.dependsOn ?? []).includes(m.workshopId) && !(d.loadOrder < m.loadOrder)) {
         errors.push(`${at} 의 의존 모드 ${d.name} 는 loadOrder 가 더 앞서야 합니다 (${d.loadOrder} → ${m.loadOrder})`);
       }
+    }
+  });
+  return errors;
+}
+
+const VANILLA_FILES = ["ini", "sandbox"];
+const INI_KEY = /^[A-Za-z][A-Za-z0-9]*$/;
+const SANDBOX_KEY = /^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)?$/;
+const SANDBOX_VALUE = /^(true|false|-?\d+(\.\d+)?)$/;
+
+/**
+ * 서버 설정으로 켜는 기본 기능 목록을 검사한다. 설치 스크립트가 이 값을 그대로
+ * ini 와 SandboxVars.lua 에 쓰므로, 형식이 틀리면 설정이 무시되거나 서버가 꺼진다.
+ */
+function validateVanilla(vanilla) {
+  const errors = [];
+  if (vanilla === undefined) return errors;
+  if (!Array.isArray(vanilla)) return ["vanilla 는 배열이어야 합니다"];
+  vanilla.forEach((v, i) => {
+    const at = `vanilla[${i}]${v?.feature ? ` (${v.feature})` : ""}`;
+    for (const f of ["feature", "file", "key", "value", "where", "why"]) {
+      if (!v?.[f]) errors.push(`${at}.${f} 가 없습니다`);
+    }
+    if (!VANILLA_FILES.includes(v?.file)) errors.push(`${at}.file 은 ini 또는 sandbox 여야 합니다 (받은 값: ${v?.file})`);
+    if (v?.file === "ini" && (!INI_KEY.test(v.key ?? "") || /[=\r\n]/.test(v.value ?? ""))) {
+      errors.push(`${at} 의 ini 키나 값 형식이 틀렸습니다: ${v.key}=${v.value}`);
+    }
+    if (v?.file === "sandbox" && (!SANDBOX_KEY.test(v.key ?? "") || !SANDBOX_VALUE.test(v.value ?? ""))) {
+      errors.push(`${at} 의 샌드박스 키나 값 형식이 틀렸습니다 (값은 true, false, 숫자): ${v.key} = ${v.value}`);
     }
   });
   return errors;
@@ -74,6 +105,7 @@ export function validateMods(data) {
   if (!Array.isArray(data.mods)) return { ok: false, errors: [...errors, "mods 는 배열이어야 합니다"] };
 
   errors.push(...validateChanges(data.modpack?.changes));
+  errors.push(...validateVanilla(data.vanilla));
 
   const cats = new Set((data.categories ?? []).map((c) => c.id));
   const seenWs = new Set();

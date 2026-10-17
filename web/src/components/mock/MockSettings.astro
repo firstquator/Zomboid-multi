@@ -1,0 +1,115 @@
+---
+import MockWindow from "./MockWindow.astro";
+import Icon from "../Icon.astro";
+import { vanilla, SERVER_NAME } from "../../lib/site.mjs";
+
+// 서버 설정 수정 화면을 흉내 내 설치 명령이 넣은 값을 보여 준다. 값은 mods.json 의 vanilla 에서 온다.
+// "where" 의 첫 칸(서버 설정 / 샌드박스)을 탭처럼 묶는다.
+const groups = new Map();
+for (const v of vanilla) {
+  const [area, page, label] = v.where.split(" → ");
+  const key = `${area} · ${page}`;
+  if (!groups.has(key)) groups.set(key, []);
+  groups.get(key).push({ ...v, label: label ?? v.key });
+}
+---
+
+<MockWindow title={`서버 설정 수정: ${SERVER_NAME}`} variant="pz" icon="settings-02" caption="설치 명령이 넣어 둔 값이에요">
+  <div class="st">
+    {
+      [...groups].map(([g, items]) => (
+        <section>
+          <p class="g">{g}</p>
+          {items.map((v: any) => (
+            <div class="row">
+              <span class="lbl">
+                {v.label}
+                <small class="mono">{v.key}</small>
+              </span>
+              <span class="vals">
+                <span class="def mono">{v.default}</span>
+                <Icon name="arrow-right-01" size={12} />
+                <span class="now mono">{v.value}</span>
+              </span>
+            </div>
+          ))}
+        </section>
+      ))
+    }
+    <div class="btns">
+      <span class="b">취소</span>
+      <span class="b primary">저장</span>
+    </div>
+  </div>
+</MockWindow>
+
+<style>
+  .st {
+    display: grid;
+    gap: 16px;
+    padding: 20px 22px 22px;
+    font-size: 13px;
+  }
+  .g {
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #3a3a32;
+    color: #f0a93a;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 10px;
+    background: rgb(0 0 0 / 0.3);
+    border: 1px solid #33332b;
+  }
+  .row + .row {
+    margin-top: 6px;
+  }
+  .lbl {
+    display: grid;
+    color: #e8e2d0;
+    line-height: 1.35;
+  }
+  .lbl small {
+    color: #8e8a7e;
+    font-size: 11px;
+  }
+  .vals {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #8e8a7e;
+  }
+  .def {
+    font-size: 12px;
+    text-decoration: line-through;
+  }
+  .now {
+    padding: 2px 8px;
+    border: 1px solid #f0a93a;
+    color: #f0a93a;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .btns {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .b {
+    padding: 6px 16px;
+    border: 1px solid #4a4a40;
+    background: #24241f;
+    color: #e8e2d0;
+  }
+  .b.primary {
+    border-color: #f0a93a;
+    color: #f0a93a;
+  }
+</style>

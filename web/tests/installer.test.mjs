@@ -10,7 +10,11 @@ const make = (over = {}) =>
     siteUrl: "https://example.com/",
     repoUrl: "https://github.com/x/y",
     modpackVersion: "v1",
-    sandbox: [{ key: "Map.AllowMiniMap", value: "true" }],
+    sandbox: [
+      { key: "Map.AllowMiniMap", value: "true" },
+      { key: "MinutesPerPage", value: "0.1" },
+    ],
+    ini: [{ key: "MapRemotePlayerVisibility", value: "4" }],
     ...over,
   });
 const script = make();
@@ -27,8 +31,8 @@ describe("installer", () => {
 
   it("실제 data/mods.json 으로 만든 스크립트도 ASCII 로만 되어 있다", () => {
     const real = JSON.parse(readFileSync(new URL("../../data/mods.json", import.meta.url), "utf8"));
-    const sandbox = real.vanilla.map((v) => ({ key: v.sandboxKey, value: v.value }));
-    expect(nonAscii(make({ mods: real.mods, sandbox }))).toEqual([]);
+    const pick = (f) => real.vanilla.filter((v) => v.file === f).map(({ key, value }) => ({ key, value }));
+    expect(nonAscii(make({ mods: real.mods, sandbox: pick("sandbox"), ini: pick("ini") }))).toEqual([]);
   });
 
   it("줄바꿈은 CRLF 다", () => {
@@ -49,6 +53,14 @@ describe("installer", () => {
     expect(texts).toContain(MESSAGES.title);
     expect(texts).toContain(MESSAGES.next("zomboid-multi"));
     expect(texts).toContain("2000000001  Hx's 좀보이드 통합 번역");
+  });
+
+  it("지도 플레이어 표시 같은 추가 ini 값도 넣는다", () => {
+    expect(script).toContain("'MapRemotePlayerVisibility' = '4'");
+  });
+
+  it("맨 위 샌드박스 값(MinutesPerPage)은 기존 파일을 고칠 때도 이름으로 찾는다", () => {
+    expect(script).toContain("'MinutesPerPage' = '0.1'");
   });
 
   it("게임이 켜져 있으면 멈춘다 (서버가 시작할 때 파일을 다시 쓰므로)", () => {
@@ -84,8 +96,9 @@ describe("installer", () => {
 });
 
 describe("sandboxLua", () => {
-  it("VERSION 과 묶음별 표를 만든다", () => {
+  it("VERSION, 맨 위 값, 묶음별 표 순서로 만든다", () => {
     const lua = sandboxLua([
+      { key: "MinutesPerPage", value: "0.1" },
       { key: "Map.AllowMiniMap", value: "true" },
       { key: "Map.AllowWorldMap", value: "true" },
       { key: "ZombieLore.Speed", value: "2" },
@@ -94,6 +107,7 @@ describe("sandboxLua", () => {
       [
         "SandboxVars = {",
         "    VERSION = 6,",
+        "    MinutesPerPage = 0.1,",
         "    Map = {",
         "        AllowMiniMap = true,",
         "        AllowWorldMap = true,",
@@ -108,7 +122,7 @@ describe("sandboxLua", () => {
   });
 
   it("문법이 깨질 수 있는 키와 값은 빌드를 멈춘다 (서버가 즉시 꺼지므로)", () => {
-    expect(() => sandboxLua([{ key: "Map", value: "true" }])).toThrow();
+    expect(() => sandboxLua([{ key: "Map.Allow.MiniMap", value: "true" }])).toThrow();
     expect(() => sandboxLua([{ key: "Map.Allow MiniMap", value: "true" }])).toThrow();
     expect(() => sandboxLua([{ key: "Map.AllowMiniMap", value: "yes" }])).toThrow();
     expect(() => sandboxLua([{ key: "Map.AllowMiniMap", value: "true}" }])).toThrow();

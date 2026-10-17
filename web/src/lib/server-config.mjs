@@ -41,8 +41,9 @@ export function modIds(mods) {
 /**
  * 설치 스크립트가 덮어쓸 ini 키와 값.
  * 여기 없는 키는 게임이 만든 기본값을 그대로 둔다.
+ * @param {{ key: string, value: string }[]} [extra] mods.json 의 vanilla 중 ini 값(지도 표시 등)
  */
-export function iniOverrides(mods) {
+export function iniOverrides(mods, extra = []) {
   return {
     WorkshopItems: workshopItems(mods),
     Mods: modIds(mods),
@@ -52,6 +53,7 @@ export function iniOverrides(mods) {
     Public: "false",
     // 아무도 없으면 시간을 멈춘다(게임 기본값과 같지만 명시해 둔다).
     PauseEmpty: "true",
+    ...Object.fromEntries(extra.map((e) => [e.key, e.value])),
   };
 }
 

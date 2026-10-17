@@ -89,3 +89,14 @@
 - Better Sorting: 샌드박스의 카테고리별 전리품 희귀도는 기본값으로 두는 편이 안전하다(GitHub #105).
 - Common Sense 는 업데이트가 잦다. 서버를 다시 켜기 전에 워크숍 업데이트를 받는다.
 - 문제가 생기면 먼저 4번(Stack ALL Fix)을 빼 본다. 지도 쪽이 이상하면 Hx_KR_Vanilla 만 빼고 Hx_KR_Mod 는 남긴다.
+
+## 2026-10-18 추가: Skill Recovery Journal (모드팩 v2)
+
+처음에는 "난이도를 크게 낮추는 모드 제외" 기준으로 뺐으나, 사용자 요청으로 넣었다.
+
+- Skill Recovery Journal (2503622437, Mod ID `SkillRecoveryJournal`): Build 42 태그, 2026-09-04 갱신, 구독 약 281만.
+  변경 기록에 'B42.20.3 hotfix2'(2026-08-18)와 비ASCII 파일명 저장 수정(2026-09-03, 한글 Steam 이름 관련).
+  GitHub `Contents/mods/Skill Recovery Journal/common/media/lua/shared/Translate/KO` 에 KO 번역 5개 파일.
+- 필수 모드(워크숍 Required items): errorMagnifier (2896041179, `errorMagnifier`),
+  Mod Update and Alert System (3077900375, `ChuckleberryFinnAlertSystem`). 두 라이브러리는 서로를 필수로 지정한다.
+- `npm run mods:verify` 결과 14개 모두 오류·경고 없음.

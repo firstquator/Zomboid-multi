@@ -5,14 +5,15 @@ import Ring from "./Ring.astro";
 // 좀보이드 메인 메뉴. 42.21 한국어 번역 이름이 확인된 항목만 글자로 쓰고,
 // 나머지 항목은 회색 막대로 둔다. 확인하지 않은 메뉴 이름을 지어내지 않으려는 것이다.
 interface Props {
-  highlight: "host" | "join" | "options";
+  // 없으면 아무 항목도 강조하지 않는다(메인 메뉴에서 기다리기만 하는 단계).
+  highlight?: "host" | "join" | "options";
   note?: string;
 }
 const { highlight, note } = Astro.props;
 const items = [
   { id: "skel", w: 56 },
   { id: "skel", w: 70 },
-  { id: "join", ko: "여러 명이서 하기", en: "JOIN" },
+  { id: "join", ko: "여러 명이서 하기", en: "MULTIPLAYER" },
   { id: "host", ko: "서버 만들기", en: "HOST" },
   { id: "skel", w: 48 },
   { id: "options", ko: "설정", en: "OPTIONS" },

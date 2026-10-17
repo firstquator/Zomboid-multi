@@ -41,7 +41,7 @@ const WHO: Record<string, string> = { all: "모두", host: "호스트", join: "�
             </summary>
             <ol>
               {t.steps.map((s) => (
-                <li>{s}</li>
+                <li set:html={s} />
               ))}
             </ol>
           </details>

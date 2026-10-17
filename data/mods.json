@@ -6,8 +6,13 @@
     "checkedAt": "2026-10-18"
   },
   "modpack": {
-    "version": "v1",
+    "version": "v2",
     "changes": [
+      {
+        "date": "2026-10-18",
+        "summary": "죽어도 스킬을 되찾는 Skill Recovery Journal과, 이 모드가 필요로 하는 라이브러리 2개(errorMagnifier, Mod Update and Alert System)를 넣었습니다. 모드 14개.",
+        "mustUpdate": true
+      },
       {
         "date": "2026-10-18",
         "summary": "첫 모드팩. B42.21 정식 기준 편의 모드 11개(한국어 번역·한글 입력 포함)를 골랐다.",
@@ -33,6 +38,10 @@
       "label": "상호작용"
     },
     {
+      "id": "character",
+      "label": "캐릭터"
+    },
+    {
       "id": "map",
       "label": "지도"
     },
@@ -42,6 +51,76 @@
     }
   ],
   "mods": [
+    {
+      "workshopId": "2896041179",
+      "modIds": [
+        "errorMagnifier"
+      ],
+      "name": "errorMagnifier",
+      "nameKo": "오류 알림 버튼",
+      "category": "lib",
+      "summary": "게임에서 오류가 나면 화면에 버튼을 띄워, 눌러서 오류 내용을 보고 복사할 수 있게 한다.",
+      "why": "Skill Recovery Journal이 필요로 하는 라이브러리다(구독 약 265만).",
+      "korean": {
+        "status": "none",
+        "note": "버튼과 오류 창 문구는 영어다. 평소에는 보이지 않는다."
+      },
+      "b42": {
+        "supported": true,
+        "lastUpdated": "2026-08-19",
+        "tags": [
+          "Build 41",
+          "Build 42",
+          "Interface",
+          "Misc",
+          "Multiplayer",
+          "QOL"
+        ],
+        "note": "Build 42 태그. Mod Update and Alert System과 서로를 필수 모드로 지정한다."
+      },
+      "dependsOn": [
+        "3077900375"
+      ],
+      "loadOrder": 1,
+      "thumbnail": "https://images.steamusercontent.com/ugc/2006946285955965520/F1B969816DF9BDB7EF43BDD2345BA1045BEA895F/",
+      "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2896041179",
+      "sandbox": []
+    },
+    {
+      "workshopId": "3077900375",
+      "modIds": [
+        "ChuckleberryFinnAlertSystem"
+      ],
+      "name": "Mod Update and Alert System",
+      "nameKo": "모드 업데이트 알림",
+      "category": "lib",
+      "summary": "메인 메뉴와 Esc 메뉴의 작은 접이식 창에 일부 모드의 업데이트 소식을 보여 준다.",
+      "why": "B42에서 Skill Recovery Journal과 errorMagnifier가 필요로 하는 라이브러리다(구독 약 170만).",
+      "korean": {
+        "status": "none",
+        "note": "소식 창 문구는 영어다."
+      },
+      "b42": {
+        "supported": true,
+        "lastUpdated": "2026-04-08",
+        "tags": [
+          "Build 41",
+          "Build 42",
+          "Framework",
+          "Interface",
+          "Misc",
+          "QOL"
+        ],
+        "note": "Build 42 태그. 설명에 'B42에서는 필수'라고 적혀 있다. 마지막 업데이트가 42.20 정식 이전이다."
+      },
+      "dependsOn": [
+        "2896041179"
+      ],
+      "loadOrder": 2,
+      "thumbnail": "https://images.steamusercontent.com/ugc/24307035126317491/0578D28193C22EBCECD677A4253ACE6426BD842D/",
+      "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3077900375",
+      "sandbox": []
+    },
     {
       "workshopId": "2313387159",
       "modIds": [
@@ -67,7 +146,7 @@
         "note": "Build 42 태그, v2.1.5. 2026-08-10 업데이트 직후 42.20.2 멀티 오류가 있었으나 다음 날 고쳐짐(GitHub #97). 아이템 분류값을 바꾸는 방식이라 샌드박스 '카테고리별 전리품 희귀도'가 일부 아이템에 안 먹는 문제가 열려 있다(GitHub #105)."
       },
       "dependsOn": [],
-      "loadOrder": 1,
+      "loadOrder": 3,
       "thumbnail": "https://images.steamusercontent.com/ugc/16772822583472605211/D95CB3CD91A8350380A3613B70E87C31F9F37DC6/",
       "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2313387159",
       "sandbox": []
@@ -94,10 +173,10 @@
           "Build 42",
           "Multiplayer"
         ],
-        "note": "Build 42 태그. '42.20 전용 서버에서 정상' 댓글(2026-09-19). Manage Containers 와 우클릭 메뉴가 부딪힌다는 보고가 있어 이 팩에는 Manage Containers 를 넣지 않았다."
+        "note": "Build 42 태그. '42.20 전용 서버에서 정상' 댓글(2026-09-19). Manage Containers와 우클릭 메뉴가 부딪힌다는 보고가 있어 이 팩에는 Manage Containers를 넣지 않았다."
       },
       "dependsOn": [],
-      "loadOrder": 2,
+      "loadOrder": 4,
       "thumbnail": "https://images.steamusercontent.com/ugc/10793773199052948/1AC936B14292634A36788BFFE5C359EA00FCE66E/",
       "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3290232938",
       "sandbox": []
@@ -124,10 +203,10 @@
           "Build 42",
           "Multiplayer"
         ],
-        "note": "Build 42 태그, 제목에 'B42.20+'. '120개 모드 서버에서 멀티 정상'(2026-10-06)과 '멀티에서 안 됨' 댓글이 섞여 있다. 지구본 탭이 가끔 사라지고 Better Sorting 을 끄니 돌아왔다는 댓글(2026-10-15)이 있다."
+        "note": "Build 42 태그, 제목에 'B42.20+'. '120개 모드 서버에서 멀티 정상'(2026-10-06)과 '멀티에서 안 됨' 댓글이 섞여 있다. 지구본 탭이 가끔 사라지고 Better Sorting을 끄니 돌아왔다는 댓글(2026-10-15)이 있다."
       },
       "dependsOn": [],
-      "loadOrder": 3,
+      "loadOrder": 5,
       "thumbnail": "https://images.steamusercontent.com/ugc/1731090662166032115/3230EC9CA60AD855DBBBAF75DCCA1DE11E9109C6/",
       "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2847184718",
       "sandbox": []
@@ -141,10 +220,10 @@
       "nameKo": "남은 양 합치기",
       "category": "inventory",
       "summary": "반쯤 쓴 실·테이프·접착제처럼 남은 양이 표시되는 아이템을 우클릭 한 번으로 하나로 합쳐 준다.",
-      "why": "원본 Stack All 이 42.14 이후 동작하지 않아 B42용 수정판을 쓴다. 같은 종류 한 번에 옮기기는 바닐라 루팅 창 버튼으로 이미 있다.",
+      "why": "원본 Stack All이 42.14 이후 동작하지 않아 B42용 수정판을 쓴다. 같은 종류 한 번에 옮기기는 바닐라 루팅 창 버튼으로 이미 있다.",
       "korean": {
         "status": "none",
-        "note": "확인 못 함. 원본 Stack All 은 KO 를 포함했지만 이 수정판의 KO 포함 여부는 알 수 없다. 메뉴 문구 몇 줄 수준이다."
+        "note": "확인 못 함. 원본 Stack All은 KO를 포함했지만 이 수정판의 KO 포함 여부는 알 수 없다. 메뉴 문구 몇 줄 수준이다."
       },
       "b42": {
         "supported": true,
@@ -152,10 +231,10 @@
         "tags": [
           "Build 42"
         ],
-        "note": "Build 42 태그. 마지막 업데이트가 42.20 정식(2026-07-29) 이전이다. 42.20.2·42.20.3 멀티 정상 댓글 2건, '42.20 에서 안 됨' 2건, 저장 파일 튕김 1건. 42.21 보고는 없다."
+        "note": "Build 42 태그. 마지막 업데이트가 42.20 정식(2026-07-29) 이전이다. 42.20.2·42.20.3 멀티 정상 댓글 2건, '42.20에서 안 됨' 2건, 저장 파일 튕김 1건. 42.21 보고는 없다."
       },
       "dependsOn": [],
-      "loadOrder": 4,
+      "loadOrder": 6,
       "thumbnail": "https://images.steamusercontent.com/ugc/17476751552289937323/C7DF78B829BD19120DE6473556A0F7C47C076D82/",
       "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3723627943",
       "sandbox": []
@@ -172,7 +251,7 @@
       "why": "원본은 2025-03 이후 업데이트가 없어, 42.20 정식 대응을 밝히고 계속 관리되는 이어받기판을 쓴다.",
       "korean": {
         "status": "native",
-        "note": "v3.6.0(2026-10-12) 변경 기록에 'Added Korean translation' 이 있다."
+        "note": "v3.6.0(2026-10-12) 변경 기록에 'Added Korean translation'이 있다."
       },
       "b42": {
         "supported": true,
@@ -181,10 +260,10 @@
           "Build 42",
           "Multiplayer"
         ],
-        "note": "Build 42 태그, 설명에 '42.20 stable 이상 정상'. v3.6.0 에서 서버 권한 방식(멀티) 대응, 직후 쇠지렛대 따기 오류가 나 당일 3.6.1 핫픽스. 업데이트가 잦아 서버도 자주 갱신해야 한다는 댓글이 있다."
+        "note": "Build 42 태그, 설명에 '42.20 stable 이상 정상'. v3.6.0에서 서버 권한 방식(멀티) 대응, 직후 쇠지렛대 따기 오류가 나 당일 3.6.1 핫픽스. 업데이트가 잦아 서버도 자주 갱신해야 한다는 댓글이 있다."
       },
       "dependsOn": [],
-      "loadOrder": 5,
+      "loadOrder": 7,
       "thumbnail": "https://images.steamusercontent.com/ugc/17038342370418928961/0638F67EE951C670AF534F1718BA0956A81A0060/",
       "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3750253491",
       "sandbox": []
@@ -214,7 +293,7 @@
         "note": "Build 42 태그, 설명에 'B42 Stable 멀티 포함 작동'. 알려진 문제: 42.20 멀티에서 재접속하면 지도 아이템이 안 읽음으로 보인다(바닐라 문제, 옵션에서 Map 표시를 끄면 됨)."
       },
       "dependsOn": [],
-      "loadOrder": 6,
+      "loadOrder": 8,
       "thumbnail": "https://images.steamusercontent.com/ugc/17549172646925789/53181618A273C24338C373CE6B4C1DF6F5408C8E/",
       "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2544353492",
       "sandbox": []
@@ -240,10 +319,10 @@
           "Build 41",
           "Build 42"
         ],
-        "note": "Build 42 태그. 'B42 stable 싱글·멀티 작동' 댓글(2026-08-04, 08-17). NeatUI 보다 먼저 로드하면 서버가 시작 중 꺼진다는 보고 1건이 있다(이 팩에는 NeatUI 없음)."
+        "note": "Build 42 태그. 'B42 stable 싱글·멀티 작동' 댓글(2026-08-04, 08-17). NeatUI보다 먼저 로드하면 서버가 시작 중 꺼진다는 보고 1건이 있다(이 팩에는 NeatUI 없음)."
       },
       "dependsOn": [],
-      "loadOrder": 7,
+      "loadOrder": 9,
       "thumbnail": "https://images.steamusercontent.com/ugc/47948470137919175/F65D54EB204CE32EE49D15FADF9A07CD8863BAF2/",
       "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2866258937",
       "sandbox": []
@@ -273,7 +352,7 @@
         "note": "Build 42 태그, 설명에 '42.20 싱글/멀티 정상'. 멀티에서 지명이 안 적히면 펜 우클릭 → '모드 심볼 일괄 추가'로 해결했다는 댓글이 여럿 있고, 2초마다 살짝 끊긴다는 보고가 2건 있다. 42.21 정식 뒤로는 업데이트가 없다."
       },
       "dependsOn": [],
-      "loadOrder": 8,
+      "loadOrder": 10,
       "thumbnail": "https://images.steamusercontent.com/ugc/2448359926387270267/8A9969F471BF5219EE7ADCAD30C6D4A8403D42E7/",
       "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3342110208",
       "sandbox": []
@@ -302,9 +381,43 @@
         "note": "Build 42 태그, 설명에 '빌드 42.20 기준 제작·테스트, 멀티는 서버에도 모드 필요'. 42.21 관련 문제 댓글은 없고 2026-10-17 긍정 댓글이 있다."
       },
       "dependsOn": [],
-      "loadOrder": 9,
+      "loadOrder": 11,
       "thumbnail": "https://images.steamusercontent.com/ugc/13060964997314661942/2EF7B3190764DA418860D0242A16082DC6CB56BA/",
       "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3780552862",
+      "sandbox": []
+    },
+    {
+      "workshopId": "2503622437",
+      "modIds": [
+        "SkillRecoveryJournal"
+      ],
+      "name": "Skill Recovery Journal",
+      "nameKo": "스킬 보존 일지",
+      "category": "character",
+      "summary": "살아 있을 때 일지에 경험을 기록해 두면, 죽은 뒤 새 캐릭터가 일지를 읽어 스킬과 레시피를 되찾는다.",
+      "why": "멀티에서 가장 많이 쓰는 스킬 보존 모드다(구독 약 281만). 2026-09-03 업데이트로 한글 같은 비ASCII Steam 이름의 기록 저장 문제가 고쳐졌다.",
+      "korean": {
+        "status": "native",
+        "note": "모드에 KO 번역(UI·아이템·레시피·샌드박스·툴팁)이 들어 있다. GitHub Translate/KO 폴더 확인."
+      },
+      "b42": {
+        "supported": true,
+        "lastUpdated": "2026-09-04",
+        "tags": [
+          "Build 41",
+          "Build 42",
+          "Balance",
+          "Multiplayer"
+        ],
+        "note": "Build 42 태그. 변경 기록에 'B42.20.3 hotfix2'(2026-08-18)와 비ASCII 파일명 수정(2026-09-03). 42.21 작동 보고는 따로 확인하지 못했다."
+      },
+      "dependsOn": [
+        "2896041179",
+        "3077900375"
+      ],
+      "loadOrder": 12,
+      "thumbnail": "https://images.steamusercontent.com/ugc/16705179691990913665/8391C9CC390A0FA349F1343BB1C03E3A5B397CC7/",
+      "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2503622437",
       "sandbox": []
     },
     {
@@ -328,10 +441,10 @@
         "tags": [
           "Build 42"
         ],
-        "note": "Build 42 태그, 2026-10-09 갱신(변경 기록 259회). 42.20.2 전용 서버에서 Hx_KR_Vanilla 가 지도 심볼 파일을 키운다는 보고(2026-08-21)와 전단지 흰 화면 보고(2026-08-26) 뒤, 변경 기록에 '42.20.4 전단지·신문 이미지 수정'(08-27), '멀티 심볼 코드 수정'(09-07)이 올라왔다. 실제로 해결됐는지는 직접 확인 못 했다."
+        "note": "Build 42 태그, 2026-10-09 갱신(변경 기록 259회). 42.20.2 전용 서버에서 Hx_KR_Vanilla가 지도 심볼 파일을 키운다는 보고(2026-08-21)와 전단지 흰 화면 보고(2026-08-26) 뒤, 변경 기록에 '42.20.4 전단지·신문 이미지 수정'(08-27), '멀티 심볼 코드 수정'(09-07)이 올라왔다. 실제로 해결됐는지는 직접 확인 못 했다."
       },
       "dependsOn": [],
-      "loadOrder": 10,
+      "loadOrder": 13,
       "thumbnail": "https://images.steamusercontent.com/ugc/2477632689744371821/E07286509BA3168C5263569FED11D9930918F40F/",
       "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3040632900",
       "sandbox": []
@@ -361,7 +474,7 @@
         "note": "Build 42 태그, 설명에 'B41 and B42.20+'. 42.21 질문에 작성자가 호환된다고 답했다(2026-10-02). 멀티 정상 댓글(2026-09-17)."
       },
       "dependsOn": [],
-      "loadOrder": 11,
+      "loadOrder": 14,
       "thumbnail": "https://images.steamusercontent.com/ugc/15297555649171165128/F7FE5B95CEF355CCF17BEE92B4C791142E350C04/",
       "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2732294885",
       "sandbox": []
@@ -370,9 +483,30 @@
   "vanilla": [
     {
       "feature": "미니맵",
-      "sandboxKey": "Map.AllowMiniMap",
+      "file": "sandbox",
+      "key": "Map.AllowMiniMap",
       "value": "true",
-      "why": "기본값이 false 라서 켜야 화면 구석에 미니맵이 나온다. WorldMap Name Symbols 의 한국어 지명도 이 미니맵 위에 뜬다."
+      "where": "샌드박스 → 지도 → 미니 맵을 사용할 수 있습니다",
+      "default": "false",
+      "why": "기본값이 꺼짐이라 켜야 화면 구석에 미니맵이 나온다. WorldMap Name Symbols의 한국어 지명도 이 미니맵 위에 뜬다."
+    },
+    {
+      "feature": "지도에 플레이어 위치 표시",
+      "file": "ini",
+      "key": "MapRemotePlayerVisibility",
+      "value": "4",
+      "where": "서버 설정 → 플레이어 설정 → MapRemotePlayerVisibility",
+      "default": "1",
+      "why": "기본값 1은 지도에서 다른 플레이어를 모두 숨긴다. 4로 두면 지도와 미니맵에 같이 하는 사람 위치가 모두 보인다(2 친구만, 3 친구와 가까운 플레이어)."
+    },
+    {
+      "feature": "책 읽기 시간",
+      "file": "sandbox",
+      "key": "MinutesPerPage",
+      "value": "0.1",
+      "where": "샌드박스 → 캐릭터 설정 → 기술 서적 한 쪽당 독서 시간",
+      "default": "2.0",
+      "why": "기술 서적을 거의 바로 읽게 한다. 게임이 허용하는 범위는 0.0~60.0(기본 2.0)인데, 독서 시간이 '쪽수 × 이 값'으로 계산되어 0이면 독서 동작 시간이 0이 되므로 가장 작은 0이 아닌 값 0.1(기본보다 20배 빠름)을 쓴다."
     }
   ]
 }

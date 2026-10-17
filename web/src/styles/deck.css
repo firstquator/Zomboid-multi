@@ -229,6 +229,23 @@
     transform 800ms 150ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
+/* 그림 두 장을 위아래로 쌓을 때(예: Esc 메뉴 → 친구 초대 창) */
+.visual-stack {
+  display: grid;
+  gap: 18px;
+}
+/* 쌓으면 화면 높이를 넘기 쉬워 사진을 줄이고, 설명문은 숨기고 출처만 남긴다. */
+.visual-stack .photo {
+  width: 78%;
+  margin-inline: auto;
+}
+.visual-stack figcaption {
+  margin-top: 8px;
+}
+.visual-stack figcaption .cap {
+  display: none;
+}
+
 /* 할 일 목록: 동그라미 숫자 + 한 줄 설명 */
 .do {
   display: grid;
@@ -296,9 +313,11 @@
 .callout.warn .icon {
   color: var(--red);
 }
-.callout b {
+.callout > span > b:first-child {
   display: block;
   margin-bottom: 2px;
+  background: none;
+  padding: 0;
 }
 
 /* 이렇게 보이면 성공 */
@@ -316,8 +335,10 @@
   color: var(--olive);
   margin-top: 2px;
 }
-.success b {
+.success > span > b:first-child {
   color: var(--olive);
+  background: none;
+  padding: 0;
 }
 
 /* 펼쳐 보는 보충 설명 */
@@ -360,6 +381,10 @@
 .slide.cover .slide-inner,
 .slide.done .slide-inner {
   max-width: 1180px;
+}
+/* 끝 장은 그림 없이 목록만 있어 본문 폭 제한을 풀어 두 줄로 펼친다. */
+.slide.done .content {
+  max-width: none;
 }
 .slide.cover .title,
 .slide.done .title {
@@ -553,10 +578,10 @@
 .route-fg {
   stroke: var(--red);
   stroke-width: 3;
-  /* 간격을 선 길이보다 길게 둬야 0% 일 때 끝에 조각이 남지 않는다. */
-  stroke-dasharray: 1 2;
-  stroke-dashoffset: 1;
-  transition: stroke-dashoffset 600ms cubic-bezier(0.6, 0, 0.2, 1);
+}
+.route-clip {
+  width: 0;
+  transition: width 600ms cubic-bezier(0.6, 0, 0.2, 1);
 }
 .pins {
   position: absolute;

@@ -20,11 +20,11 @@ import { iniOverrides, ordered } from "./server-config.mjs";
 export const MESSAGES = {
   title: "[좀보이드 멀티] 서버 설정 설치",
   ok: "완료",
-  gameRunning: "Project Zomboid 가 실행 중입니다. 게임을 완전히 끈 뒤 다시 실행하세요.",
+  gameRunning: "Project Zomboid가 실행 중입니다. 게임을 완전히 끈 뒤 다시 실행하세요.",
   checkFolder: "설정 폴더 확인",
   backup: "기존 설정 백업",
   mods: (n) => `서버 설정에 모드 ${n}개 등록`,
-  sandbox: "샌드박스 설정 (미니맵 켜기)",
+  sandbox: "샌드박스 설정 (미니맵, 독서 시간)",
   spawn: "스폰 지역 11곳 등록",
   preselect: "서버 만들기 화면 기본 선택 지정",
   done: "설치 완료",
@@ -75,22 +75,29 @@ const LUA_VALUE = /^(true|false|-?\d+(\.\d+)?)$/;
  * 샌드박스 값 목록으로 SandboxVars.lua 를 만든다.
  * 이 파일에 문법 오류가 있으면 서버가 시작하자마자 꺼지므로, 키와 값은
  * 정해진 모양만 받고 나머지는 빌드를 멈춘다.
- * @param {{ key: string, value: string }[]} values key 는 "Map.AllowMiniMap" 처럼 점으로 구분
+ * @param {{ key: string, value: string }[]} values key 는 "MinutesPerPage" 처럼 맨 위 값이거나
+ *   "Map.AllowMiniMap" 처럼 묶음 안의 값
  */
 export function sandboxLua(values) {
+  const top = [];
   const groups = new Map();
   for (const { key, value } of values) {
     const parts = key.split(".");
-    if (parts.length !== 2 || !parts.every((p) => LUA_KEY.test(p))) {
-      throw new Error(`샌드박스 키 형식이 아닙니다: ${key} (예: Map.AllowMiniMap)`);
+    if (parts.length > 2 || !parts.every((p) => LUA_KEY.test(p))) {
+      throw new Error(`샌드박스 키 형식이 아닙니다: ${key} (예: MinutesPerPage, Map.AllowMiniMap)`);
     }
     if (!LUA_VALUE.test(String(value))) {
       throw new Error(`샌드박스 값은 true, false, 숫자만 씁니다: ${key} = ${value}`);
+    }
+    if (parts.length === 1) {
+      top.push([parts[0], value]);
+      continue;
     }
     if (!groups.has(parts[0])) groups.set(parts[0], []);
     groups.get(parts[0]).push([parts[1], value]);
   }
   const lines = ["SandboxVars = {", "    VERSION = 6,"];
+  for (const [k, v] of top) lines.push(`    ${k} = ${v},`);
   for (const [group, entries] of groups) {
     lines.push(`    ${group} = {`);
     for (const [k, v] of entries) lines.push(`        ${k} = ${v},`);
@@ -123,11 +130,12 @@ export function demoLines({ modCount, serverName }) {
  * @param {string} o.siteUrl 사이트 주소. 스크립트 머리말에 남긴다
  * @param {string} o.repoUrl 저장소 주소
  * @param {string} o.modpackVersion 모드팩 버전
- * @param {{ key: string, value: string }[]} [o.sandbox] 샌드박스 값. key 는 "Map.AllowMiniMap" 형식
+ * @param {{ key: string, value: string }[]} [o.sandbox] 샌드박스 값. key 는 "MinutesPerPage", "Map.AllowMiniMap" 형식
+ * @param {{ key: string, value: string }[]} [o.ini] 서버 설정(ini)에 더 넣을 값(지도 표시 등)
  */
-export function buildInstaller({ mods, serverName, siteUrl, repoUrl, modpackVersion, sandbox = [] }) {
+export function buildInstaller({ mods, serverName, siteUrl, repoUrl, modpackVersion, sandbox = [], ini = [] }) {
   const list = ordered(mods);
-  const overrides = iniOverrides(list);
+  const overrides = iniOverrides(list, ini);
   const M = MESSAGES;
   const crlf = (s) => s.replace(/\r?\n/g, "\r\n");
 

@@ -30,6 +30,10 @@ export { mods };
 export const categories = data.categories;
 export const vanilla = data.vanilla ?? [];
 
+// 서버 설정(ini)과 샌드박스(SandboxVars.lua)에 넣을 값. 설치 스크립트가 쓴다.
+export const iniValues = vanilla.filter((v) => v.file === "ini").map(({ key, value }) => ({ key, value }));
+export const sandboxValues = vanilla.filter((v) => v.file === "sandbox").map(({ key, value }) => ({ key, value }));
+
 /** 카테고리 id 로 사람이 읽는 이름을 찾는다. 없으면 id 를 그대로 쓴다. */
 export const categoryLabel = (id) => categories.find((c) => c.id === id)?.label ?? id;
 

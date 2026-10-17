@@ -1,0 +1,322 @@
+{
+  "shots": [
+    {
+      "id": "pz-host-screen",
+      "file": "shots/pz-host-screen.webp",
+      "width": 1120,
+      "height": 760,
+      "build": "B42",
+      "lang": "en",
+      "caption": "메인 메뉴에서 HOST를 누르면 나오는 B42(42.13) 서버 열기(HOST GAME) 화면이에요.",
+      "source": "https://www.youtube.com/watch?v=-12EW8vxwLA",
+      "credit": "MrAtomicDuck (YouTube: How To Host Multiplayer Servers For Project Zomboid)",
+      "targets": [
+        {
+          "x": 49.8,
+          "y": 17.0,
+          "w": 9.7,
+          "h": 3.3,
+          "label": "Server name: 열 서버(설정)를 골라요"
+        },
+        {
+          "x": 49.8,
+          "y": 20.5,
+          "w": 9.7,
+          "h": 3.3,
+          "label": "Manage settings… 를 눌러 설정을 만들거나 고쳐요"
+        },
+        {
+          "x": 49.8,
+          "y": 24.1,
+          "w": 9.7,
+          "h": 3.3,
+          "label": "Server memory: 서버 메모리(4~8GB)"
+        },
+        {
+          "x": 90.6,
+          "y": 94.1,
+          "w": 7.6,
+          "h": 3.4,
+          "label": "START를 눌러 서버를 열어요"
+        }
+      ]
+    },
+    {
+      "id": "pz-esc-invite",
+      "file": "shots/pz-esc-invite.webp",
+      "width": 1600,
+      "height": 783,
+      "build": "B42",
+      "lang": "en",
+      "caption": "서버를 연 뒤 게임 안에서 ESC를 누르면 나오는 B42 메뉴예요. 여기서 INVITE FRIENDS로 친구를 불러요.",
+      "source": "https://www.youtube.com/watch?v=-12EW8vxwLA",
+      "credit": "MrAtomicDuck (YouTube: How To Host Multiplayer Servers For Project Zomboid)",
+      "targets": [
+        {
+          "x": 11.2,
+          "y": 52.3,
+          "w": 9.7,
+          "h": 3.2,
+          "label": "ESC를 누른 뒤 INVITE FRIENDS(친구 초대)"
+        }
+      ]
+    },
+    {
+      "id": "pz-invite-friends",
+      "file": "shots/pz-invite-friends.webp",
+      "width": 1360,
+      "height": 884,
+      "build": "B42",
+      "lang": "en",
+      "caption": "게임 중 ESC → INVITE FRIENDS를 누르면 나오는 B42 친구 초대 창이에요. (친구 이름은 가렸어요)",
+      "source": "https://www.youtube.com/watch?v=-12EW8vxwLA",
+      "credit": "MrAtomicDuck (YouTube: How To Host Multiplayer Servers For Project Zomboid)",
+      "targets": [
+        {
+          "x": 1.3,
+          "y": 41.4,
+          "w": 96.6,
+          "h": 3.2,
+          "label": "초대할 친구를 눌러 골라요"
+        },
+        {
+          "x": 92.7,
+          "y": 95.1,
+          "w": 6.0,
+          "h": 2.9,
+          "label": "INVITE를 눌러 초대를 보내요"
+        }
+      ]
+    },
+    {
+      "id": "pz-server-workshop-items",
+      "file": "shots/pz-server-workshop-items.webp",
+      "width": 1600,
+      "height": 940,
+      "build": "B41",
+      "lang": "en",
+      "caption": "모드가 들어간 서버에 처음 들어갈 때 뜨는 'Server Workshop Items' 창이에요. INSTALL을 누르면 필요한 아이템을 자동으로 받아요.",
+      "source": "https://servers4gamers.com/blog/how-to-add-mods-to-a-project-zomboid-server/",
+      "credit": "Servers4Gamers 블로그",
+      "targets": [
+        {
+          "x": 8.8,
+          "y": 14.2,
+          "w": 82.4,
+          "h": 15.6,
+          "label": "서버에 적용된 창작마당 아이템 목록"
+        },
+        {
+          "x": 83.8,
+          "y": 25.5,
+          "w": 7.1,
+          "h": 3.1,
+          "label": "Not Subscribed = 아직 안 받은 아이템"
+        },
+        {
+          "x": 42.9,
+          "y": 89.8,
+          "w": 6.4,
+          "h": 3.5,
+          "label": "INSTALL을 눌러 한 번에 받아요"
+        }
+      ]
+    },
+    {
+      "id": "steam-invite-accept",
+      "file": "shots/steam-invite-accept.webp",
+      "width": 680,
+      "height": 510,
+      "build": "해당없음",
+      "lang": "en",
+      "caption": "친구가 초대를 보내면 Steam 채팅 창에 뜨는 게임 초대 카드예요. 사진은 다른 게임 예시지만 Project Zomboid도 똑같이 생겼어요. (친구 이름은 가렸어요)",
+      "source": "https://www.youtube.com/watch?v=7Eja1oqQzx4",
+      "credit": "Gamer Tweak (YouTube)",
+      "targets": [
+        {
+          "x": 40.1,
+          "y": 29.2,
+          "w": 18.2,
+          "h": 6.3,
+          "label": "Play Game(게임 참가)을 눌러 초대를 받아요"
+        }
+      ]
+    },
+    {
+      "id": "pz-main-menu",
+      "file": "shots/pz-main-menu.webp",
+      "width": 1200,
+      "height": 676,
+      "build": "B42",
+      "lang": "en",
+      "caption": "B42(42.19) 메인 메뉴예요. B42에서는 JOIN 대신 MULTIPLAYER, 서버 열기는 HOST 메뉴예요.",
+      "source": "https://my.logicservers.com/knowledgebase/734/How-to-join-a-Project-Zomboid-server.html",
+      "credit": "LogicServers 지식베이스",
+      "targets": [
+        {
+          "x": 10.7,
+          "y": 63.2,
+          "w": 11.2,
+          "h": 3.7,
+          "label": "서버를 여는 사람은 HOST를 눌러요"
+        },
+        {
+          "x": 10.7,
+          "y": 68.2,
+          "w": 11.2,
+          "h": 3.7,
+          "label": "언어를 바꿀 땐 OPTIONS"
+        }
+      ]
+    },
+    {
+      "id": "steam-beta",
+      "file": "shots/steam-beta.webp",
+      "width": 1440,
+      "height": 985,
+      "build": "B42",
+      "lang": "en",
+      "caption": "Steam 라이브러리에서 Project Zomboid 우클릭 → 속성 → 'Game Versions & Betas' 탭이에요. 맨 위 'Default Public Version'을 고르면 정식(42.x) 버전이 돼요.",
+      "source": "https://www.youtube.com/watch?v=WGO9mYTsTfY",
+      "credit": "AwpShorts (YouTube: How To Improve Performance in Project Zomboid - Build 42+)",
+      "targets": [
+        {
+          "x": 0.3,
+          "y": 30.5,
+          "w": 22.9,
+          "h": 5.5,
+          "label": "Game Versions & Betas(게임 버전 및 베타) 탭"
+        },
+        {
+          "x": 26.2,
+          "y": 33.2,
+          "w": 69.7,
+          "h": 8.3,
+          "label": "Default Public Version(기본 공개 버전)을 골라요"
+        }
+      ]
+    },
+    {
+      "id": "win-firewall",
+      "file": "shots/win-firewall.webp",
+      "width": 900,
+      "height": 715,
+      "build": "해당없음",
+      "lang": "en",
+      "caption": "처음 서버를 열 때 뜨는 'Windows 보안 경고(Windows Security Alert)' 방화벽 창이에요. 사진은 다른 프로그램 예시지만 좀보이드도 같은 창이 떠요.",
+      "source": "https://stolafcarleton.teamdynamix.com/TDClient/2092/Carleton/KB/Article/142988/Troubleshooting-Windows-Defender-Firewall-blocking-certain-features-of-Zoom",
+      "credit": "St. Olaf & Carleton Colleges IT 지식베이스",
+      "targets": [
+        {
+          "x": 4.0,
+          "y": 63.2,
+          "w": 52.4,
+          "h": 4.5,
+          "label": "개인 네트워크(Private networks)에 체크"
+        },
+        {
+          "x": 61.6,
+          "y": 92.7,
+          "w": 21.1,
+          "h": 5.6,
+          "label": "액세스 허용(Allow access)을 눌러요"
+        }
+      ]
+    },
+    {
+      "id": "pz-language",
+      "file": "shots/pz-language.webp",
+      "width": 1352,
+      "height": 872,
+      "build": "B42",
+      "lang": "en",
+      "caption": "B42 메인 메뉴 → OPTIONS → USER INTERFACE (UI) 탭 맨 아래에 있는 Language(언어) 설정이에요.",
+      "source": "https://www.youtube.com/watch?v=VRLEJi8DZ7Y",
+      "credit": "CorruptDave (YouTube: Best Settings for New Players | Project Zomboid Build 42)",
+      "targets": [
+        {
+          "x": 31.1,
+          "y": 4.0,
+          "w": 11.3,
+          "h": 2.6,
+          "label": "USER INTERFACE (UI) 탭"
+        },
+        {
+          "x": 52.6,
+          "y": 82.0,
+          "w": 11.7,
+          "h": 3.0,
+          "label": "Language에서 한국어(Korean)를 골라요"
+        },
+        {
+          "x": 46.7,
+          "y": 96.2,
+          "w": 6.1,
+          "h": 3.2,
+          "label": "ACCEPT를 눌러 저장해요"
+        }
+      ]
+    },
+    {
+      "id": "pz-server-settings",
+      "file": "shots/pz-server-settings.webp",
+      "width": 963,
+      "height": 876,
+      "build": "B42",
+      "lang": "en",
+      "caption": "서버 만들기 → 서버 설정(Manage settings…)에서 설정을 고칠 때 나오는 B42(42.13) 편집 화면이에요. 사진은 샌드박스 → 캐릭터(Character) 페이지예요.",
+      "source": "https://www.youtube.com/watch?v=-12EW8vxwLA",
+      "credit": "MrAtomicDuck (YouTube: How To Host Multiplayer Servers For Project Zomboid)",
+      "targets": [
+        {
+          "x": 1.2,
+          "y": 9.0,
+          "w": 22.4,
+          "h": 2.7,
+          "label": "Steam Workshop: 창작마당 아이템 번호(WorkshopItems)"
+        },
+        {
+          "x": 1.2,
+          "y": 12.0,
+          "w": 22.4,
+          "h": 2.9,
+          "label": "Mods: 켤 모드 목록"
+        },
+        {
+          "x": 92.7,
+          "y": 96.3,
+          "w": 7.0,
+          "h": 2.5,
+          "label": "SAVE를 눌러 저장해요"
+        }
+      ]
+    },
+    {
+      "id": "pz-server-mods",
+      "file": "shots/pz-server-mods.webp",
+      "width": 963,
+      "height": 876,
+      "build": "B42",
+      "lang": "en",
+      "caption": "B42에서 새 서버 설정을 만들면 나오는 'Mods used by this server(이 서버가 쓰는 모드)' 화면이에요.",
+      "source": "https://www.youtube.com/watch?v=-12EW8vxwLA",
+      "credit": "MrAtomicDuck (YouTube: How To Host Multiplayer Servers For Project Zomboid)",
+      "targets": [
+        {
+          "x": 44.7,
+          "y": 96.3,
+          "w": 11.0,
+          "h": 2.6,
+          "label": "Choose Mods… 로 서버에 넣을 모드를 골라요"
+        },
+        {
+          "x": 92.4,
+          "y": 96.3,
+          "w": 7.3,
+          "h": 2.6,
+          "label": "NEXT를 눌러 다음으로"
+        }
+      ]
+    }
+  ]
+}

@@ -7,7 +7,7 @@ import { site, SERVER_NAME } from "../lib/site.mjs";
 
 // 오른쪽 서버 정보 카드. 접속 전에 알아야 할 사실만 적는다.
 const spec = [
-  { icon: "game-controller-03", k: "게임 버전", v: `Build ${site.build}`, note: "Steam 베타 설정 '없음'" },
+  { icon: "game-controller-03", k: "게임 버전", v: `Build ${site.build}`, note: "Steam 베타 선택 안 함 (Default Public Version)" },
   { icon: "package", k: "모드", v: `${site.modCount}개`, note: `한국어 지원 ${site.koreanCount}개 · 접속 시 자동 설치` },
   { icon: "server-stack-01", k: "호스팅", v: "친구 PC", note: "게임 메뉴의 서버 만들기" },
   { icon: "user-add-01", k: "접속 방식", v: "Steam 초대", note: "포트포워딩·IP 입력 불필요" },
@@ -39,8 +39,8 @@ const spec = [
       </h1>
 
       <p class="lede">
-        호스트 1명이 자기 PC 에서 서버를 열고 Steam 으로 초대하면, 나머지는 수락만 하면 됩니다.
-        모드 <strong>{site.modCount}개</strong>는 접속할 때 자동으로 설치됩니다.
+        호스트가 자기 PC에서 서버를 열고 Steam으로 초대합니다.
+        참가자는 수락만 하면 되고, 모드 <strong>{site.modCount}개</strong>는 접속할 때 자동으로 설치됩니다.
       </p>
 
       <div class="ctas">
@@ -108,8 +108,8 @@ const spec = [
   }
   .moon {
     position: absolute;
-    top: 3%;
-    right: 24%;
+    top: 6%;
+    left: 50%;
     width: clamp(56px, 6vw, 88px);
     aspect-ratio: 1;
     border-radius: 50%;

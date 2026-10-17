@@ -45,7 +45,7 @@ for (let i = 0; i < last; i++) {
           steps.map((s, i) => (
             <li>
               <a href={`#step-${i}`} data-goto={i}>
-                <span class="toc-n mono">{i === 0 ? "시작" : i === last ? "끝" : String(i).padStart(2, "0")}</span>
+                <span class="toc-n mono">{i === 0 ? "시작" : i === last ? "완료" : String(i).padStart(2, "0")}</span>
                 <span>{s}</span>
               </a>
             </li>
@@ -74,14 +74,19 @@ for (let i = 0; i < last; i++) {
 
     <div class="route" style={`--last:${last}`}>
       <svg class="route-line" viewBox={`0 0 ${W} 40`} preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <clipPath id={`route-clip-${id}`}>
+            <rect class="route-clip" x="-10" y="-20" height="80" data-route-clip />
+          </clipPath>
+        </defs>
         <path class="route-bg" d={d} pathLength="1" />
-        <path class="route-fg" d={d} pathLength="1" data-route />
+        <path class="route-fg" d={d} clip-path={`url(#route-clip-${id})`} />
       </svg>
       <ol class="pins">
         {
           steps.map((s, i) => (
             <li style={`--x:${(i / last) * 100}%`}>
-              <button type="button" class="pin" data-goto={i} aria-label={`${i === 0 ? "시작" : i === last ? "끝" : i + "단계"}: ${s}`}>
+              <button type="button" class="pin" data-goto={i} aria-label={`${i === 0 ? "시작" : i === last ? "완료" : i + "단계"}: ${s}`}>
                 {i === 0 ? (
                   <Icon name="flag-02" size={14} />
                 ) : i === last ? (
@@ -128,7 +133,10 @@ for (let i = 0; i < last; i++) {
     const next = deck.querySelector<HTMLButtonElement>("[data-next]")!;
     const finish = deck.querySelector<HTMLElement>("[data-finish]")!;
     const now = deck.querySelector<HTMLElement>("[data-deck-now]")!;
-    const route = deck.querySelector<SVGPathElement>("[data-route]")!;
+    // 진행선은 빨간 선 전체를 그려 두고 왼쪽부터 잘라 보여 준다. 점선 길이로 자르면
+    // 선 두께 고정(non-scaling-stroke)과 섞여 넓은 화면에서 핀까지 닿지 않는다.
+    const routeClip = deck.querySelector<SVGRectElement>("[data-route-clip]")!;
+    const ROUTE_W = routeClip.ownerSVGElement?.viewBox.baseVal.width ?? 1000;
     const marker = deck.querySelector<HTMLElement>("[data-marker]")!;
     const count = deck.querySelector<HTMLElement>("[data-count]")!;
     const bar = deck.querySelector<HTMLElement>("[data-bar]")!;
@@ -169,12 +177,12 @@ for (let i = 0; i < last; i++) {
         else p.removeAttribute("aria-current");
       });
       const frac = last ? i / last : 0;
-      route.style.strokeDashoffset = String(1 - frac);
+      routeClip.style.width = `${frac * ROUTE_W + 10}px`;
       marker.style.setProperty("--x", `${frac * 100}%`);
       bar.style.width = `${frac * 100}%`;
       // 표지와 끝 장은 단계 수에 넣지 않는다. 실제 단계는 last - 1 개다.
       count.textContent = i === 0 ? "시작" : i === last ? "완료" : `${i} / ${last - 1}`;
-      now.textContent = i === 0 ? "" : i === last ? "끝" : `${i}단계 · ${slides[i].dataset.title}`;
+      now.textContent = i === 0 ? "" : i === last ? "완료" : `${i}단계 · ${slides[i].dataset.title}`;
 
       prev.disabled = i === 0;
       const atEnd = i === last;
@@ -242,7 +250,7 @@ for (let i = 0; i < last; i++) {
       if (saved > 0 && saved <= last) {
         const box = deck.querySelector<HTMLElement>("[data-resume]")!;
         deck.querySelector<HTMLElement>("[data-resume-text]")!.textContent =
-          `지난번에 ${saved === last ? "끝까지" : saved + "단계까지"} 봤어요`;
+          `지난번에 ${saved === last ? "끝까지" : saved + "단계까지"} 봤습니다`;
         box.hidden = false;
         deck.querySelector("[data-resume-go]")!.addEventListener("click", () => {
           box.hidden = true;

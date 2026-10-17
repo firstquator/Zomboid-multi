@@ -1,0 +1,28 @@
+---
+import Icon from "./Icon.astro";
+
+// 메뉴 경로를 게임 메뉴처럼 칩으로 이어 보여 준다. 마지막 칸이 실제로 누를 곳이라 강조한다.
+// 예: <Menu path={["설정", "사용자 인터페이스 (UI)", "언어 선택"]} />
+interface Props {
+  path: string[];
+  // 경로 맨 앞에 붙일 프로그램 표시(예: Steam). 없으면 생략.
+  app?: string;
+}
+const { path, app } = Astro.props;
+---
+
+<span class="menu-path" aria-label={[app, ...path].filter(Boolean).join(", ")}>
+  {app && <span class="m app">{app}</span>}
+  {
+    path.map((p, i) => (
+      <>
+        {(i > 0 || app) && (
+          <span class="sep" aria-hidden="true">
+            <Icon name="arrow-right-01" size={13} />
+          </span>
+        )}
+        <span class={`m ${i === path.length - 1 ? "end" : ""}`}>{p}</span>
+      </>
+    ))
+  }
+</span>
