@@ -1,0 +1,2352 @@
+{
+  "build": "42.21.0",
+  "professions": [
+    {
+      "id": "unemployed",
+      "name": "커스텀 직업",
+      "nameEn": "Custom Occupation",
+      "cost": 8,
+      "desc": "공짜 특성 포인트로 당신의 캐릭터에 맞는 빌드를 만들어 보세요.",
+      "xp": [],
+      "granted": [],
+      "recipes": 0,
+      "icon": null
+    },
+    {
+      "id": "tailor",
+      "name": "재봉사",
+      "nameEn": "Tailor",
+      "cost": 2,
+      "desc": "",
+      "xp": [
+        {
+          "skill": "Tailoring",
+          "level": 4,
+          "name": "재단술"
+        }
+      ],
+      "granted": [],
+      "recipes": 59,
+      "icon": "icons/prof/tailor.webp"
+    },
+    {
+      "id": "burgerflipper",
+      "name": "햄버거 조리사",
+      "nameEn": "Burger Flipper",
+      "cost": 2,
+      "desc": "",
+      "xp": [
+        {
+          "skill": "Cooking",
+          "level": 2,
+          "name": "요리"
+        },
+        {
+          "skill": "Maintenance",
+          "level": 1,
+          "name": "물건관리"
+        },
+        {
+          "skill": "SmallBlade",
+          "level": 1,
+          "name": "단검"
+        }
+      ],
+      "granted": [
+        "cook2"
+      ],
+      "recipes": 0,
+      "icon": "icons/prof/burgerflipper.webp"
+    },
+    {
+      "id": "nurse",
+      "name": "간호사",
+      "nameEn": "Nurse",
+      "cost": 0,
+      "desc": "",
+      "xp": [
+        {
+          "skill": "Doctor",
+          "level": 3,
+          "name": "의료"
+        },
+        {
+          "skill": "Lightfoot",
+          "level": 1,
+          "name": "조용한 발걸음"
+        },
+        {
+          "skill": "Fitness",
+          "level": 1,
+          "name": "체력"
+        }
+      ],
+      "granted": [
+        "nightowl"
+      ],
+      "recipes": 0,
+      "icon": "icons/prof/nurse.webp"
+    },
+    {
+      "id": "farmer",
+      "name": "농부",
+      "nameEn": "Farmer",
+      "cost": 0,
+      "desc": "",
+      "xp": [
+        {
+          "skill": "Farming",
+          "level": 4,
+          "name": "농사"
+        },
+        {
+          "skill": "Husbandry",
+          "level": 1,
+          "name": "사육"
+        },
+        {
+          "skill": "Strength",
+          "level": 1,
+          "name": "근력"
+        }
+      ],
+      "granted": [],
+      "recipes": 63,
+      "icon": "icons/prof/farmer.webp"
+    },
+    {
+      "id": "rancher",
+      "name": "목장주",
+      "nameEn": "Rancher",
+      "cost": 0,
+      "desc": "",
+      "xp": [
+        {
+          "skill": "Husbandry",
+          "level": 4,
+          "name": "사육"
+        },
+        {
+          "skill": "Butchering",
+          "level": 3,
+          "name": "도축"
+        },
+        {
+          "skill": "Fitness",
+          "level": 1,
+          "name": "체력"
+        }
+      ],
+      "granted": [],
+      "recipes": 1,
+      "icon": "icons/prof/rancher.webp"
+    },
+    {
+      "id": "lumberjack",
+      "name": "벌목꾼",
+      "nameEn": "Lumberjack",
+      "cost": 0,
+      "desc": "숲과 삼림 지대에서 빠르게 이동할 수 있습니다.<br>벌목으로 생기는 근육통이 덜합니다.",
+      "xp": [
+        {
+          "skill": "Axe",
+          "level": 2,
+          "name": "도끼"
+        },
+        {
+          "skill": "Strength",
+          "level": 1,
+          "name": "근력"
+        },
+        {
+          "skill": "Maintenance",
+          "level": 1,
+          "name": "물건관리"
+        }
+      ],
+      "granted": [
+        "axeman"
+      ],
+      "recipes": 0,
+      "icon": "icons/prof/lumberjack.webp"
+    },
+    {
+      "id": "fireofficer",
+      "name": "소방관",
+      "nameEn": "Firefighter",
+      "cost": 0,
+      "desc": "",
+      "xp": [
+        {
+          "skill": "Sprinting",
+          "level": 1,
+          "name": "능숙한 달리기"
+        },
+        {
+          "skill": "Strength",
+          "level": 1,
+          "name": "근력"
+        },
+        {
+          "skill": "Fitness",
+          "level": 1,
+          "name": "체력"
+        },
+        {
+          "skill": "Axe",
+          "level": 1,
+          "name": "도끼"
+        }
+      ],
+      "granted": [],
+      "recipes": 0,
+      "icon": "icons/prof/fireofficer.webp"
+    },
+    {
+      "id": "doctor",
+      "name": "의사",
+      "nameEn": "Doctor",
+      "cost": 0,
+      "desc": "",
+      "xp": [
+        {
+          "skill": "Doctor",
+          "level": 6,
+          "name": "의료"
+        },
+        {
+          "skill": "SmallBlade",
+          "level": 1,
+          "name": "단검"
+        }
+      ],
+      "granted": [],
+      "recipes": 0,
+      "icon": "icons/prof/doctor.webp"
+    },
+    {
+      "id": "repairman",
+      "name": "DIY 전문가",
+      "nameEn": "DIY Expert",
+      "cost": -2,
+      "desc": "",
+      "xp": [
+        {
+          "skill": "Woodwork",
+          "level": 1,
+          "name": "목공예"
+        },
+        {
+          "skill": "Maintenance",
+          "level": 2,
+          "name": "물건관리"
+        },
+        {
+          "skill": "SmallBlunt",
+          "level": 1,
+          "name": "짧은 둔기"
+        },
+        {
+          "skill": "Masonry",
+          "level": 1,
+          "name": "석공"
+        }
+      ],
+      "granted": [
+        "inventive_prof"
+      ],
+      "recipes": 24,
+      "icon": "icons/prof/repairman.webp"
+    },
+    {
+      "id": "constructionworker",
+      "name": "건축 인부",
+      "nameEn": "Construction Worker",
+      "cost": -2,
+      "desc": "",
+      "xp": [
+        {
+          "skill": "SmallBlunt",
+          "level": 2,
+          "name": "짧은 둔기"
+        },
+        {
+          "skill": "Blunt",
+          "level": 1,
+          "name": "긴 둔기"
+        },
+        {
+          "skill": "Masonry",
+          "level": 2,
+          "name": "석공"
+        },
+        {
+          "skill": "Woodwork",
+          "level": 1,
+          "name": "목공예"
+        },
+        {
+          "skill": "Maintenance",
+          "level": 1,
+          "name": "물건관리"
+        }
+      ],
+      "granted": [],
+      "recipes": 0,
+      "icon": "icons/prof/constructionworker.webp"
+    },
+    {
+      "id": "securityguard",
+      "name": "경비원",
+      "nameEn": "Security Guard",
+      "cost": -2,
+      "desc": "",
+      "xp": [
+        {
+          "skill": "Sprinting",
+          "level": 2,
+          "name": "능숙한 달리기"
+        },
+        {
+          "skill": "Lightfoot",
+          "level": 1,
+          "name": "조용한 발걸음"
+        },
+        {
+          "skill": "SmallBlunt",
+          "level": 1,
+          "name": "짧은 둔기"
+        }
+      ],
+      "granted": [
+        "nightowl"
+      ],
+      "recipes": 0,
+      "icon": "icons/prof/securityguard.webp"
+    },
+    {
+      "id": "carpenter",
+      "name": "목수",
+      "nameEn": "Carpenter",
+      "cost": -2,
+      "desc": "",
+      "xp": [
+        {
+          "skill": "Woodwork",
+          "level": 4,
+          "name": "목공예"
+        },
+        {
+          "skill": "Carving",
+          "level": 1,
+          "name": "조각"
+        },
+        {
+          "skill": "SmallBlunt",
+          "level": 1,
+          "name": "짧은 둔기"
+        },
+        {
+          "skill": "Masonry",
+          "level": 1,
+          "name": "석공"
+        },
+        {
+          "skill": "Maintenance",
+          "level": 1,
+          "name": "물건관리"
+        }
+      ],
+      "granted": [],
+      "recipes": 19,
+      "icon": "icons/prof/carpenter.webp"
+    },
+    {
+      "id": "fisherman",
+      "name": "어부",
+      "nameEn": "Fishing Guide",
+      "cost": -2,
+      "desc": "",
+      "xp": [
+        {
+          "skill": "Fishing",
+          "level": 3,
+          "name": "낚시"
+        },
+        {
+          "skill": "PlantScavenging",
+          "level": 1,
+          "name": "채집"
+        },
+        {
+          "skill": "Butchering",
+          "level": 1,
+          "name": "도축"
+        }
+      ],
+      "granted": [],
+      "recipes": 5,
+      "icon": "icons/prof/fisherman.webp"
+    },
+    {
+      "id": "electrician",
+      "name": "전기 기사",
+      "nameEn": "Electrician",
+      "cost": -2,
+      "desc": "발전기를 사용할 수 있습니다.",
+      "xp": [
+        {
+          "skill": "Electricity",
+          "level": 5,
+          "name": "전기공학"
+        }
+      ],
+      "granted": [],
+      "recipes": 12,
+      "icon": "icons/prof/electrician.webp"
+    },
+    {
+      "id": "chef",
+      "name": "주방장",
+      "nameEn": "Chef",
+      "cost": -2,
+      "desc": "",
+      "xp": [
+        {
+          "skill": "Cooking",
+          "level": 4,
+          "name": "요리"
+        },
+        {
+          "skill": "Maintenance",
+          "level": 1,
+          "name": "물건관리"
+        },
+        {
+          "skill": "SmallBlade",
+          "level": 1,
+          "name": "단검"
+        },
+        {
+          "skill": "Butchering",
+          "level": 2,
+          "name": "도축"
+        }
+      ],
+      "granted": [
+        "cook2"
+      ],
+      "recipes": 20,
+      "icon": "icons/prof/chef.webp"
+    },
+    {
+      "id": "policeofficer",
+      "name": "경찰관",
+      "nameEn": "Police Officer",
+      "cost": -4,
+      "desc": "",
+      "xp": [
+        {
+          "skill": "Aiming",
+          "level": 4,
+          "name": "조준"
+        },
+        {
+          "skill": "Reloading",
+          "level": 1,
+          "name": "재장전"
+        },
+        {
+          "skill": "Nimble",
+          "level": 1,
+          "name": "조준시 발걸음"
+        }
+      ],
+      "granted": [],
+      "recipes": 0,
+      "icon": "icons/prof/policeofficer.webp"
+    },
+    {
+      "id": "parkranger",
+      "name": "국립공원 관리인",
+      "nameEn": "Park Ranger",
+      "cost": -4,
+      "desc": "숲과 삼림 지대에서 매우 빠르게 이동할 수 있습니다.",
+      "xp": [
+        {
+          "skill": "Trapping",
+          "level": 1,
+          "name": "함정"
+        },
+        {
+          "skill": "Doctor",
+          "level": 1,
+          "name": "의료"
+        },
+        {
+          "skill": "PlantScavenging",
+          "level": 1,
+          "name": "채집"
+        },
+        {
+          "skill": "FlintKnapping",
+          "level": 1,
+          "name": "석기 제작"
+        },
+        {
+          "skill": "Carving",
+          "level": 1,
+          "name": "조각"
+        }
+      ],
+      "granted": [
+        "herbalist_prof"
+      ],
+      "recipes": 5,
+      "icon": "icons/prof/parkranger.webp"
+    },
+    {
+      "id": "engineer",
+      "name": "기술자",
+      "nameEn": "Engineer",
+      "cost": -4,
+      "desc": "함정과 폭발물을 만들 수 있습니다.<br>발전기를 사용할 수 있습니다.",
+      "xp": [
+        {
+          "skill": "Electricity",
+          "level": 1,
+          "name": "전기공학"
+        },
+        {
+          "skill": "Woodwork",
+          "level": 1,
+          "name": "목공예"
+        },
+        {
+          "skill": "Masonry",
+          "level": 1,
+          "name": "석공"
+        }
+      ],
+      "granted": [],
+      "recipes": 13,
+      "icon": "icons/prof/engineer.webp"
+    },
+    {
+      "id": "metalworker",
+      "name": "용접공",
+      "nameEn": "Welder",
+      "cost": -4,
+      "desc": "물건이나 바리케이드를 제작하기 위해 금속을 용접할 수 있습니다.",
+      "xp": [
+        {
+          "skill": "MetalWelding",
+          "level": 4,
+          "name": "금속용접"
+        }
+      ],
+      "granted": [],
+      "recipes": 36,
+      "icon": "icons/prof/metalworker.webp"
+    },
+    {
+      "id": "mechanics",
+      "name": "자동차 정비공",
+      "nameEn": "Mechanic",
+      "cost": -4,
+      "desc": "켄터키 주 도로 위에서 달리는 모든 차량에 대한 유지보수와 수리에 능통합니다.",
+      "xp": [
+        {
+          "skill": "Mechanics",
+          "level": 4,
+          "name": "차량정비"
+        },
+        {
+          "skill": "MetalWelding",
+          "level": 1,
+          "name": "금속용접"
+        }
+      ],
+      "granted": [
+        "mechanics2"
+      ],
+      "recipes": 3,
+      "icon": "icons/prof/mechanics.webp"
+    },
+    {
+      "id": "smither",
+      "name": "대장장이",
+      "nameEn": "Blacksmith",
+      "cost": -6,
+      "desc": "돌 용광로를 만들고 금속을 녹여 가공할 수 있습니다.",
+      "xp": [
+        {
+          "skill": "Blacksmith",
+          "level": 4,
+          "name": "금속세공"
+        },
+        {
+          "skill": "Maintenance",
+          "level": 1,
+          "name": "물건관리"
+        },
+        {
+          "skill": "SmallBlunt",
+          "level": 1,
+          "name": "짧은 둔기"
+        }
+      ],
+      "granted": [
+        "blacksmith2"
+      ],
+      "recipes": 81,
+      "icon": "icons/prof/smither.webp"
+    },
+    {
+      "id": "burglar",
+      "name": "좀도둑",
+      "nameEn": "Burglar",
+      "cost": -6,
+      "desc": "",
+      "xp": [
+        {
+          "skill": "Nimble",
+          "level": 2,
+          "name": "조준시 발걸음"
+        },
+        {
+          "skill": "Sneak",
+          "level": 2,
+          "name": "은밀한 움직임"
+        },
+        {
+          "skill": "Lightfoot",
+          "level": 2,
+          "name": "조용한 발걸음"
+        }
+      ],
+      "granted": [
+        "burglar"
+      ],
+      "recipes": 14,
+      "icon": "icons/prof/burglar.webp"
+    },
+    {
+      "id": "fitnessinstructor",
+      "name": "피트니스 강사",
+      "nameEn": "Fitness Instructor",
+      "cost": -6,
+      "desc": "",
+      "xp": [
+        {
+          "skill": "Fitness",
+          "level": 3,
+          "name": "체력"
+        },
+        {
+          "skill": "Sprinting",
+          "level": 2,
+          "name": "능숙한 달리기"
+        },
+        {
+          "skill": "Strength",
+          "level": 1,
+          "name": "근력"
+        }
+      ],
+      "granted": [
+        "nutritionist2"
+      ],
+      "recipes": 0,
+      "icon": "icons/prof/fitnessinstructor.webp"
+    },
+    {
+      "id": "veteran",
+      "name": "퇴역 군인",
+      "nameEn": "Veteran",
+      "cost": -8,
+      "desc": "",
+      "xp": [
+        {
+          "skill": "Aiming",
+          "level": 2,
+          "name": "조준"
+        },
+        {
+          "skill": "Reloading",
+          "level": 2,
+          "name": "재장전"
+        }
+      ],
+      "granted": [
+        "desensitized"
+      ],
+      "recipes": 1,
+      "icon": "icons/prof/veteran.webp"
+    }
+  ],
+  "traits": [
+    {
+      "id": "strong",
+      "name": "강인함",
+      "nameEn": "Strong",
+      "cost": 10,
+      "desc": "근거리 무기로 공격하면 상대가 더 오래 비틀거립니다.<br>들 수 있는 무게가 증가합니다.",
+      "exclusive": [
+        "feeble",
+        "stout",
+        "weak"
+      ],
+      "xp": [
+        {
+          "skill": "Strength",
+          "level": 4,
+          "name": "근력"
+        }
+      ],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/strong.webp"
+    },
+    {
+      "id": "athletic",
+      "name": "육상 선수",
+      "nameEn": "Athletic",
+      "cost": 10,
+      "desc": "달리기 속도가 빨라집니다.<br>더 오래 지치지 않고 달릴 수 있습니다.",
+      "exclusive": [
+        "overweight",
+        "fit",
+        "obese",
+        "out of shape",
+        "unfit",
+        "very underweight",
+        "smoker"
+      ],
+      "xp": [
+        {
+          "skill": "Fitness",
+          "level": 4,
+          "name": "체력"
+        }
+      ],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/athletic.webp"
+    },
+    {
+      "id": "handy",
+      "name": "능숙함",
+      "nameEn": "Handy",
+      "cost": 8,
+      "desc": "건축물을 튼튼하고 빠르게 만듭니다.",
+      "exclusive": [],
+      "xp": [
+        {
+          "skill": "Carving",
+          "level": 1,
+          "name": "조각"
+        },
+        {
+          "skill": "Maintenance",
+          "level": 1,
+          "name": "물건관리"
+        },
+        {
+          "skill": "Masonry",
+          "level": 1,
+          "name": "석공"
+        },
+        {
+          "skill": "Woodwork",
+          "level": 1,
+          "name": "목공예"
+        }
+      ],
+      "recipes": 24,
+      "professionOnly": false,
+      "icon": "icons/trait/handy.webp"
+    },
+    {
+      "id": "thickskinned",
+      "name": "두꺼운 피부",
+      "nameEn": "Thick-skinned",
+      "cost": 8,
+      "desc": "긁히거나 물릴 위험이 낮아집니다.",
+      "exclusive": [
+        "thinskinned"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/thickskinned.webp"
+    },
+    {
+      "id": "hunter",
+      "name": "사냥꾼",
+      "nameEn": "Hunter",
+      "cost": 8,
+      "desc": "",
+      "exclusive": [],
+      "xp": [
+        {
+          "skill": "Aiming",
+          "level": 1,
+          "name": "조준"
+        },
+        {
+          "skill": "Tracking",
+          "level": 1,
+          "name": "Tracking"
+        },
+        {
+          "skill": "Sneak",
+          "level": 1,
+          "name": "은밀한 움직임"
+        },
+        {
+          "skill": "SmallBlade",
+          "level": 1,
+          "name": "단검"
+        },
+        {
+          "skill": "Butchering",
+          "level": 1,
+          "name": "도축"
+        }
+      ],
+      "recipes": 6,
+      "professionOnly": false,
+      "icon": "icons/trait/hunter.webp"
+    },
+    {
+      "id": "wildernessknowledge",
+      "name": "야생 생존 취미",
+      "nameEn": "Bushcrafter",
+      "cost": 8,
+      "desc": "치료용 약초를 찾을 수 있습니다. 약초로 치료제를 제작할 수 있습니다. 간단한 돌과 뼈 도구를 만들 수 있습니다. <br> 불을 더 빨리 피웁니다.",
+      "exclusive": [],
+      "xp": [
+        {
+          "skill": "PlantScavenging",
+          "level": 1,
+          "name": "채집"
+        },
+        {
+          "skill": "FlintKnapping",
+          "level": 1,
+          "name": "석기 제작"
+        },
+        {
+          "skill": "Maintenance",
+          "level": 1,
+          "name": "물건관리"
+        },
+        {
+          "skill": "Carving",
+          "level": 1,
+          "name": "조각"
+        }
+      ],
+      "recipes": 29,
+      "professionOnly": false,
+      "icon": "icons/trait/wildernessknowledge.webp"
+    },
+    {
+      "id": "fit",
+      "name": "건강함",
+      "nameEn": "Fit",
+      "cost": 6,
+      "desc": "",
+      "exclusive": [
+        "athletic",
+        "obese",
+        "out of shape",
+        "overweight",
+        "unfit"
+      ],
+      "xp": [
+        {
+          "skill": "Fitness",
+          "level": 2,
+          "name": "체력"
+        }
+      ],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/fit.webp"
+    },
+    {
+      "id": "stout",
+      "name": "건장함",
+      "nameEn": "Stout",
+      "cost": 6,
+      "desc": "근거리 무기로 공격하면 상대가 더 오래 비틀거립니다.<br>들 수 있는 무게가 증가합니다.",
+      "exclusive": [
+        "feeble",
+        "strong",
+        "weak"
+      ],
+      "xp": [
+        {
+          "skill": "Strength",
+          "level": 2,
+          "name": "근력"
+        }
+      ],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/stout.webp"
+    },
+    {
+      "id": "blacksmith",
+      "name": "단조 지식",
+      "nameEn": "Blacksmith Knowledge",
+      "cost": 6,
+      "desc": "모루로 금속 물건을 만들 수 있습니다.",
+      "exclusive": [
+        "blacksmith2"
+      ],
+      "xp": [
+        {
+          "skill": "Blacksmith",
+          "level": 2,
+          "name": "금속세공"
+        },
+        {
+          "skill": "Maintenance",
+          "level": 1,
+          "name": "물건관리"
+        }
+      ],
+      "recipes": 80,
+      "professionOnly": false,
+      "icon": "icons/trait/blacksmith.webp"
+    },
+    {
+      "id": "fasthealer",
+      "name": "빠른 회복",
+      "nameEn": "Fast Healer",
+      "cost": 6,
+      "desc": "부상과 질병을 빠르게 회복합니다.",
+      "exclusive": [
+        "slowhealer"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/fasthealer.webp"
+    },
+    {
+      "id": "brawler",
+      "name": "싸움꾼",
+      "nameEn": "Brawler",
+      "cost": 6,
+      "desc": "",
+      "exclusive": [],
+      "xp": [
+        {
+          "skill": "Axe",
+          "level": 1,
+          "name": "도끼"
+        },
+        {
+          "skill": "Blunt",
+          "level": 1,
+          "name": "긴 둔기"
+        }
+      ],
+      "recipes": 6,
+      "professionOnly": false,
+      "icon": "icons/trait/brawler.webp"
+    },
+    {
+      "id": "keenhearing",
+      "name": "예민한 청력",
+      "nameEn": "Keen Hearing",
+      "cost": 6,
+      "desc": "소리를 인지하는 반경이 커집니다.",
+      "exclusive": [
+        "deaf",
+        "hardofhearing"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/keenhearing.webp"
+    },
+    {
+      "id": "formerscout",
+      "name": "전직 청소년단",
+      "nameEn": "Former Scout",
+      "cost": 6,
+      "desc": "불을 더 빨리 피웁니다.",
+      "exclusive": [],
+      "xp": [
+        {
+          "skill": "Doctor",
+          "level": 1,
+          "name": "의료"
+        },
+        {
+          "skill": "PlantScavenging",
+          "level": 1,
+          "name": "채집"
+        },
+        {
+          "skill": "Fishing",
+          "level": 1,
+          "name": "낚시"
+        }
+      ],
+      "recipes": 3,
+      "professionOnly": false,
+      "icon": "icons/trait/formerscout.webp"
+    },
+    {
+      "id": "fastlearner",
+      "name": "현자",
+      "nameEn": "Fast Learner",
+      "cost": 6,
+      "desc": "경험치 획득량이 증가합니다.",
+      "exclusive": [
+        "crafty",
+        "slowlearner"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/fastlearner.webp"
+    },
+    {
+      "id": "target_shooter",
+      "name": "과녁 사수",
+      "nameEn": "Target Shooter",
+      "cost": 5,
+      "desc": "",
+      "exclusive": [],
+      "xp": [
+        {
+          "skill": "Aiming",
+          "level": 1,
+          "name": "조준"
+        }
+      ],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/target_shooter.webp"
+    },
+    {
+      "id": "hiker",
+      "name": "도보 여행자",
+      "nameEn": "Hiker",
+      "cost": 5,
+      "desc": "",
+      "exclusive": [],
+      "xp": [
+        {
+          "skill": "PlantScavenging",
+          "level": 1,
+          "name": "채집"
+        },
+        {
+          "skill": "Trapping",
+          "level": 1,
+          "name": "함정"
+        }
+      ],
+      "recipes": 3,
+      "professionOnly": false,
+      "icon": "icons/trait/hiker.webp"
+    },
+    {
+      "id": "gymnast",
+      "name": "체조선수",
+      "nameEn": "Gymnast",
+      "cost": 5,
+      "desc": "",
+      "exclusive": [],
+      "xp": [
+        {
+          "skill": "Lightfoot",
+          "level": 1,
+          "name": "조용한 발걸음"
+        },
+        {
+          "skill": "Nimble",
+          "level": 1,
+          "name": "조준시 발걸음"
+        }
+      ],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/gymnast.webp"
+    },
+    {
+      "id": "resilient",
+      "name": "강한 저항력",
+      "nameEn": "Resilient",
+      "cost": 4,
+      "desc": "질병에 걸릴 가능성이 감소합니다.<br>좀비화 진행 속도가 느려집니다.",
+      "exclusive": [
+        "pronetoillness"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/resilient.webp"
+    },
+    {
+      "id": "fishing",
+      "name": "낚시꾼",
+      "nameEn": "Angler",
+      "cost": 4,
+      "desc": "",
+      "exclusive": [],
+      "xp": [
+        {
+          "skill": "Fishing",
+          "level": 1,
+          "name": "낚시"
+        }
+      ],
+      "recipes": 3,
+      "professionOnly": false,
+      "icon": "icons/trait/fishing.webp"
+    },
+    {
+      "id": "tinkerer",
+      "name": "땜장이",
+      "nameEn": "Tinkerer",
+      "cost": 4,
+      "desc": "",
+      "exclusive": [],
+      "xp": [
+        {
+          "skill": "Maintenance",
+          "level": 1,
+          "name": "물건관리"
+        }
+      ],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/tinkerer.webp"
+    },
+    {
+      "id": "eagleeyed",
+      "name": "매의 눈",
+      "nameEn": "Eagle Eyed",
+      "cost": 4,
+      "desc": "시야 확보 속도가 빨라집니다.<br>볼 수 있는 시야가 넓어집니다.<br>무기에 부착된 조준경의 장거리 효율이 높아집니다.",
+      "exclusive": [
+        "shortsighted"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/eagleeyed.webp"
+    },
+    {
+      "id": "inconspicuous",
+      "name": "부족한 존재감",
+      "nameEn": "Inconspicuous",
+      "cost": 4,
+      "desc": "좀비의 눈에 띌 확률이 감소합니다.",
+      "exclusive": [
+        "conspicuous"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/inconspicuous.webp"
+    },
+    {
+      "id": "adrenalinejunkie",
+      "name": "아드레날린 중독",
+      "nameEn": "Adrenaline Junkie",
+      "cost": 4,
+      "desc": "공황상태일 때 더 빨리 움직입니다.",
+      "exclusive": [
+        "agoraphobic",
+        "claustrophobic",
+        "cowardly",
+        "desensitized"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/adrenalinejunkie.webp"
+    },
+    {
+      "id": "baseballplayer",
+      "name": "야구 선수",
+      "nameEn": "Baseball Player",
+      "cost": 4,
+      "desc": "",
+      "exclusive": [],
+      "xp": [
+        {
+          "skill": "Blunt",
+          "level": 1,
+          "name": "긴 둔기"
+        }
+      ],
+      "recipes": 1,
+      "professionOnly": false,
+      "icon": "icons/trait/baseballplayer.webp"
+    },
+    {
+      "id": "herbalist",
+      "name": "약초꾼",
+      "nameEn": "Herbalist",
+      "cost": 4,
+      "desc": "치료용 약초를 찾을 수 있습니다. 약초로 치료제를 제작할 수 있습니다.",
+      "exclusive": [
+        "herbalist_prof"
+      ],
+      "xp": [
+        {
+          "skill": "PlantScavenging",
+          "level": 1,
+          "name": "채집"
+        }
+      ],
+      "recipes": 9,
+      "professionOnly": false,
+      "icon": "icons/trait/herbalist.webp"
+    },
+    {
+      "id": "brave",
+      "name": "용감함",
+      "nameEn": "Brave",
+      "cost": 4,
+      "desc": "공황상태에 잘 빠지지 않습니다.",
+      "exclusive": [
+        "cowardly",
+        "agoraphobic",
+        "claustrophobic",
+        "desensitized"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/brave.webp"
+    },
+    {
+      "id": "graceful",
+      "name": "우아함",
+      "nameEn": "Graceful",
+      "cost": 4,
+      "desc": "움직일 때 나는 소리가 감소합니다.",
+      "exclusive": [
+        "clumsy"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/graceful.webp"
+    },
+    {
+      "id": "tailor",
+      "name": "재단술",
+      "nameEn": "Sewer",
+      "cost": 4,
+      "desc": "",
+      "exclusive": [],
+      "xp": [
+        {
+          "skill": "Tailoring",
+          "level": 1,
+          "name": "재단술"
+        }
+      ],
+      "recipes": 59,
+      "professionOnly": false,
+      "icon": "icons/trait/tailor.webp"
+    },
+    {
+      "id": "organized",
+      "name": "정리쟁이",
+      "nameEn": "Organized",
+      "cost": 4,
+      "desc": "보관함에 물건을 넣을 수 있는 양이 증가합니다.",
+      "exclusive": [
+        "disorganized"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/organized.webp"
+    },
+    {
+      "id": "jogger",
+      "name": "조깅 취미",
+      "nameEn": "Runner",
+      "cost": 4,
+      "desc": "",
+      "exclusive": [],
+      "xp": [
+        {
+          "skill": "Sprinting",
+          "level": 1,
+          "name": "능숙한 달리기"
+        }
+      ],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/jogger.webp"
+    },
+    {
+      "id": "nightvision",
+      "name": "고양이의 눈",
+      "nameEn": "Cat's Eyes",
+      "cost": 3,
+      "desc": "밤에 더 나은 시력을 가집니다.",
+      "exclusive": [],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/nightvision.webp"
+    },
+    {
+      "id": "crafty",
+      "name": "손재주꾼",
+      "nameEn": "Crafty",
+      "cost": 3,
+      "desc": "제작 기술 경험치를 더 많이 얻습니다.",
+      "exclusive": [
+        "fastlearner",
+        "slowlearner"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/crafty.webp"
+    },
+    {
+      "id": "cook",
+      "name": "열정적인 요리사",
+      "nameEn": "Keen Cook",
+      "cost": 3,
+      "desc": "다양한 요리 레시피를 알고 있습니다.",
+      "exclusive": [
+        "cook2"
+      ],
+      "xp": [
+        {
+          "skill": "Cooking",
+          "level": 2,
+          "name": "요리"
+        },
+        {
+          "skill": "Butchering",
+          "level": 1,
+          "name": "도축"
+        }
+      ],
+      "recipes": 15,
+      "professionOnly": false,
+      "icon": "icons/trait/cook.webp"
+    },
+    {
+      "id": "needslesssleep",
+      "name": "잠이 적음",
+      "nameEn": "Wakeful",
+      "cost": 3,
+      "desc": "잠을 덜 필요로 합니다.",
+      "exclusive": [
+        "needsmoresleep"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/needslesssleep.webp"
+    },
+    {
+      "id": "mechanics",
+      "name": "차량 지식",
+      "nameEn": "Vehicle Knowledge",
+      "cost": 3,
+      "desc": "일반 차량과 상용 차량의 구조와 수리에 대한 지식이 있습니다.",
+      "exclusive": [
+        "mechanics2"
+      ],
+      "xp": [
+        {
+          "skill": "Mechanics",
+          "level": 1,
+          "name": "차량정비"
+        }
+      ],
+      "recipes": 2,
+      "professionOnly": false,
+      "icon": "icons/trait/mechanics.webp"
+    },
+    {
+      "id": "irongut",
+      "name": "강철 위장",
+      "nameEn": "Iron Gut",
+      "cost": 2,
+      "desc": "음식으로 인한 질병에 걸릴 확률이 감소합니다.",
+      "exclusive": [
+        "weakstomach"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/irongut.webp"
+    },
+    {
+      "id": "lowthirst",
+      "name": "낮은 갈증",
+      "nameEn": "Low Thirst",
+      "cost": 2,
+      "desc": "생존을 위한 물의 소모량이 감소합니다.",
+      "exclusive": [
+        "highthirst"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/lowthirst.webp"
+    },
+    {
+      "id": "artisan",
+      "name": "도예가",
+      "nameEn": "Artisan",
+      "cost": 2,
+      "desc": "도기 제작과 유리 세공에 능합니다.",
+      "exclusive": [],
+      "xp": [
+        {
+          "skill": "Glassmaking",
+          "level": 1,
+          "name": "유리 세공"
+        },
+        {
+          "skill": "Pottery",
+          "level": 1,
+          "name": "도기 제작"
+        }
+      ],
+      "recipes": 6,
+      "professionOnly": false,
+      "icon": "icons/trait/artisan.webp"
+    },
+    {
+      "id": "outdoorsman",
+      "name": "등산 애호가",
+      "nameEn": "Outdoorsy",
+      "cost": 2,
+      "desc": "혹독한 날씨에도 영향을 덜 받습니다.",
+      "exclusive": [],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/outdoorsman.webp"
+    },
+    {
+      "id": "dextrous",
+      "name": "민첩함",
+      "nameEn": "Dextrous",
+      "cost": 2,
+      "desc": "소지품창에 물건을 넣고 꺼낼 때 속도가 빨라집니다.<br>밧줄을 타는 속도가 빨라지고, 떨어질 확률이 줄어듭니다.<br>무기 견착 속도가 빨라집니다.",
+      "exclusive": [
+        "allthumbs"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/dextrous.webp"
+    },
+    {
+      "id": "inventive",
+      "name": "발명가",
+      "nameEn": "Inventive",
+      "cost": 2,
+      "desc": "물건으로부터 제작법을 연구하거나 자동으로 제작법을 배우는 데에 필요한 기술 단계가 낮아집니다.",
+      "exclusive": [
+        "inventive_prof"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/inventive.webp"
+    },
+    {
+      "id": "mason",
+      "name": "석공",
+      "nameEn": "Mason",
+      "cost": 2,
+      "desc": "돌과 벽돌을 쌓아 건축물을 만드는 데 능합니다.",
+      "exclusive": [],
+      "xp": [
+        {
+          "skill": "Masonry",
+          "level": 2,
+          "name": "석공"
+        }
+      ],
+      "recipes": 7,
+      "professionOnly": false,
+      "icon": "icons/trait/mason.webp"
+    },
+    {
+      "id": "lighteater",
+      "name": "소식가",
+      "nameEn": "Light Eater",
+      "cost": 2,
+      "desc": "덜 주기적으로 식사를 합니다.",
+      "exclusive": [
+        "heartyappetite",
+        "obese"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/lighteater.webp"
+    },
+    {
+      "id": "fastreader",
+      "name": "속독",
+      "nameEn": "Fast Reader",
+      "cost": 2,
+      "desc": "책을 읽는 데 시간이 적게 소요됩니다.",
+      "exclusive": [
+        "slowreader",
+        "illiterate"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/fastreader.webp"
+    },
+    {
+      "id": "nutritionist",
+      "name": "영양사",
+      "nameEn": "Nutritionist",
+      "cost": 2,
+      "desc": "모든 음식의 영양 정보를 볼 수 있습니다.",
+      "exclusive": [
+        "nutritionist2"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/nutritionist.webp"
+    },
+    {
+      "id": "firstaid",
+      "name": "응급처치",
+      "nameEn": "First Aider",
+      "cost": 2,
+      "desc": "",
+      "exclusive": [],
+      "xp": [
+        {
+          "skill": "Doctor",
+          "level": 1,
+          "name": "의료"
+        }
+      ],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/firstaid.webp"
+    },
+    {
+      "id": "gardener",
+      "name": "정원사",
+      "nameEn": "Gardener",
+      "cost": 2,
+      "desc": "",
+      "exclusive": [],
+      "xp": [
+        {
+          "skill": "Farming",
+          "level": 1,
+          "name": "농사"
+        }
+      ],
+      "recipes": 56,
+      "professionOnly": false,
+      "icon": "icons/trait/gardener.webp"
+    },
+    {
+      "id": "whittler",
+      "name": "조각가",
+      "nameEn": "Whittler",
+      "cost": 2,
+      "desc": "나무와 뼈를 조각할 수 있습니다.",
+      "exclusive": [],
+      "xp": [
+        {
+          "skill": "Carving",
+          "level": 2,
+          "name": "조각"
+        }
+      ],
+      "recipes": 19,
+      "professionOnly": false,
+      "icon": "icons/trait/whittler.webp"
+    },
+    {
+      "id": "speeddemon",
+      "name": "속도광",
+      "nameEn": "Speed Demon",
+      "cost": 1,
+      "desc": "빠른 운전을 합니다.",
+      "exclusive": [
+        "sundaydriver"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/speeddemon.webp"
+    },
+    {
+      "id": "overweight",
+      "name": "과체중",
+      "nameEn": "High Weight",
+      "cost": 0,
+      "desc": "달리기 속도가 느리고, 지구력이 낮으며 부상당하기 쉽습니다.",
+      "exclusive": [
+        "athletic",
+        "fit",
+        "emaciated",
+        "very underweight",
+        "underweight"
+      ],
+      "xp": [
+        {
+          "skill": "Fitness",
+          "level": -1,
+          "name": "체력"
+        }
+      ],
+      "recipes": 0,
+      "professionOnly": true,
+      "icon": "icons/trait/overweight.webp"
+    },
+    {
+      "id": "blacksmith2",
+      "name": "단조 지식",
+      "nameEn": "Blacksmith Knowledge",
+      "cost": 0,
+      "desc": "모루로 금속 물건을 만들 수 있습니다.",
+      "exclusive": [
+        "blacksmith"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": true,
+      "icon": "icons/trait/blacksmith2.webp"
+    },
+    {
+      "id": "axeman",
+      "name": "도끼 전문",
+      "nameEn": "Ax-pert",
+      "cost": 0,
+      "desc": "나무를 더 잘 베어냅니다.<br>도끼를 휘두르는 속도가 빨라집니다.",
+      "exclusive": [],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": true,
+      "icon": "icons/trait/axeman.webp"
+    },
+    {
+      "id": "desensitized",
+      "name": "둔감함",
+      "nameEn": "Desensitized",
+      "cost": 0,
+      "desc": "공황상태에 빠지지 않습니다.<br>불편함을 느끼지 않습니다.",
+      "exclusive": [
+        "adrenalinejunkie",
+        "agoraphobic",
+        "brave",
+        "claustrophobic",
+        "cowardly",
+        "hemophobic"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": true,
+      "icon": "icons/trait/desensitized.webp"
+    },
+    {
+      "id": "marksman",
+      "name": "명사수",
+      "nameEn": "Marksman",
+      "cost": 0,
+      "desc": "화기 사용시 정확도와 피해가 향상됩니다.<br>재장전 속도가 빨라집니다.",
+      "exclusive": [],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": true,
+      "icon": "icons/trait/marksman.webp"
+    },
+    {
+      "id": "inventive_prof",
+      "name": "발명가",
+      "nameEn": "Inventive",
+      "cost": 0,
+      "desc": "물건으로부터 제작법을 연구하거나 자동으로 제작법을 배우는 데에 필요한 기술 단계가 낮아집니다.",
+      "exclusive": [
+        "inventive"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": true,
+      "icon": "icons/trait/inventive_prof.webp"
+    },
+    {
+      "id": "obese",
+      "name": "비만",
+      "nameEn": "Very High Weight",
+      "cost": 0,
+      "desc": "달리기 속도가 느리고, 지구력이 매우 낮으며 부상당하기 쉽습니다.",
+      "exclusive": [
+        "athletic",
+        "emaciated",
+        "fit",
+        "lighteater",
+        "very underweight",
+        "underweight",
+        "overweight"
+      ],
+      "xp": [
+        {
+          "skill": "Fitness",
+          "level": -2,
+          "name": "체력"
+        }
+      ],
+      "recipes": 0,
+      "professionOnly": true,
+      "icon": "icons/trait/obese.webp"
+    },
+    {
+      "id": "nightowl",
+      "name": "야행성",
+      "nameEn": "Night Owl",
+      "cost": 0,
+      "desc": "피곤함을 회복할 때 조금만 자도 충분합니다.<br>자는 동안에도 주변에 대한 경계를 유지합니다.",
+      "exclusive": [],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": true,
+      "icon": "icons/trait/nightowl.webp"
+    },
+    {
+      "id": "herbalist_prof",
+      "name": "약초꾼",
+      "nameEn": "Herbalist",
+      "cost": 0,
+      "desc": "치료용 약초를 찾을 수 있습니다. 약초로 치료제를 제작할 수 있습니다.",
+      "exclusive": [
+        "herbalist"
+      ],
+      "xp": [
+        {
+          "skill": "PlantScavenging",
+          "level": 1,
+          "name": "채집"
+        }
+      ],
+      "recipes": 9,
+      "professionOnly": true,
+      "icon": "icons/trait/herbalist_prof.webp"
+    },
+    {
+      "id": "cook2",
+      "name": "열정적인 요리사",
+      "nameEn": "Keen Cook",
+      "cost": 0,
+      "desc": "다양한 요리 레시피를 알고 있습니다.",
+      "exclusive": [
+        "cook"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": true,
+      "icon": "icons/trait/cook2.webp"
+    },
+    {
+      "id": "nutritionist2",
+      "name": "영양사",
+      "nameEn": "Nutritionist",
+      "cost": 0,
+      "desc": "모든 음식의 영양 정보를 볼 수 있습니다.",
+      "exclusive": [
+        "nutritionist"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": true,
+      "icon": "icons/trait/nutritionist2.webp"
+    },
+    {
+      "id": "underweight",
+      "name": "저체중",
+      "nameEn": "Low Weight",
+      "cost": 0,
+      "desc": "근력이 낮고, 지구력이 낮으며 부상당하기 쉽습니다.",
+      "exclusive": [
+        "obese",
+        "very underweight",
+        "overweight"
+      ],
+      "xp": [
+        {
+          "skill": "Fitness",
+          "level": -1,
+          "name": "체력"
+        }
+      ],
+      "recipes": 0,
+      "professionOnly": true,
+      "icon": "icons/trait/underweight.webp"
+    },
+    {
+      "id": "burglar",
+      "name": "좀도둑",
+      "nameEn": "Burglar",
+      "cost": 0,
+      "desc": "차량 배선을 딸 수 있습니다. 건물 창문을 강제로 열 때 잠금장치를 망가뜨릴 확률이 낮습니다.",
+      "exclusive": [],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": true,
+      "icon": "icons/trait/burglar.webp"
+    },
+    {
+      "id": "mechanics2",
+      "name": "차량 지식",
+      "nameEn": "Vehicle Knowledge",
+      "cost": 0,
+      "desc": "일반 차량과 상용 차량의 구조와 수리에 대한 지식이 있습니다.",
+      "exclusive": [
+        "mechanics"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": true,
+      "icon": "icons/trait/mechanics2.webp"
+    },
+    {
+      "id": "deaf",
+      "name": "청각 장애",
+      "nameEn": "Deaf",
+      "cost": -12,
+      "desc": "소리를 들을 수 없습니다.",
+      "exclusive": [
+        "hardofhearing",
+        "keenhearing"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/deaf.webp"
+    },
+    {
+      "id": "illiterate",
+      "name": "문맹",
+      "nameEn": "Illiterate",
+      "cost": -10,
+      "desc": "책이나 글을 읽을 수 없습니다.",
+      "exclusive": [
+        "fastreader",
+        "slowreader"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/illiterate.webp"
+    },
+    {
+      "id": "unfit",
+      "name": "비실함",
+      "nameEn": "Unfit",
+      "cost": -10,
+      "desc": "지구력과 지구력의 회복 속도가 매우 낮습니다.",
+      "exclusive": [
+        "athletic",
+        "fit",
+        "out of shape"
+      ],
+      "xp": [
+        {
+          "skill": "Fitness",
+          "level": -4,
+          "name": "체력"
+        }
+      ],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/unfit.webp"
+    },
+    {
+      "id": "emaciated",
+      "name": "수척함",
+      "nameEn": "Emaciated",
+      "cost": -10,
+      "desc": "근력이 낮고, 지구력이 낮으며 부상당하기 쉽습니다.",
+      "exclusive": [
+        "obese",
+        "overweight"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": true,
+      "icon": "icons/trait/emaciated.webp"
+    },
+    {
+      "id": "weak",
+      "name": "약함",
+      "nameEn": "Puny",
+      "cost": -10,
+      "desc": "근거리 무기로 공격하면 상대가 훨씬 덜 비틀거립니다.<br>들 수 있는 무게가 크게 검소합니다.",
+      "exclusive": [
+        "feeble",
+        "stout",
+        "strong"
+      ],
+      "xp": [
+        {
+          "skill": "Strength",
+          "level": -5,
+          "name": "근력"
+        }
+      ],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/weak.webp"
+    },
+    {
+      "id": "thinskinned",
+      "name": "얇은 피부",
+      "nameEn": "Thin-skinned",
+      "cost": -8,
+      "desc": "긁히거나 물릴 위험이 높아집니다.",
+      "exclusive": [
+        "thickskinned"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/thinskinned.webp"
+    },
+    {
+      "id": "slowlearner",
+      "name": "느린 학습",
+      "nameEn": "Slow Learner",
+      "cost": -6,
+      "desc": "경험치 획득량이 감소합니다.",
+      "exclusive": [
+        "crafty",
+        "fastlearner"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/slowlearner.webp"
+    },
+    {
+      "id": "disorganized",
+      "name": "비체계적",
+      "nameEn": "Disorganized",
+      "cost": -6,
+      "desc": "보관함에 물건을 넣을 수 있는 양이 감소합니다.<br>각종 보관함과 가방에 영향을 미치지만, 주 소지품 용량에는 영향을 주지 않습니다.",
+      "exclusive": [
+        "organized"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/disorganized.webp"
+    },
+    {
+      "id": "insomniac",
+      "name": "수면장애",
+      "nameEn": "Restless Sleeper",
+      "cost": -6,
+      "desc": "잠으로 피곤함을 해소하는 것이 느려집니다.",
+      "exclusive": [],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/insomniac.webp"
+    },
+    {
+      "id": "feeble",
+      "name": "연약함",
+      "nameEn": "Weak",
+      "cost": -6,
+      "desc": "근거리 무기로 공격하면 상대가 덜 비틀거립니다.<br>들 수 있는 무게가 검소합니다.",
+      "exclusive": [
+        "stout",
+        "strong",
+        "weak"
+      ],
+      "xp": [
+        {
+          "skill": "Strength",
+          "level": -2,
+          "name": "근력"
+        }
+      ],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/feeble.webp"
+    },
+    {
+      "id": "asthmatic",
+      "name": "천식 환자",
+      "nameEn": "Short of Breath",
+      "cost": -5,
+      "desc": "지구력이 빠르게 감소합니다.",
+      "exclusive": [],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/asthmatic.webp"
+    },
+    {
+      "id": "pacifist",
+      "name": "평화주의자",
+      "nameEn": "Reluctant Fighter",
+      "cost": -5,
+      "desc": "전투 경험치 획득량이 감소합니다.",
+      "exclusive": [],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/pacifist.webp"
+    },
+    {
+      "id": "hemophobic",
+      "name": "피 공포증",
+      "nameEn": "Fear of Blood",
+      "cost": -5,
+      "desc": "피범벅이 되거나 자신에게 응급처치 시 공황상태에 빠집니다.<br>다른 사람들을 치료할 수 없습니다.<br>피투성이가 되면 스트레스를 받습니다.",
+      "exclusive": [
+        "desensitized"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/hemophobic.webp"
+    },
+    {
+      "id": "agoraphobic",
+      "name": "광장 공포증",
+      "nameEn": "Agoraphobic",
+      "cost": -4,
+      "desc": "실외에서 점점 공황상태가 되어 갑니다.",
+      "exclusive": [
+        "adrenalinejunkie",
+        "brave",
+        "desensitized",
+        "claustrophobic"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/agoraphobic.webp"
+    },
+    {
+      "id": "conspicuous",
+      "name": "넘치는 존재감",
+      "nameEn": "Conspicuous",
+      "cost": -4,
+      "desc": "좀비의 눈에 띌 확률이 증가합니다.",
+      "exclusive": [
+        "inconspicuous"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/conspicuous.webp"
+    },
+    {
+      "id": "heartyappetite",
+      "name": "대식가",
+      "nameEn": "Hearty Appetite",
+      "cost": -4,
+      "desc": "주기적으로 더 식사를 해야 합니다.",
+      "exclusive": [
+        "lighteater",
+        "very underweight"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/heartyappetite.webp"
+    },
+    {
+      "id": "claustrophobic",
+      "name": "밀실 공포증",
+      "nameEn": "Claustrophobic",
+      "cost": -4,
+      "desc": "좁은 실내에 있을 때 점점 공황상태가 되어 갑니다.",
+      "exclusive": [
+        "adrenalinejunkie",
+        "agoraphobic",
+        "brave",
+        "desensitized"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/claustrophobic.webp"
+    },
+    {
+      "id": "hardofhearing",
+      "name": "어두운 귀",
+      "nameEn": "Hard of Hearing",
+      "cost": -4,
+      "desc": "소리를 인지하는 반경이 작아집니다. <br>들리는 범위가 짧아집니다.",
+      "exclusive": [
+        "deaf",
+        "keenhearing"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/hardofhearing.webp"
+    },
+    {
+      "id": "needsmoresleep",
+      "name": "잠꾸러기",
+      "nameEn": "Sleepyhead",
+      "cost": -4,
+      "desc": "더 많은 잠을 필요로 합니다.",
+      "exclusive": [
+        "needslesssleep"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/needsmoresleep.webp"
+    },
+    {
+      "id": "pronetoillness",
+      "name": "질병에 취약함",
+      "nameEn": "Prone to Illness",
+      "cost": -4,
+      "desc": "질병에 걸릴 가능성이 증가합니다.<br>좀비화 진행 속도가 빨라집니다.",
+      "exclusive": [
+        "resilient"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/pronetoillness.webp"
+    },
+    {
+      "id": "smoker",
+      "name": "골초",
+      "nameEn": "Smoker",
+      "cost": -3,
+      "desc": "담배를 피우지 않으면 불행이 올라갑니다.<br>담배를 피우면 스트레스와 불행이 감소합니다.",
+      "exclusive": [
+        "athletic"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/smoker.webp"
+    },
+    {
+      "id": "slowhealer",
+      "name": "느린 치유",
+      "nameEn": "Slow Healer",
+      "cost": -3,
+      "desc": "부상과 질병을 느리게 회복합니다.",
+      "exclusive": [
+        "fasthealer"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/slowhealer.webp"
+    },
+    {
+      "id": "cowardly",
+      "name": "겁쟁이",
+      "nameEn": "Cowardly",
+      "cost": -2,
+      "desc": "공황상태에 빠지기 쉽습니다",
+      "exclusive": [
+        "adrenalinejunkie",
+        "brave",
+        "desensitized"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/cowardly.webp"
+    },
+    {
+      "id": "highthirst",
+      "name": "높은 갈증",
+      "nameEn": "High Thirst",
+      "cost": -2,
+      "desc": "생존을 위한 물의 소모량이 증가합니다.",
+      "exclusive": [
+        "lowthirst"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/highthirst.webp"
+    },
+    {
+      "id": "weightgain",
+      "name": "느린 신진대사",
+      "nameEn": "Slow Metabolism",
+      "cost": -2,
+      "desc": "영구적으로 살이 빨리 찝니다. 과체중 특성을 가지고 시작합니다.",
+      "exclusive": [
+        "weightloss"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/weightgain.webp"
+    },
+    {
+      "id": "clumsy",
+      "name": "덤벙댐",
+      "nameEn": "Clumsy",
+      "cost": -2,
+      "desc": "움직일 때 나는 소리가 증가합니다.",
+      "exclusive": [
+        "graceful"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/clumsy.webp"
+    },
+    {
+      "id": "weightloss",
+      "name": "빠른 신진대사",
+      "nameEn": "Fast Metabolism",
+      "cost": -2,
+      "desc": "영구적으로 살이 빨리 빠집니다. 저체중 특성을 가지고 시작합니다.",
+      "exclusive": [
+        "weightgain"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/weightloss.webp"
+    },
+    {
+      "id": "allthumbs",
+      "name": "서투른",
+      "nameEn": "All Thumbs",
+      "cost": -2,
+      "desc": "소지품창에 물건을 넣고 뺄때 속도가 느려집니다. 걸으면서 제작할 수 없습니다.<br>밧줄을 타는 속도가 느려지고, 떨어질 확률이 늘어납니다.<br>무기 견착 속도가 느려집니다.",
+      "exclusive": [
+        "dextrous"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/allthumbs.webp"
+    },
+    {
+      "id": "weakstomach",
+      "name": "소화불량",
+      "nameEn": "Weak Stomach",
+      "cost": -2,
+      "desc": "음식으로 인한 질병에 걸릴 확률이 증가합니다.",
+      "exclusive": [
+        "irongut"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/weakstomach.webp"
+    },
+    {
+      "id": "slowreader",
+      "name": "정독",
+      "nameEn": "Slow Reader",
+      "cost": -2,
+      "desc": "책을 읽는 데 시간이 많이 소요됩니다.",
+      "exclusive": [
+        "fastreader",
+        "illiterate"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/slowreader.webp"
+    },
+    {
+      "id": "shortsighted",
+      "name": "짧은 시야",
+      "nameEn": "Short Sighted",
+      "cost": -2,
+      "desc": "시야 거리가 짧아집니다.<br>시야 확보 속도가 느려집니다.<br>무기에 부착된 조준경의 효율이 낮아집니다.",
+      "exclusive": [
+        "eagleeyed"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/shortsighted.webp"
+    },
+    {
+      "id": "sundaydriver",
+      "name": "초보 운전",
+      "nameEn": "Sunday Driver",
+      "cost": -1,
+      "desc": "느린 운전을 합니다.",
+      "exclusive": [
+        "speeddemon"
+      ],
+      "xp": [],
+      "recipes": 0,
+      "professionOnly": false,
+      "icon": "icons/trait/sundaydriver.webp"
+    }
+  ],
+  "skills": {
+    "Nimble": "조준시 발걸음",
+    "Sneak": "은밀한 움직임",
+    "Lightfoot": "조용한 발걸음",
+    "Cooking": "요리",
+    "Maintenance": "물건관리",
+    "SmallBlade": "단검",
+    "Woodwork": "목공예",
+    "Carving": "조각",
+    "SmallBlunt": "짧은 둔기",
+    "Masonry": "석공",
+    "Butchering": "도축",
+    "Blunt": "긴 둔기",
+    "Doctor": "의료",
+    "Electricity": "전기공학",
+    "Farming": "농사",
+    "Husbandry": "사육",
+    "Strength": "근력",
+    "Sprinting": "능숙한 달리기",
+    "Fitness": "체력",
+    "Axe": "도끼",
+    "Fishing": "낚시",
+    "PlantScavenging": "채집",
+    "Mechanics": "차량정비",
+    "MetalWelding": "금속용접",
+    "Trapping": "함정",
+    "FlintKnapping": "석기 제작",
+    "Aiming": "조준",
+    "Reloading": "재장전",
+    "Blacksmith": "금속세공",
+    "Tailoring": "재단술",
+    "Glassmaking": "유리 세공",
+    "Pottery": "도기 제작",
+    "Tracking": "Tracking"
+  }
+}

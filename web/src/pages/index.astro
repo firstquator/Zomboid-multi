@@ -109,6 +109,15 @@ const flow = [
         index={1}
       />
     </div>
+
+    <a class="char-link reveal" href={base("character/")}>
+      <span class="cl-ic"><Icon name="user-circle" size={26} /></span>
+      <span class="cl-text">
+        <b>캐릭터 만들기</b>
+        직업과 특성 고르는 법, 역할별 추천 조합, 포인트 계산기
+      </span>
+      <Icon name="arrow-right-02" size={20} />
+    </a>
   </section>
 
   <section class="install" id="install" aria-labelledby="install-title">
@@ -320,6 +329,44 @@ const flow = [
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: clamp(28px, 4vw, 56px);
+  }
+
+  .char-link {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 16px;
+    margin-top: 28px;
+    padding: 18px 22px;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-lg);
+    background: var(--paper-3);
+    color: var(--ink-2);
+    text-decoration: none;
+    box-shadow: var(--shadow-sheet);
+    transition:
+      transform 200ms ease,
+      box-shadow 200ms ease;
+  }
+  .char-link:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lift);
+  }
+  .cl-ic {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: var(--night);
+    color: var(--sodium);
+  }
+  .cl-text b {
+    display: block;
+    color: var(--ink);
+    font-family: var(--f-display);
+    font-weight: 400;
+    font-size: 22px;
   }
 
   .install {

@@ -205,7 +205,10 @@ kbd {
   background: color-mix(in srgb, var(--steel) 13%, transparent);
   color: var(--steel);
   font-weight: 600;
-  white-space: nowrap;
+  /* 긴 경로는 칸을 넘칠 때만 끊는다. 끊긴 줄에도 배경을 이어 그린다. */
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 /* 핵심 단어 강조. 형광펜으로 아랫부분만 칠한 모양. */
@@ -368,6 +371,11 @@ kbd {
   font-size: 13.5px;
   line-height: 1.5;
   word-break: break-all;
+  /* 본문 안의 값 칩 스타일(:where(.content) code)을 받지 않게 되돌린다. */
+  white-space: normal;
+  background: none;
+  border-radius: 0;
+  font-weight: 400;
 }
 .cmdline code::before {
   content: "PS>";

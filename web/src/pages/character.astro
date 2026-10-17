@@ -1,0 +1,1076 @@
+---
+import Base from "../layouts/Base.astro";
+import PageHead from "../components/PageHead.astro";
+import Icon from "../components/Icon.astro";
+import PixelIcon from "../components/PixelIcon.astro";
+import { base } from "../lib/base-url.mjs";
+import { remainingPoints, SLEEP_TRAITS } from "../lib/character.mjs";
+import { builds, verdicts, spawnTips, firstDay } from "../data/builds.mjs";
+import data from "../data/character.json";
+
+const TAG = {
+  good: { label: "추천", cls: "good" },
+  ok: { label: "상황에 따라", cls: "ok" },
+  bad: { label: "피하기", cls: "bad" },
+  server: { label: "효과 거의 없음", cls: "server" },
+  off: { label: "선택 불가", cls: "off" },
+};
+
+const profById = new Map(data.professions.map((p) => [p.id, p]));
+const traitById = new Map(data.traits.map((t) => [t.id, t]));
+const pickable = data.traits.filter((t) => !t.professionOnly);
+const positives = pickable.filter((t) => t.cost > 0);
+const negatives = pickable.filter((t) => t.cost < 0);
+
+// 게임 설명에 섞인 <br> 을 문장 구분으로 바꾼다.
+const clean = (s: string) => s.replace(/<br\s*\/?>/gi, " · ").replace(/\s+/g, " ").trim();
+// 남은 포인트에 주는 영향으로 보여 준다. 긍정 특성은 포인트를 쓰므로 음수.
+const fx = (n: number) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : "0");
+
+const buildCards = builds.map((b) => {
+  const p = profById.get(b.profession)!;
+  const good = b.good.map((id) => traitById.get(id)!);
+  const bad = b.bad.map((id) => traitById.get(id)!);
+  return { ...b, p, good, bad, left: remainingPoints(p, [...good, ...bad]) };
+});
+
+// 계산기가 쓰는 데이터만 페이지에 넣는다.
+const clientData = {
+  professions: data.professions.map(({ id, name, cost, xp, granted }) => ({ id, name, cost, xp, granted })),
+  traits: pickable.map(({ id, name, cost, exclusive, xp }) => ({ id, name, cost, exclusive, xp })),
+  granted: Object.fromEntries(data.traits.filter((t) => t.professionOnly).map((t) => [t.id, t.name])),
+  off: SLEEP_TRAITS,
+  builds: builds.map((b) => ({ id: b.id, profession: b.profession, traits: [...b.good, ...b.bad] })),
+};
+---
+
+<Base title="캐릭터 만들기" active="character">
+  <PageHead
+    kicker={`Build ${data.build} · 직업과 특성`}
+    title="캐릭터 만들기"
+    desc="처음 시작할 때 고르는 직업과 특성을 정리했습니다. 수치는 게임 파일에서 그대로 가져왔고, 우리 서버 설정에 맞춘 추천을 붙였습니다."
+    icon="user"
+    seed={45}
+  />
+
+  <section class="wrap sec rules" aria-labelledby="rules-title">
+    <p class="kicker">01</p>
+    <h2 id="rules-title" class="display">포인트 계산법</h2>
+
+    <div class="eq reveal">
+      <div class="term">
+        <span class="t-k">직업 포인트</span>
+        <span class="t-v">커스텀 직업 <b class="plus">+8</b> · 소방관 <b>0</b> · 퇴역 군인 <b class="minus">−8</b></span>
+      </div>
+      <span class="op" aria-label="빼기">−</span>
+      <div class="term">
+        <span class="t-k">긍정 특성 비용</span>
+        <span class="t-v">두꺼운 피부 <b class="minus">8</b> · 민첩함 <b class="minus">2</b></span>
+      </div>
+      <span class="op" aria-label="더하기">+</span>
+      <div class="term">
+        <span class="t-k">부정 특성 보상</span>
+        <span class="t-v">대식가 <b class="plus">4</b> · 정독 <b class="plus">2</b></span>
+      </div>
+      <span class="op" aria-label="0 이상">≥</span>
+      <div class="term zero">
+        <span class="t-k">남은 포인트</span>
+        <span class="t-big">0</span>
+      </div>
+    </div>
+    <p class="lede">남은 포인트가 0 이상이면 시작할 수 있습니다. 남은 포인트는 다른 곳에 쓸 수 없어서 0에 가깝게 맞추는 게 좋습니다.</p>
+
+    <h3 class="sub-title">우리 서버에서 달라지는 점</h3>
+    <ul class="notes">
+      <li class="reveal" style="--i:0">
+        <span class="n-ic"><Icon name="moon-02" size={20} /></span>
+        <span><b>수면 특성 3개는 고를 수 없습니다</b>잠 설정이 꺼진 멀티 서버에서는 수면장애, 잠꾸러기, 잠이 적음이 목록에서 빠집니다. 피로도 쌓이지 않습니다.</span>
+      </li>
+      <li class="reveal" style="--i:1">
+        <span class="n-ic"><Icon name="book-open-01" size={20} /></span>
+        <span><b>책을 거의 바로 읽습니다</b>독서 시간이 한 쪽당 0.1분이라 <em>속독</em>은 효과가 거의 없고, <em>정독</em>은 사실상 공짜 2점입니다. 대신 <em>문맹</em>은 기술 서적을 못 읽어 손해가 큽니다.</span>
+      </li>
+      <li class="reveal" style="--i:2">
+        <span class="n-ic"><Icon name="book-02" size={20} /></span>
+        <span><b>스킬 보존 일지가 있습니다</b>일지에 기록한 기술은 죽은 뒤 새 캐릭터가 되찾습니다. 그래서 <em>현자</em>처럼 성장을 빠르게 하는 특성의 가치가 오릅니다.</span>
+      </li>
+    </ul>
+  </section>
+
+  <section class="wrap sec" aria-labelledby="builds-title">
+    <p class="kicker">02</p>
+    <h2 id="builds-title" class="display">추천 조합</h2>
+    <p class="lede">역할별 조합 4개입니다. 모두 포인트가 맞는지 게임 수치로 검사했습니다. 마음에 드는 조합을 계산기로 불러와 바꿔 볼 수 있습니다.</p>
+
+    <div class="build-grid">
+      {
+        buildCards.map((b, i) => (
+          <article class="build reveal" style={`--i:${i}`}>
+            <header class="b-head">
+              <PixelIcon src={b.p.icon} size={36} />
+              <div>
+                <p class="b-tag">{b.tag}</p>
+                <h3 class="display">{b.title}</h3>
+              </div>
+              <span class="b-left mono" title="남은 포인트">
+                남은 <b>{b.left}</b>
+              </span>
+            </header>
+            <p class="b-prof">
+              직업 <b>{b.p.name}</b> <span class="mono pts">{fx(b.p.cost)}</span>
+            </p>
+            <div class="b-traits">
+              <p class="b-lbl">긍정 특성</p>
+              <ul>
+                {b.good.map((t) => (
+                  <li>
+                    <PixelIcon src={t.icon} size={18} />
+                    {t.name}
+                    <span class="mono pts minus">{fx(-t.cost)}</span>
+                  </li>
+                ))}
+              </ul>
+              <p class="b-lbl">부정 특성</p>
+              <ul>
+                {b.bad.map((t) => (
+                  <li>
+                    <PixelIcon src={t.icon} size={18} />
+                    {t.name}
+                    <span class="mono pts plus">{fx(-t.cost)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <ul class="b-why">
+              {b.why.map((w) => (
+                <li>{w}</li>
+              ))}
+            </ul>
+            <button type="button" class="b-load" data-load-build={b.id}>
+              <Icon name="sliders-horizontal" size={16} />
+              계산기에서 열기
+            </button>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="wrap sec" id="builder" aria-labelledby="builder-title">
+    <p class="kicker">03</p>
+    <h2 id="builder-title" class="display">직접 짜 보기</h2>
+    <p class="lede">직업 하나와 특성을 눌러 고릅니다. 함께 못 고르는 특성은 자동으로 막히고, 오른쪽에 남은 포인트와 오르는 기술이 바로 보입니다.</p>
+
+    <script type="application/json" id="char-data" set:html={JSON.stringify(clientData)} />
+
+    <div class="builder">
+      <div class="pick">
+        <h3 class="step-h"><span class="mono">1</span>직업</h3>
+        <div class="profs" role="group" aria-label="직업">
+          {
+            data.professions.map((p) => (
+              <button type="button" class="prof" data-prof={p.id} aria-pressed="false">
+                <PixelIcon src={p.icon} size={28} fallback="user" />
+                <span class="p-name">{p.name}</span>
+                <span class={`mono pts ${p.cost > 0 ? "plus" : p.cost < 0 ? "minus" : ""}`}>{fx(p.cost)}</span>
+              </button>
+            ))
+          }
+        </div>
+        <div class="prof-detail" data-prof-detail aria-live="polite"></div>
+
+        <div class="list-head">
+          <h3 class="step-h"><span class="mono">2</span>긍정 특성 <small>포인트를 씀</small></h3>
+          <label class="only"><input type="checkbox" data-only-good /> 추천만 보기</label>
+        </div>
+        <div class="traits" role="group" aria-label="긍정 특성">
+          {
+            positives.map((t) => (
+              <button type="button" class="trait" data-trait={t.id} data-tag={verdicts[t.id]?.tag ?? ""} aria-pressed="false">
+                <PixelIcon src={t.icon} size={22} />
+                <span class="t-main">
+                  <span class="t-name">
+                    {t.name}
+                    {verdicts[t.id] && <span class={`tag ${TAG[verdicts[t.id].tag].cls}`}>{TAG[verdicts[t.id].tag].label}</span>}
+                  </span>
+                  <span class="t-desc">{verdicts[t.id]?.note ?? clean(t.desc)}</span>
+                  {t.xp.length > 0 && (
+                    <span class="t-xp">
+                      {t.xp.map((x) => (
+                        <span class="xp">
+                          {x.name} {x.level > 0 ? `+${x.level}` : x.level}
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                  <span class="t-why" data-why></span>
+                </span>
+                <span class="mono pts minus">{fx(-t.cost)}</span>
+              </button>
+            ))
+          }
+        </div>
+
+        <div class="list-head">
+          <h3 class="step-h"><span class="mono">3</span>부정 특성 <small>포인트를 돌려받음</small></h3>
+        </div>
+        <div class="traits" role="group" aria-label="부정 특성">
+          {
+            negatives.map((t) => (
+              <button type="button" class="trait" data-trait={t.id} data-tag={verdicts[t.id]?.tag ?? ""} aria-pressed="false">
+                <PixelIcon src={t.icon} size={22} />
+                <span class="t-main">
+                  <span class="t-name">
+                    {t.name}
+                    {verdicts[t.id] && <span class={`tag ${TAG[verdicts[t.id].tag].cls}`}>{TAG[verdicts[t.id].tag].label}</span>}
+                  </span>
+                  <span class="t-desc">{verdicts[t.id]?.note ?? clean(t.desc)}</span>
+                  {t.xp.length > 0 && (
+                    <span class="t-xp">
+                      {t.xp.map((x) => (
+                        <span class="xp">
+                          {x.name} {x.level > 0 ? `+${x.level}` : x.level}
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                  <span class="t-why" data-why></span>
+                </span>
+                <span class="mono pts plus">{fx(-t.cost)}</span>
+              </button>
+            ))
+          }
+        </div>
+      </div>
+
+      <aside class="summary" aria-label="고른 결과">
+        <div class="s-card">
+          <p class="s-k">남은 포인트</p>
+          <p class="s-points mono" data-points>8</p>
+          <p class="s-state" data-state>시작할 수 있습니다</p>
+
+          <p class="s-k">고른 것</p>
+          <ul class="s-chosen" data-chosen></ul>
+
+          <p class="s-k">오르는 기술</p>
+          <ul class="s-skills" data-skills></ul>
+
+          <div class="s-actions">
+            <button type="button" class="s-btn" data-reset><Icon name="refresh" size={16} />처음부터</button>
+            <button type="button" class="s-btn primary" data-share><Icon name="link-01" size={16} /><span data-share-label>링크 복사</span></button>
+          </div>
+          <p class="s-hint">링크를 보내면 친구도 같은 조합을 열어 볼 수 있습니다.</p>
+        </div>
+      </aside>
+    </div>
+    <p class="mobile-points" aria-hidden="true">남은 <b class="mono" data-points-mini>8</b></p>
+  </section>
+
+  <section class="wrap sec two" aria-labelledby="start-title">
+    <div>
+      <p class="kicker">04</p>
+      <h2 id="start-title" class="display">시작 지역</h2>
+      <ul class="tips">
+        {spawnTips.map((s) => (
+          <li>{s}</li>
+        ))}
+      </ul>
+    </div>
+    <div>
+      <p class="kicker">05</p>
+      <h2 class="display">시작 직후 할 일</h2>
+      <ol class="first">
+        {
+          firstDay.map((f, i) => (
+            <li class="reveal" style={`--i:${i % 3}`}>
+              <span class="f-ic">
+                <Icon name={f.icon} size={20} />
+              </span>
+              <span>
+                <b>{f.title}</b>
+                {f.text}
+              </span>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <p class="wrap credit">
+    직업·특성 이름, 수치, 아이콘은 Project Zomboid {data.build} 게임 파일에서 가져왔습니다. 아이콘의 저작권은 The Indie Stone 에 있습니다.
+    참가자 접속 방법은 <a href={base("join/")}>참가자 가이드</a>를 보세요.
+  </p>
+</Base>
+
+<script>
+  import { remainingPoints, conflicts, skillTotals, encodeBuild, decodeBuild } from "../lib/character.mjs";
+
+  type Prof = { id: string; name: string; cost: number; xp: any[]; granted: string[] };
+  type Trait = { id: string; name: string; cost: number; exclusive: string[]; xp: any[] };
+  const D = JSON.parse(document.getElementById("char-data")!.textContent!);
+  const profs = new Map<string, Prof>(D.professions.map((p: Prof) => [p.id, p]));
+  const traits = new Map<string, Trait>(D.traits.map((t: Trait) => [t.id, t]));
+  const off = new Set<string>(D.off);
+
+  let profId = "unemployed";
+  let chosen = new Set<string>();
+
+  const $ = <T extends Element>(s: string) => document.querySelector<T>(s)!;
+  const profBtns = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-prof]"));
+  const traitBtns = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-trait]"));
+  const fx = (n: number) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : "0");
+
+  // t 를 지금 고를 수 없는 이유. 없으면 빈 문자열.
+  function blocked(t: Trait, p: Prof) {
+    if (off.has(t.id)) return "우리 서버에서는 고를 수 없음";
+    if (p.granted.includes(t.id)) return "직업이 이미 줌";
+    for (const g of p.granted) {
+      if (t.exclusive.includes(g)) return `직업 특성(${D.granted[g] ?? g})과 함께 못 고름`;
+    }
+    for (const id of chosen) {
+      const other = traits.get(id)!;
+      if (t.exclusive.includes(id) || other.exclusive.includes(t.id)) return `${other.name}와 함께 못 고름`;
+    }
+    return "";
+  }
+
+  // 처음 열 때는 주소를 바꾸지 않는다. 사용자가 고르기 시작한 뒤부터 조합을 주소에 남긴다.
+  let touched = false;
+
+  function render() {
+    const p = profs.get(profId)!;
+    const ts = [...chosen].map((id) => traits.get(id)!);
+    const left = remainingPoints(p, ts);
+
+    profBtns.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.prof === profId)));
+    traitBtns.forEach((b) => {
+      const t = traits.get(b.dataset.trait!)!;
+      const on = chosen.has(t.id);
+      const why = on ? "" : blocked(t, p);
+      b.setAttribute("aria-pressed", String(on));
+      b.classList.toggle("is-blocked", !!why);
+      b.querySelector<HTMLElement>("[data-why]")!.textContent = why;
+    });
+
+    const pointsEl = $<HTMLElement>("[data-points]");
+    pointsEl.textContent = fx(left).replace("+", "");
+    pointsEl.classList.toggle("neg", left < 0);
+    $<HTMLElement>("[data-points-mini]").textContent = String(left);
+    $<HTMLElement>("[data-state]").textContent =
+      left < 0 ? `${-left}점이 모자랍니다. 긍정 특성을 빼거나 부정 특성을 더하세요` : left === 0 ? "딱 맞습니다. 시작할 수 있습니다" : `${left}점이 남습니다. 시작할 수 있습니다`;
+
+    const chosenEl = $<HTMLElement>("[data-chosen]");
+    chosenEl.innerHTML = "";
+    const add = (text: string, pts: string, cls: string) => {
+      const li = document.createElement("li");
+      li.className = cls;
+      li.innerHTML = `<span></span><b class="mono"></b>`;
+      li.querySelector("span")!.textContent = text;
+      li.querySelector("b")!.textContent = pts;
+      chosenEl.append(li);
+    };
+    add(`직업 · ${p.name}`, fx(p.cost), "prof");
+    for (const g of p.granted) add(`직업 특성 · ${D.granted[g] ?? g}`, "", "granted");
+    for (const t of ts) add(t.name, fx(-t.cost), t.cost > 0 ? "pos" : "neg");
+
+    const skillsEl = $<HTMLElement>("[data-skills]");
+    const skills = skillTotals(p, ts);
+    skillsEl.innerHTML = skills.length ? "" : "<li class='none'>없음</li>";
+    for (const s of skills) {
+      const li = document.createElement("li");
+      li.innerHTML = `<span></span><b class="mono"></b><i></i>`;
+      li.querySelector("span")!.textContent = s.name;
+      li.querySelector("b")!.textContent = s.level > 0 ? `+${s.level}` : String(s.level);
+      (li.querySelector("i") as HTMLElement).style.width = `${Math.min(100, Math.abs(s.level) * 12)}%`;
+      li.classList.toggle("down", s.level < 0);
+      skillsEl.append(li);
+    }
+
+    const detail = $<HTMLElement>("[data-prof-detail]");
+    const xp = p.xp.map((x: any) => `${x.name} +${x.level}`).join(" · ");
+    const granted = p.granted.map((g) => D.granted[g] ?? g).join(", ");
+    detail.textContent = [p.name, xp && `기술 ${xp}`, granted && `직업 특성 ${granted}`].filter(Boolean).join("  |  ");
+
+    if (touched && conflicts(p, ts).length === 0) history.replaceState(null, "", `#${encodeBuild(profId, [...chosen])}`);
+  }
+
+  profBtns.forEach((b) =>
+    b.addEventListener("click", () => {
+      touched = true;
+      profId = b.dataset.prof!;
+      // 새 직업과 부딪히는 특성은 뺀다
+      const p = profs.get(profId)!;
+      for (const id of [...chosen]) {
+        const t = traits.get(id)!;
+        if (p.granted.includes(id) || p.granted.some((g) => t.exclusive.includes(g))) chosen.delete(id);
+      }
+      render();
+    }),
+  );
+  traitBtns.forEach((b) =>
+    b.addEventListener("click", () => {
+      touched = true;
+      const id = b.dataset.trait!;
+      if (chosen.has(id)) chosen.delete(id);
+      else if (!blocked(traits.get(id)!, profs.get(profId)!)) chosen.add(id);
+      render();
+    }),
+  );
+
+  function load(profession: string, ids: string[]) {
+    if (!profs.has(profession)) return;
+    touched = true;
+    profId = profession;
+    chosen = new Set(ids.filter((id) => traits.has(id)));
+    render();
+  }
+
+  document.querySelectorAll<HTMLButtonElement>("[data-load-build]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const build = D.builds.find((x: any) => x.id === b.dataset.loadBuild);
+      if (!build) return;
+      load(build.profession, build.traits);
+      document.getElementById("builder")!.scrollIntoView({ behavior: "smooth" });
+    }),
+  );
+
+  $<HTMLButtonElement>("[data-reset]").addEventListener("click", () => load("unemployed", []));
+
+  $<HTMLButtonElement>("[data-share]").addEventListener("click", async () => {
+    const label = $<HTMLElement>("[data-share-label]");
+    try {
+      await navigator.clipboard.writeText(location.href);
+      label.textContent = "복사됨";
+    } catch {
+      label.textContent = "주소창의 링크를 복사하세요";
+    }
+    setTimeout(() => (label.textContent = "링크 복사"), 1800);
+  });
+
+  $<HTMLInputElement>("[data-only-good]").addEventListener("change", (e) => {
+    document.querySelector(".builder")!.classList.toggle("only-good", (e.target as HTMLInputElement).checked);
+  });
+
+  const fromHash = decodeBuild(location.hash);
+  if (fromHash) load(fromHash.professionId, fromHash.traitIds);
+  else render();
+</script>
+
+<style>
+  .sec {
+    padding-top: 90px;
+  }
+  .sec h2 {
+    margin-top: 10px;
+    font-size: clamp(30px, 4vw, 48px);
+  }
+  .lede {
+    max-width: 52em;
+    margin-top: 14px;
+    color: var(--ink-2);
+  }
+
+  /* 포인트 식 */
+  .eq {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 10px;
+    margin-top: 28px;
+  }
+  .term {
+    display: grid;
+    align-content: center;
+    gap: 6px;
+    flex: 1 1 180px;
+    padding: 16px 18px;
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    background: var(--paper-3);
+    box-shadow: var(--shadow-sheet);
+  }
+  .term.zero {
+    flex: 0 0 auto;
+    min-width: 140px;
+    background: var(--night);
+    color: var(--night-ink);
+    border-color: transparent;
+  }
+  .t-k {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink-3);
+  }
+  .zero .t-k {
+    color: var(--night-dim);
+  }
+  .t-v {
+    font-size: 14.5px;
+    color: var(--ink-2);
+  }
+  .t-big {
+    font-family: var(--f-stencil);
+    font-size: 44px;
+    line-height: 1;
+    color: var(--sodium);
+  }
+  .op {
+    display: grid;
+    place-items: center;
+    font-family: var(--f-display);
+    font-size: 30px;
+    color: var(--ink-3);
+  }
+  .plus {
+    color: var(--olive);
+  }
+  .minus {
+    color: var(--red);
+  }
+
+  .sub-title {
+    margin-top: 40px;
+    font-size: 18px;
+  }
+  .notes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: 14px;
+    margin: 16px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .notes li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    padding: 16px 18px;
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    background: var(--paper-3);
+    font-size: 14.5px;
+    color: var(--ink-2);
+  }
+  .notes b {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--ink);
+    font-size: 15.5px;
+  }
+  .notes em {
+    font-style: normal;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .n-ic {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--night);
+    color: var(--sodium);
+  }
+
+  /* 추천 조합 */
+  .build-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr));
+    gap: 18px;
+    margin-top: 28px;
+  }
+  .build {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    background: var(--paper-3);
+    box-shadow: var(--shadow-sheet);
+  }
+  .b-head {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 12px;
+  }
+  .b-tag {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--red);
+  }
+  .b-head h3 {
+    font-weight: 400;
+    font-size: 22px;
+  }
+  .b-left {
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--olive) 14%, transparent);
+    color: var(--olive);
+    font-size: 12px;
+  }
+  .b-prof {
+    font-size: 14.5px;
+    color: var(--ink-2);
+  }
+  .pts {
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+  .b-lbl {
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-3);
+  }
+  .b-traits ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 6px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .b-traits li {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px 3px 3px;
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    background: var(--paper);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .b-traits li :global(.px) {
+    border-radius: 5px;
+  }
+  .b-why {
+    display: grid;
+    gap: 6px;
+    margin: 4px 0 0;
+    padding-left: 18px;
+    font-size: 13.5px;
+    color: var(--ink-2);
+  }
+  .b-load {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: auto;
+    padding: 10px 14px;
+    border: 1.5px solid var(--ink);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink);
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+      background 150ms ease,
+      color 150ms ease;
+  }
+  .b-load:hover {
+    background: var(--ink);
+    color: var(--paper-3);
+  }
+
+  /* 계산기 */
+  .builder {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 28px;
+    align-items: start;
+    margin-top: 28px;
+  }
+  .step-h {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 26px 0 12px;
+    font-size: 18px;
+  }
+  .step-h:first-child {
+    margin-top: 0;
+  }
+  .step-h .mono {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--paper-3);
+    font-size: 13px;
+  }
+  .step-h small {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-3);
+  }
+  .profs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 8px;
+  }
+  .prof {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px 6px 6px;
+    border: 1.5px solid var(--rule);
+    border-radius: 10px;
+    background: var(--paper-3);
+    color: var(--ink);
+    font-size: 13.5px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      border-color 150ms ease,
+      transform 150ms ease;
+  }
+  .prof:hover {
+    border-color: var(--ink-3);
+    transform: translateY(-1px);
+  }
+  .prof[aria-pressed="true"] {
+    border-color: var(--red);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--red) 18%, transparent);
+  }
+  .p-name {
+    min-width: 0;
+    line-height: 1.3;
+  }
+  .prof-detail {
+    min-height: 1.6em;
+    margin-top: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--steel) 10%, transparent);
+    color: var(--ink-2);
+    font-size: 13.5px;
+  }
+  .prof-detail:empty {
+    display: none;
+  }
+  .list-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .only {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 14px;
+    font-size: 13.5px;
+    color: var(--ink-2);
+    cursor: pointer;
+  }
+  .traits {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    gap: 8px;
+  }
+  .trait {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 10px;
+    padding: 10px 12px 10px 8px;
+    border: 1.5px solid var(--rule);
+    border-radius: 10px;
+    background: var(--paper-3);
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+    transition:
+      border-color 150ms ease,
+      opacity 150ms ease;
+  }
+  .trait:hover {
+    border-color: var(--ink-3);
+  }
+  .trait[aria-pressed="true"] {
+    border-color: var(--olive);
+    background: color-mix(in srgb, var(--olive) 10%, var(--paper-3));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--olive) 16%, transparent);
+  }
+  .trait.is-blocked {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .only-good .trait:not([data-tag="good"]):not([aria-pressed="true"]) {
+    display: none;
+  }
+  .t-main {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+  }
+  .t-name {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    font-size: 14.5px;
+    font-weight: 700;
+  }
+  .t-desc {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--ink-2);
+  }
+  .t-xp {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .xp {
+    padding: 0 6px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--steel) 12%, transparent);
+    color: var(--steel);
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+  .t-why {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--red);
+  }
+  .t-why:empty {
+    display: none;
+  }
+  .tag {
+    padding: 0 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .tag.good {
+    background: color-mix(in srgb, var(--olive) 18%, transparent);
+    color: var(--olive);
+  }
+  .tag.ok {
+    background: color-mix(in srgb, var(--amber) 16%, transparent);
+    color: var(--amber);
+  }
+  .tag.bad {
+    background: color-mix(in srgb, var(--red) 14%, transparent);
+    color: var(--red);
+  }
+  .tag.server,
+  .tag.off {
+    background: color-mix(in srgb, var(--ink) 10%, transparent);
+    color: var(--ink-3);
+  }
+
+  .summary {
+    position: sticky;
+    top: 86px;
+  }
+  .s-card {
+    display: grid;
+    gap: 8px;
+    padding: 20px;
+    border-radius: 14px;
+    background: var(--night);
+    color: var(--night-ink);
+    box-shadow: var(--shadow-lift);
+  }
+  .s-k {
+    margin-top: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--night-dim);
+  }
+  .s-points {
+    font-family: var(--f-stencil);
+    font-size: 64px;
+    line-height: 1;
+    color: var(--sodium);
+    transition: color 200ms ease;
+  }
+  .s-points.neg {
+    color: #ff6b57;
+  }
+  .s-state {
+    font-size: 13.5px;
+    color: #cfc6ad;
+  }
+  .s-chosen,
+  .s-skills {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 13px;
+  }
+  .s-chosen :global(li) {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 4px 0;
+    border-bottom: 1px dashed rgb(235 226 200 / 0.12);
+  }
+  .s-chosen :global(li.pos b) {
+    color: #ff8a78;
+  }
+  .s-chosen :global(li.neg b) {
+    color: #a9d18e;
+  }
+  .s-chosen :global(li.granted span) {
+    color: var(--night-dim);
+  }
+  .s-skills :global(li) {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 8px;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .s-skills :global(li i) {
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 0;
+    background: rgb(240 169 58 / 0.18);
+  }
+  .s-skills :global(li.down i) {
+    background: rgb(255 107 87 / 0.2);
+  }
+  .s-skills :global(li span),
+  .s-skills :global(li b) {
+    position: relative;
+    z-index: 1;
+  }
+  .s-skills :global(li.none) {
+    color: var(--night-dim);
+  }
+  .s-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .s-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: 1;
+    padding: 9px 10px;
+    border: 1px solid rgb(235 226 200 / 0.3);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--night-ink);
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .s-btn.primary {
+    border-color: var(--sodium);
+    color: var(--sodium);
+  }
+  .s-hint {
+    font-size: 12px;
+    color: var(--night-dim);
+  }
+  .mobile-points {
+    display: none;
+  }
+
+  /* 시작 지역과 첫날 */
+  .two {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 48px;
+  }
+  .tips {
+    display: grid;
+    gap: 10px;
+    margin: 20px 0 0;
+    padding-left: 20px;
+    color: var(--ink-2);
+  }
+  .first {
+    display: grid;
+    gap: 10px;
+    margin: 20px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .first li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    background: var(--paper-3);
+    font-size: 14.5px;
+    color: var(--ink-2);
+  }
+  .first b {
+    display: block;
+    color: var(--ink);
+  }
+  .f-ic {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--red) 12%, transparent);
+    color: var(--red);
+  }
+  .credit {
+    margin-top: 60px;
+    font-size: 12.5px;
+    color: var(--ink-3);
+  }
+  .credit a {
+    color: inherit;
+  }
+
+  @media (max-width: 1000px) {
+    .builder {
+      grid-template-columns: 1fr;
+    }
+    .summary {
+      position: static;
+      order: -1;
+    }
+    .mobile-points {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 20;
+      display: block;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: var(--night);
+      color: var(--night-ink);
+      font-size: 14px;
+      box-shadow: var(--shadow-lift);
+    }
+    .mobile-points b {
+      color: var(--sodium);
+      font-size: 18px;
+    }
+    .two {
+      grid-template-columns: 1fr;
+    }
+    .op {
+      flex-basis: 100%;
+      font-size: 24px;
+    }
+  }
+</style>

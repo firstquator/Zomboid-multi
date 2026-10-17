@@ -1,0 +1,39 @@
+---
+import Icon from "./Icon.astro";
+import { base } from "../lib/base-url.mjs";
+
+// 게임에서 뽑은 18px 도트 아이콘. 키워도 번지지 않게 픽셀을 그대로 늘리고,
+// 게임 화면처럼 어두운 칸 위에 올린다. 아이콘이 없으면 일반 아이콘으로 대신한다.
+interface Props {
+  src?: string | null;
+  size?: number;
+  fallback?: string;
+  class?: string;
+}
+const { src, size = 36, fallback = "user", class: klass = "" } = Astro.props;
+---
+
+<span class={`px ${klass}`} style={`--s:${size}px`} aria-hidden="true">
+  {src ? <img src={base(src)} alt="" width={size} height={size} loading="lazy" decoding="async" /> : <Icon name={fallback} size={Math.round(size * 0.6)} />}
+</span>
+
+<style>
+  .px {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: calc(var(--s) + 10px);
+    height: calc(var(--s) + 10px);
+    border-radius: 8px;
+    background: #1c1c17;
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.06),
+      0 2px 0 rgb(0 0 0 / 0.25);
+    color: #c9c2ad;
+  }
+  img {
+    width: var(--s);
+    height: var(--s);
+    image-rendering: pixelated;
+  }
+</style>

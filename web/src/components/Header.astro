@@ -5,13 +5,14 @@ import { base } from "../lib/base-url.mjs";
 import { site } from "../lib/site.mjs";
 
 interface Props {
-  active?: "home" | "host" | "join" | "mods" | "help";
+  active?: "home" | "host" | "join" | "character" | "mods" | "help";
 }
 const { active = "home" } = Astro.props;
 
 const nav = [
   { id: "host", href: base("host/"), label: "호스트 가이드", icon: "server-stack-01" },
   { id: "join", href: base("join/"), label: "참가자 가이드", icon: "user-group" },
+  { id: "character", href: base("character/"), label: "캐릭터", icon: "user-circle" },
   { id: "mods", href: base("mods/"), label: "모드 목록", icon: "package" },
   { id: "help", href: base("help/"), label: "문제 해결", icon: "first-aid-kit" },
 ];
@@ -146,7 +147,7 @@ const nav = [
     background: var(--rule-strong);
   }
 
-  @media (max-width: 1100px) {
+  @media (max-width: 1280px) {
     .ver {
       display: none;
     }

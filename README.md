@@ -11,7 +11,7 @@ Project Zomboid Build 42 멀티 서버 안내 사이트와 호스트용 설치 �
 ## 구성
 
     data/mods.json            모드팩의 단일 정본. 사이트와 설치 스크립트가 모두 여기서 만든다
-    docs/research/            모드 선정(mods.md)과 호스팅 방식(hosting.md) 조사 기록
+    docs/research/            모드 선정(mods.md), 모드 호환성(compat.md), 호스팅 방식(hosting.md) 조사 기록
     scripts/verify-workshop.mjs  창작마당 실물과 mods.json 대조
     web/                      Astro 정적 사이트
       src/pages/              index, host(호스트 가이드), join(참가자 가이드), mods, help
@@ -52,6 +52,18 @@ Project Zomboid Build 42 멀티 서버 안내 사이트와 호스트용 설치 �
 4. `main` 에 푸시하면 사이트와 설치 스크립트가 함께 갱신된다
 
 호스트는 게임을 끈 상태에서 설치 명령을 다시 실행하면 된다.
+
+## 캐릭터 만들기 페이지
+
+`/character/` 는 직업·특성 설명, 역할별 추천 조합, 포인트 계산기를 담는다. 직업·특성의
+포인트, 기술 보너스, 함께 못 고르는 특성, 한국어 이름, 아이콘은 게임 파일에서 뽑는다.
+
+    python scripts/extract-character.py "C:/Program Files (x86)/Steam/steamapps/common/ProjectZomboid"
+
+`web/src/data/character.json` 과 `web/public/icons/` (무손실 webp)를 다시 만든다. 게임이
+업데이트되면 다시 돌리고, 추천 조합(`web/src/data/builds.mjs`)이 여전히 포인트에 맞는지
+`npm test` 로 확인한다. 멀티에서 잠 설정이 꺼져 있으면 수면 특성 3개는 고를 수 없다
+(게임 `CharacterCreationProfession.lua` 의 `isTraitEnabled`).
 
 ## 개발
 
