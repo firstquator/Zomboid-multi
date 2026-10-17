@@ -1,0 +1,1155 @@
+---
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import Base from "../layouts/Base.astro";
+import PageHead from "../components/PageHead.astro";
+import Icon from "../components/Icon.astro";
+import { base } from "../lib/base-url.mjs";
+
+// 아이템 도감. 데이터는 scripts/extract-items.py 가 42.21 게임 파일에서 만든 public/data 의 두 파일이다.
+// 검색용 목록(items-index.json)은 페이지를 열 때, 자세한 내용(items-detail.json)은 처음 아이템을 고를 때 받는다.
+// 분류 묶음 수와 자주 찾는 아이템은 빌드할 때 목록을 읽어 미리 그린다.
+const idx = JSON.parse(readFileSync(resolve("public/data/items-index.json"), "utf8"));
+
+// 게임 분류(70여 개)를 큰 묶음으로 나눈다. 여기 없는 분류는 "기타".
+const GROUPS = [
+  { id: "weapon", label: "무기", icon: "sword-01", keys: ["Weapon", "WeaponCrafted", "WeaponImprovised", "BrokenWeapon", "Ammo", "Explosives", "WeaponPart"] },
+  { id: "tool", label: "도구", icon: "tools", keys: ["Tool", "ToolWeapon", "Electronics", "Communications", "LightSource", "FireSource", "Security", "Trapping", "Fishing", "FishingWeapon", "Camping", "Cartography", "Paint"] },
+  { id: "food", label: "음식·요리", icon: "dish-01", keys: ["Food", "Cooking", "CookingWeapon", "WaterContainer", "Water"] },
+  { id: "medical", label: "의료", icon: "first-aid-kit", keys: ["FirstAid", "FirstAidWeapon"] },
+  { id: "wear", label: "옷·가방", icon: "t-shirt", keys: ["Clothing", "Accessory", "ProtectiveGear", "Bag", "Container", "Appearance"] },
+  { id: "book", label: "책·잡지", icon: "book-02", keys: ["Literature", "SkillBook", "RecipeResource"] },
+  { id: "material", label: "재료", icon: "package", keys: ["Material", "MaterialWeapon", "AnimalPart", "AnimalPartWeapon", "Junk", "JunkWeapon"] },
+  { id: "vehicle", label: "차량", icon: "car-01", keys: ["VehicleMaintenance", "VehicleMaintenanceWeapon"] },
+  { id: "farm", label: "농사·동물", icon: "plant-02", keys: ["Gardening", "GardeningWeapon", "Animal", "Corpse", "Bug"] },
+  { id: "etc", label: "기타", icon: "more-horizontal-circle-01", keys: [] as string[] },
+];
+const groupOf: Record<string, string> = {};
+for (const g of GROUPS) for (const k of g.keys) groupOf[k] = g.id;
+const count: Record<string, number> = {};
+for (const it of idx.items) {
+  const g = groupOf[it.category] ?? "etc";
+  count[g] = (count[g] ?? 0) + 1;
+}
+const QUICK = ["Base.Hammer", "Base.Bandage", "Base.PetrolCan", "Base.CarKey", "Base.HandTorch", "Base.TinnedBeans", "Base.Generator", "Base.Crowbar", "Base.Axe", "Base.Saw", "Base.Whetstone", "Base.Disinfectant"];
+const byId = new Map(idx.items.map((i: any) => [i.id, i]));
+const quick = QUICK.map((id) => byId.get(id)).filter(Boolean) as any[];
+const clientCfg = { base: import.meta.env.BASE_URL, groups: GROUPS.map(({ id, keys }) => ({ id, keys })) };
+---
+
+<Base title="아이템 도감" active="items" description="42.21 아이템 4천여 개를 검색해서 무엇인지, 어떻게 쓰는지, 어디에 쓰는지, 어디서 나오는지 봅니다.">
+  <PageHead
+    kicker={`Build ${idx.build} · 아이템 ${idx.items.length.toLocaleString("ko-KR")}개`}
+    title="아이템 도감"
+    desc="아이템을 찾아서 무엇인지, 어떻게 쓰는지, 어디에 쓰는지, 어디서 나오는지 봅니다. 이름·수치·아이콘·제작법은 게임 파일에서 그대로 가져왔습니다."
+    icon="search-01"
+    seed={73}
+  >
+    <label class="search">
+      <Icon name="search-01" size={22} />
+      <input type="search" placeholder="이름으로 찾기 (예: 망치, ㅁㅊ, hammer)" autocomplete="off" data-q aria-label="아이템 찾기" />
+      <span class="mono s-count" data-count></span>
+    </label>
+    <div class="quick">
+      <span class="q-k">자주 찾는</span>
+      {
+        quick.map((q) => (
+          <button type="button" data-open={q.id}>
+            <img src={base(q.icon)} alt="" width="20" height="20" />
+            {q.name}
+          </button>
+        ))
+      }
+    </div>
+  </PageHead>
+
+  <section class="wrap dex" data-dex>
+    <div class="groups" role="group" aria-label="분류">
+      <button type="button" aria-pressed="true" data-group="all">
+        <Icon name="grid-view" size={16} />전체 <span class="mono">{idx.items.length}</span>
+      </button>
+      {
+        GROUPS.map((g) => (
+          <button type="button" aria-pressed="false" data-group={g.id}>
+            <Icon name={g.icon} size={16} />
+            {g.label} <span class="mono">{count[g.id] ?? 0}</span>
+          </button>
+        ))
+      }
+    </div>
+
+    <div class="body">
+      <div class="results">
+        <p class="r-note" data-note aria-live="polite">불러오는 중...</p>
+        <ul class="grid" data-grid></ul>
+        <div class="more" data-more aria-hidden="true"></div>
+        <p class="empty" data-empty hidden>찾는 아이템이 없습니다. 다른 이름이나 영어 이름으로 찾아보세요.</p>
+      </div>
+
+      <aside class="detail" data-detail aria-label="아이템 설명">
+        <div class="d-empty" data-d-empty>
+          <Icon name="information-circle" size={28} />
+          <p><b>아이템을 고르면 여기에 설명이 나옵니다</b>무엇인지, 어떻게 쓰는지, 어디에 쓰는지, 어디서 나오는지 볼 수 있습니다.</p>
+        </div>
+        <div class="d-body" data-d-body hidden></div>
+      </aside>
+    </div>
+    <div class="backdrop" data-backdrop hidden></div>
+  </section>
+
+  <p class="wrap credit">
+    아이템 이름·수치·아이콘·제작법·나오는 곳은 Project Zomboid {idx.build} 게임 파일(scripts/extract-items.py)에서 가져왔습니다. 나오는 곳의 숫자는 그 상자를 하나 열었을 때 1개 이상 나올 대략의 확률이며, 서버 설정과 시간에 따라 달라집니다.
+  </p>
+  <script type="application/json" id="dex-cfg" set:html={JSON.stringify(clientCfg)} />
+</Base>
+
+<script>
+  type Idx = { id: string; name: string; nameEn: string; category: string; icon: string | null; weight: number; summary: string };
+  type Card = Idx & { ids: string[]; group: string; hay: string; cho: string };
+  const cfg = JSON.parse(document.getElementById("dex-cfg")!.textContent!) as { base: string; groups: { id: string; keys: string[] }[] };
+  const B = cfg.base.endsWith("/") ? cfg.base : cfg.base + "/";
+  const $ = <T extends Element>(s: string, r: ParentNode = document) => r.querySelector<T>(s)!;
+  const esc = (s: unknown) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+  const num = (n: number) => (Math.round(n * 100) / 100).toLocaleString("ko-KR");
+
+  const qInput = $<HTMLInputElement>("[data-q]");
+  const grid = $<HTMLElement>("[data-grid]");
+  const note = $<HTMLElement>("[data-note]");
+  const empty = $<HTMLElement>("[data-empty]");
+  const more = $<HTMLElement>("[data-more]");
+  const countEl = $<HTMLElement>("[data-count]");
+  const detail = $<HTMLElement>("[data-detail]");
+  const dBody = $<HTMLElement>("[data-d-body]");
+  const dEmpty = $<HTMLElement>("[data-d-empty]");
+  const backdrop = $<HTMLElement>("[data-backdrop]");
+
+  const groupOf: Record<string, string> = {};
+  for (const g of cfg.groups) for (const k of g.keys) groupOf[k] = g.id;
+
+  // ── 초성 검색 ──
+  const CHO = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";
+  const toCho = (s: string) =>
+    Array.from(s)
+      .map((ch) => {
+        const c = ch.charCodeAt(0) - 0xac00;
+        return c >= 0 && c < 11172 ? CHO[Math.floor(c / 588)] : ch;
+      })
+      .join("");
+  const norm = (s: string) => s.toLowerCase().replace(/\s+/g, "");
+  const isCho = (s: string) => /^[ㄱ-ㅎ]+$/.test(s);
+
+  let items = new Map<string, Idx>();
+  let cards: Card[] = [];
+  let shown: Card[] = [];
+  let rendered = 0;
+  let group = "all";
+  const PAGE = 60;
+
+  // 같은 이름·분류·요약인 색상 차이 아이템은 카드 하나로 묶는다.
+  function buildCards(list: Idx[]) {
+    const map = new Map<string, Card>();
+    for (const it of list) {
+      const key = `${it.name}|${it.category}|${it.summary}`;
+      const c = map.get(key);
+      if (c) c.ids.push(it.id);
+      else {
+        map.set(key, {
+          ...it,
+          ids: [it.id],
+          group: groupOf[it.category] ?? "etc",
+          hay: norm(`${it.name} ${it.nameEn} ${it.id.replace(/^Base\./, "")}`),
+          cho: toCho(norm(it.name)),
+        });
+      }
+    }
+    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, "ko"));
+  }
+
+  function filter() {
+    const q = norm(qInput.value);
+    let list = group === "all" ? cards : cards.filter((c) => c.group === group);
+    if (q) {
+      const cho = isCho(q);
+      const scored: [number, Card][] = [];
+      for (const c of list) {
+        const n = norm(c.name);
+        let s = -1;
+        if (n === q) s = 0;
+        else if (n.startsWith(q)) s = 1;
+        else if (n.includes(q)) s = 2;
+        else if (c.hay.includes(q)) s = 3;
+        else if (cho && c.cho.includes(q)) s = 4;
+        if (s >= 0) scored.push([s, c]);
+      }
+      scored.sort((a, b) => a[0] - b[0] || a[1].name.length - b[1].name.length);
+      list = scored.map((x) => x[1]);
+    }
+    shown = list;
+    rendered = 0;
+    grid.innerHTML = "";
+    const total = list.reduce((s, c) => s + c.ids.length, 0);
+    note.textContent = q || group !== "all" ? `${total.toLocaleString("ko-KR")}개 찾음` : `아이템 ${total.toLocaleString("ko-KR")}개 · 같은 물건의 색 차이는 한 칸으로 묶었습니다`;
+    countEl.textContent = q ? `${total}` : "";
+    empty.hidden = list.length > 0;
+    renderMore();
+  }
+
+  function cardHtml(c: Card) {
+    return `<li><button type="button" class="card" data-open="${esc(c.ids[0])}">
+      <span class="ic">${c.icon ? `<img src="${B}${esc(c.icon)}" alt="" width="32" height="32" loading="lazy">` : ""}</span>
+      <span class="c-t"><b>${esc(c.name)}</b><small>${esc(c.nameEn)}</small>${c.summary ? `<span class="c-s">${esc(c.summary)}</span>` : ""}</span>
+      ${c.ids.length > 1 ? `<span class="c-v">${c.ids.length}가지</span>` : ""}
+    </button></li>`;
+  }
+
+  function renderMore() {
+    const next = shown.slice(rendered, rendered + PAGE);
+    grid.insertAdjacentHTML("beforeend", next.map(cardHtml).join(""));
+    rendered += next.length;
+  }
+  new IntersectionObserver((e) => e[0].isIntersecting && rendered < shown.length && renderMore(), { rootMargin: "600px" }).observe(more);
+
+  let t = 0;
+  qInput.addEventListener("input", () => {
+    clearTimeout(t);
+    t = window.setTimeout(filter, 120);
+  });
+  document.querySelectorAll<HTMLButtonElement>("[data-group]").forEach((b) =>
+    b.addEventListener("click", () => {
+      group = b.dataset.group!;
+      document.querySelectorAll("[data-group]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      filter();
+    }),
+  );
+
+  // ── 자세한 내용 ──
+  let D: any = null;
+  let loading: Promise<any> | null = null;
+  const loadDetail = () =>
+    (loading ??= fetch(`${B}data/items-detail.json`)
+      .then((r) => r.json())
+      .then((j) => (D = j)));
+
+  const nameOf = (id: string) => D?.items[id]?.name ?? items.get(id)?.name ?? id.replace(/^Base\./, "");
+  const iconOf = (id: string) => D?.items[id]?.icon ?? items.get(id)?.icon ?? null;
+  const img = (p: string | null, s = 24) => (p ? `<img src="${B}${esc(p)}" alt="" width="${s}" height="${s}" loading="lazy">` : `<span class="noimg"></span>`);
+  const ichip = (id: string, extra = "") =>
+    items.has(id) ? `<button type="button" class="ichip" data-open="${esc(id)}">${img(iconOf(id), 20)}<span>${esc(nameOf(id))}</span>${extra}</button>` : `<span class="ichip off">${esc(nameOf(id))}${extra}</span>`;
+  const stat = (k: string, v: string, tone = "") => `<li class="${tone}"><span>${esc(k)}</span><b>${v}</b></li>`;
+  const signed = (n: number) => (n > 0 ? `+${num(n)}` : num(n));
+  const pct = (n: number) => `${Math.round(n * 100)}%`;
+
+  function stats(it: any) {
+    const s: string[] = [];
+    s.push(stat("무게", num(it.weight)));
+    const f = it.food;
+    if (f) {
+      if (f.hunger) s.push(stat("배고픔", signed(f.hunger), f.hunger < 0 ? "good" : "bad"));
+      if (f.thirst) s.push(stat("갈증", signed(f.thirst), f.thirst < 0 ? "good" : "bad"));
+      if (f.calories) s.push(stat("칼로리", `${num(f.calories)} kcal`));
+      if (f.unhappy) s.push(stat("불행", signed(f.unhappy), f.unhappy < 0 ? "good" : "bad"));
+      if (f.stress) s.push(stat("스트레스", signed(f.stress), f.stress < 0 ? "good" : "bad"));
+      if (f.boredom) s.push(stat("지루함", signed(f.boredom), f.boredom < 0 ? "good" : "bad"));
+      if (f.daysFresh) s.push(stat("신선", `${f.daysFresh}일`));
+      if (f.daysRotten) s.push(stat("상함", `${f.daysRotten}일 뒤`));
+      if (f.minutesToCook) s.push(stat("익히는 시간", `${f.minutesToCook}분`));
+    }
+    const w = it.weapon;
+    if (w) {
+      s.push(stat("기술", esc(w.skillName)));
+      s.push(stat("피해", `${num(w.minDamage)}~${num(w.maxDamage)}`));
+      s.push(stat("사거리", num(w.maxRange)));
+      if (w.condition) s.push(stat("내구도", `${w.condition}${w.conditionLowerOneIn ? ` <small>(${w.conditionLowerOneIn}번에 한 번 닳음)</small>` : ""}`));
+      if (w.critChance) s.push(stat("치명타", `${w.critChance}%`));
+      if (w.maxHit > 1) s.push(stat("한 번에", `${w.maxHit}마리`));
+      if (w.twoHanded) s.push(stat("손", "양손"));
+      if (w.firearm) {
+        if (w.ammo) s.push(stat("탄약", ichip(w.ammo.id)));
+        if (w.magazine) s.push(stat("탄창", ichip(w.magazine.id)));
+        if (w.capacity) s.push(stat("장탄", `${w.capacity}발`));
+        if (w.soundRadius) s.push(stat("소리", `${w.soundRadius}칸`, "bad"));
+      }
+    }
+    const wear = it.wear;
+    if (wear) {
+      if (wear.slotName) s.push(stat("입는 곳", esc(wear.slotName)));
+      if (wear.bite) s.push(stat("물림 방어", `${wear.bite}`, "good"));
+      if (wear.scratch) s.push(stat("긁힘 방어", `${wear.scratch}`, "good"));
+      if (wear.insulation) s.push(stat("보온", pct(wear.insulation)));
+      if (wear.wind) s.push(stat("방풍", pct(wear.wind)));
+      if (wear.water) s.push(stat("방수", pct(wear.water)));
+      if (wear.runSpeed && wear.runSpeed < 1) s.push(stat("달리기", `−${Math.round((1 - wear.runSpeed) * 100)}%`, "bad"));
+    }
+    const bag = it.bag;
+    if (bag) {
+      s.push(stat("용량", `${bag.capacity}`));
+      if (bag.weightReduction) s.push(stat("무게 감소", `${bag.weightReduction}%`, "good"));
+      if (bag.slotName) s.push(stat("메는 곳", esc(bag.slotName)));
+      if (bag.runSpeed && bag.runSpeed < 1) s.push(stat("달리기", `−${Math.round((1 - bag.runSpeed) * 100)}%`, "bad"));
+    }
+    const bk = it.book;
+    if (bk?.skillName) s.push(stat("기술 서적", `${esc(bk.skillName)} ${bk.levels?.join("~") ?? ""}레벨`));
+    if (bk?.pages) s.push(stat("쪽수", `${bk.pages}`));
+    if (bk?.boredom) s.push(stat("지루함", signed(bk.boredom), "good"));
+    if (it.uses) s.push(stat("사용 횟수", `${it.uses}`));
+    if (it.light?.distance) s.push(stat("비추는 거리", `${it.light.distance}칸`));
+    if (it.fluid?.capacity) s.push(stat("담는 양", `${num(it.fluid.capacity)} L`));
+    const m = it.medical;
+    if (m?.bandage) s.push(stat("붕대 효과", `${m.bandage}`, "good"));
+    if (m?.disinfect) s.push(stat("소독", `${m.disinfect}`, "good"));
+    if (m?.pain) s.push(stat("진통", `${m.pain}`, "good"));
+    return `<ul class="stats">${s.join("")}</ul>`;
+  }
+
+  // 종류에 따라 "어떻게 쓰나" 문장을 만든다. 게임 설명(tooltip)은 따로 붙인다.
+  function howTo(it: any) {
+    const out: string[] = [];
+    const w = it.weapon;
+    if (w?.firearm) {
+      out.push(`${w.ammo ? `「${esc(w.ammo.name)}」을 ` : ""}${w.magazine ? `탄창에 넣어 ` : ""}<kbd>R</kbd> 로 재장전하고 <kbd>X</kbd> 로 장전 손잡이를 당긴 뒤, 우클릭으로 조준해 좌클릭으로 쏩니다.`);
+      if (w.soundRadius) out.push(`총소리가 ${w.soundRadius}칸까지 퍼져 좀비가 몰려옵니다.`);
+    } else if (w && it.type === "weapon") {
+      out.push(`손에 들고(우클릭 → 장착, 또는 벨트에 걸고 <kbd>1</kbd>~<kbd>8</kbd>) 우클릭을 누른 채 좌클릭으로 휘두릅니다. ${esc(w.skillName)} 기술이 오릅니다.${w.twoHanded ? " 양손으로 듭니다." : ""}`);
+      if (w.improvised) out.push("임시 무기라 빨리 닳습니다.");
+    }
+    const f = it.food;
+    if (f) {
+      if (f.mustOpen) out.push(`먼저 ${f.openWith ? `「${esc(f.openWith)}」` : "따는"} 제작을 해야 먹을 수 있습니다(깡통 따개나 칼 필요).`);
+      out.push("우클릭 → 먹기. 반만, 4분의 1만 먹을 수도 있습니다.");
+      if (f.cookable) out.push(`오븐·모닥불·바비큐에서 익힙니다${f.minutesToCook ? `(약 ${f.minutesToCook}분, 너무 오래 두면 탑니다)` : ""}.`);
+      if (f.dangerousRaw) out.push("날로 먹으면 식중독에 걸릴 수 있습니다.");
+      if (f.canned) out.push("따기 전에는 상하지 않습니다.");
+      if (f.evolved?.length) out.push(`넣어서 만들 수 있는 요리: ${f.evolved.slice(0, 8).map(esc).join(", ")}`);
+    }
+    if (it.wear && it.type !== "container") out.push(`우클릭 → 입기${it.wear.slotName ? `(${esc(it.wear.slotName)})` : ""}.`);
+    if (it.bag) out.push(`우클릭 → 메기${it.bag.slotName ? `(${esc(it.bag.slotName)})` : ""}. 안에 든 물건 무게가 ${it.bag.weightReduction ?? 0}% 줄어듭니다.`);
+    const bk = it.book;
+    if (bk?.skillName) out.push(`우클릭 → 읽기. 다 읽으면 ${esc(bk.skillName)} ${bk.levels?.join("~") ?? ""}레벨 동안 경험치를 더 받습니다. 우리 서버는 기술 서적을 거의 바로 읽습니다.`);
+    if (it.knowledge?.length) out.push(`읽으면 배우는 것: ${it.knowledge.map((k: string) => `「${esc(k)}」`).join(", ")}`);
+    else if (it.type === "literature" && !bk?.skillName && bk?.boredom) out.push("읽으면 지루함·스트레스가 줄어듭니다.");
+    if (it.medical?.bandage) out.push("상태 창(<kbd>H</kbd>)에서 다친 부위를 우클릭해 감습니다.");
+    if (it.medical?.disinfect) out.push("상태 창(<kbd>H</kbd>)에서 다친 부위를 우클릭해 소독합니다.");
+    if (it.light) out.push("손에 들고 켭니다(<kbd>F</kbd>).");
+    if (it.fluid?.capacity) out.push(`${num(it.fluid.capacity)}L 를 담습니다. 우클릭으로 마시거나 붓습니다.${it.fluid.contents?.length ? ` 담기는 것: ${it.fluid.contents.map((c: any) => esc(c.name)).join(", ")}` : ""}`);
+    if (it.uses && !it.food) out.push(`${it.uses}번 쓰면 다 떨어집니다.`);
+    if (it.becomes) out.push(`쓰고 나면 → ${ichip(it.becomes.id)}`);
+    if (it.type === "key" && it.id === "Base.CarKey") out.push("갖고 있으면 그 차의 문을 열고 시동을 겁니다. 시동을 끄면 저절로 가방에 들어옵니다.");
+    if (it.forage) out.push(`채집으로도 찾습니다(채집 ${it.forage.skill}레벨부터, ${it.forage.zones.slice(0, 4).map((z: any) => esc(z.name)).join("·")}).`);
+    return out;
+  }
+
+  function recipeRow(rid: string) {
+    const r = D.recipes[rid];
+    if (!r) return "";
+    const skills = r.skills.map((s: any) => `<span class="rs">${esc(s.name)} ${s.level}</span>`).join("");
+    return `<details class="rc" data-rid="${esc(rid)}"><summary><b>${esc(r.name)}</b><span class="rk ${r.kind}">${r.kind === "build" ? "건축" : esc(r.categoryName)}</span>${skills}${r.needsLearning ? `<span class="rl">배워야 함</span>` : ""}</summary><div class="rc-b"></div></details>`;
+  }
+
+  function slotHtml(x: any, isOut = false) {
+    const n = x.n !== 1 ? `<span class="n">${num(x.n)}${x.max && x.max !== x.n ? `~${num(x.max)}` : ""}</span>` : "";
+    let body = "";
+    if (x.items?.length) {
+      body = x.items.slice(0, 3).map((id: string) => ichip(id)).join("") + (x.items.length > 3 ? `<span class="also">외 ${x.items.length - 3}</span>` : "");
+    } else if (x.tags?.length) {
+      body = x.tags
+        .map((tg: string) => {
+          const first = D.tagItems[tg]?.[0];
+          return `<span class="ichip tag">${img(first ? iconOf(first) : null, 20)}<span>${esc(D.tagNames[tg] ?? tg.replace(/^base:/, ""))}</span></span>`;
+        })
+        .join(`<span class="also">또는</span>`);
+    } else if (x.fluids || x.fluidCategories) {
+      body = `<span class="ichip tag"><span>${esc((x.fluids ?? x.fluidCategories).join(", "))}</span></span>`;
+    } else if (x.any) body = `<span class="also">아무거나</span>`;
+    return `<span class="slot${x.keep ? " keep" : ""}">${n}${body}${x.keep && !isOut ? `<span class="keepmark">도구</span>` : ""}</span>`;
+  }
+
+  function recipeBody(rid: string) {
+    const r = D.recipes[rid];
+    const outs = r.outputs?.length ? r.outputs.map((o: any) => slotHtml(o, true)).join("") : `<span class="also">${r.kind === "build" ? "건축물이 지어집니다" : "결과는 게임 코드가 정합니다"}</span>`;
+    const meta = [
+      r.stations?.length ? `시설: ${r.stations.map((s: any) => esc(s.name ?? s)).join(", ")}` : "",
+      r.time ? `시간 ${r.time}` : "",
+      r.xp?.length ? `경험치 ${r.xp.map((x: any) => `${esc(x.name)} ${x.amount}`).join(", ")}` : "",
+      r.autoLearn?.length ? `${r.autoLearn.map((a: any) => `${esc(a.name)} ${a.level}`).join(", ")}레벨에 저절로 배움` : "",
+    ].filter(Boolean);
+    return `<div class="rc-io"><div class="rc-in">${r.inputs.map((x: any) => slotHtml(x)).join("")}</div><span class="arrow">→</span><div class="rc-out">${outs}</div></div>${r.desc ? `<p class="rc-d">${esc(r.desc)}</p>` : ""}${meta.length ? `<p class="rc-m">${meta.join(" · ")}</p>` : ""}`;
+  }
+
+  function recipeList(title: string, ids: string[] | undefined, hint: string, openAll = false) {
+    if (!ids?.length) return "";
+    const first = ids.slice(0, 8);
+    return `<div class="rlist" data-rlist="${esc(ids.join(","))}"><h4>${esc(title)} <span class="mono">${ids.length}</span></h4><p class="hint">${hint}</p>${first.map(recipeRow).join("")}${ids.length > 8 ? `<button type="button" class="rmore" data-rmore>모두 보기 (${ids.length})</button>` : ""}</div>`.replace(openAll ? /<details class="rc"/g : /$^/, openAll ? '<details class="rc" open' : "");
+  }
+
+  function lootHtml(it: any) {
+    if (!it.loot?.length && !it.forage) return `<p class="hint">상자에서는 나오지 않습니다. 만들거나, 다른 물건을 바꿔 입거나, 게임 코드가 따로 만듭니다.</p>`;
+    const rows = (it.loot ?? [])
+      .slice(0, 8)
+      .map(([k, p]: [string, number]) => `<li><span>${esc(D.places[k] ?? k)}</span><i style="--p:${Math.min(100, p)}%"></i><b class="mono">${p >= 1 ? Math.round(p) : num(p)}%</b></li>`)
+      .join("");
+    const rest = (it.lootCount ?? 0) - Math.min(8, it.loot?.length ?? 0);
+    return `${rows ? `<ul class="loot">${rows}</ul>` : ""}${rest > 0 ? `<p class="hint">외 ${rest}곳에서도 나옵니다.</p>` : ""}`;
+  }
+
+  function render(id: string) {
+    const it = D.items[id];
+    if (!it) return;
+    const card = cards.find((c) => c.ids.includes(id));
+    const variants = card && card.ids.length > 1 ? `<div class="vars"><span>모양 ${card.ids.length}가지</span>${card.ids.map((v) => `<button type="button" class="${v === id ? "on" : ""}" data-open="${esc(v)}" title="${esc(nameOf(v))}">${img(iconOf(v), 24)}</button>`).join("")}</div>` : "";
+    const roles = it.roles?.length
+      ? `<div class="sec-d"><h4>도구로 쓰이는 역할</h4><p class="hint">제작법에서 이 역할이 필요하면 이 아이템을 쓸 수 있습니다. 누르면 같은 역할을 하는 다른 아이템이 나옵니다.</p><div class="roles">${it.roles.map((r: any) => `<button type="button" class="role" data-role="${esc(r.tag)}">${esc(r.name)}</button>`).join("")}</div><div class="role-items" data-role-items></div></div>`
+      : "";
+    const how = howTo(it);
+    const rc = it.recipes ?? {};
+    dBody.innerHTML = `
+      <button type="button" class="d-close" data-close aria-label="닫기">←</button>
+      <header class="d-head">
+        <span class="d-ic">${img(it.icon, 48)}</span>
+        <div><h3>${esc(it.name)}</h3><p class="mono">${esc(it.nameEn)}</p><p class="d-tags"><span>${esc(it.category?.name)}</span>${it.typeName && it.typeName !== it.category?.name ? `<span>${esc(it.typeName)}</span>` : ""}</p></div>
+      </header>
+      ${variants}
+      ${it.tooltip ? `<p class="tip">${esc(it.tooltip)}</p>` : ""}
+      ${stats(it)}
+      ${how.length ? `<div class="sec-d"><h4>어떻게 쓰나</h4><ul class="how">${how.map((h) => `<li>${h}</li>`).join("")}</ul></div>` : ""}
+      ${roles}
+      ${
+        rc.uses || rc.tool || rc.research || rc.teaches
+          ? `<div class="sec-d"><h4 class="big">어디에 쓰나</h4>
+        ${recipeList("재료로 들어가는 제작법", rc.uses, "만들 때 이 아이템이 없어집니다.")}
+        ${recipeList("도구로 쓰는 제작법", rc.tool, "만들 때 손에 들고 쓰고, 없어지지 않습니다.")}
+        ${recipeList("가르쳐 주는 제작법", rc.teaches, "읽으면 배웁니다.")}
+        ${recipeList("연구하면 배우는 제작법", rc.research, "우클릭 → 「제작법 연구하기」로 배웁니다. 물건은 없어지지 않습니다.")}</div>`
+          : ""
+      }
+      ${rc.made ? `<div class="sec-d"><h4 class="big">만드는 법</h4>${recipeList("이 아이템을 만드는 제작법", rc.made, "펼치면 재료가 나옵니다.", rc.made.length <= 2)}</div>` : ""}
+      <div class="sec-d"><h4 class="big">어디서 나오나</h4>${lootHtml(it)}</div>
+    `;
+    dBody.querySelectorAll<HTMLDetailsElement>("details.rc[open]").forEach(fillRecipe);
+    dEmpty.hidden = true;
+    dBody.hidden = false;
+    detail.scrollTop = 0;
+  }
+
+  function fillRecipe(d: HTMLDetailsElement) {
+    const b = d.querySelector<HTMLElement>(".rc-b")!;
+    if (!b.dataset.done) {
+      b.innerHTML = recipeBody(d.dataset.rid!);
+      b.dataset.done = "1";
+    }
+  }
+  dBody.addEventListener("toggle", (e) => {
+    const d = e.target as HTMLDetailsElement;
+    if (d.matches?.("details.rc") && d.open) fillRecipe(d);
+  }, true);
+
+  dBody.addEventListener("click", (e) => {
+    const t = e.target as HTMLElement;
+    const moreBtn = t.closest<HTMLElement>("[data-rmore]");
+    if (moreBtn) {
+      const box = moreBtn.closest<HTMLElement>("[data-rlist]")!;
+      const ids = box.dataset.rlist!.split(",");
+      moreBtn.insertAdjacentHTML("beforebegin", ids.slice(8).map(recipeRow).join(""));
+      moreBtn.remove();
+      return;
+    }
+    const role = t.closest<HTMLElement>("[data-role]");
+    if (role) {
+      const box = dBody.querySelector<HTMLElement>("[data-role-items]")!;
+      const on = role.classList.toggle("on");
+      dBody.querySelectorAll(".role").forEach((r) => r !== role && r.classList.remove("on"));
+      const list = (D.tagItems[role.dataset.role!] ?? []) as string[];
+      box.innerHTML = on ? `<p class="hint">「${esc(role.textContent)}」 역할: ${list.length}개</p><div class="chips">${list.slice(0, 40).map((id) => ichip(id)).join("")}${list.length > 40 ? `<span class="also">외 ${list.length - 40}</span>` : ""}</div>` : "";
+      return;
+    }
+    if (t.closest("[data-close]")) closeDetail();
+  });
+
+  const mobile = () => matchMedia("(max-width: 900px)").matches;
+  async function openItem(id: string, push = true) {
+    if (!items.has(id)) return;
+    detail.classList.add("open");
+    if (mobile()) {
+      backdrop.hidden = false;
+      document.body.classList.add("sheet-open");
+    }
+    if (!D) {
+      dEmpty.hidden = false;
+      dEmpty.querySelector("p")!.innerHTML = "<b>불러오는 중...</b>처음 한 번만 자세한 데이터를 받습니다.";
+      await loadDetail();
+    }
+    render(id);
+    grid.querySelectorAll(".card.sel").forEach((c) => c.classList.remove("sel"));
+    grid.querySelector(`.card[data-open="${CSS.escape(id)}"]`)?.classList.add("sel");
+    const h = `#${id}`;
+    if (location.hash !== h) history[push ? "pushState" : "replaceState"](null, "", h);
+  }
+  function closeDetail() {
+    detail.classList.remove("open");
+    backdrop.hidden = true;
+    document.body.classList.remove("sheet-open");
+    if (mobile() && location.hash) history.replaceState(null, "", location.pathname);
+  }
+  backdrop.addEventListener("click", closeDetail);
+  document.addEventListener("keydown", (e) => e.key === "Escape" && mobile() && closeDetail());
+
+  document.addEventListener("click", (e) => {
+    const o = (e.target as HTMLElement).closest<HTMLElement>("[data-open]");
+    if (!o) return;
+    e.preventDefault();
+    openItem(o.dataset.open!);
+  });
+  window.addEventListener("popstate", () => {
+    const id = decodeURIComponent(location.hash.slice(1));
+    if (items.has(id)) openItem(id, false);
+    else closeDetail();
+  });
+
+  fetch(`${B}data/items-index.json`)
+    .then((r) => r.json())
+    .then((j) => {
+      items = new Map(j.items.map((i: Idx) => [i.id, i]));
+      cards = buildCards(j.items);
+      filter();
+      const id = decodeURIComponent(location.hash.slice(1));
+      if (items.has(id)) openItem(id, false);
+    })
+    .catch(() => (note.textContent = "아이템 목록을 불러오지 못했습니다. 새로고침해 보세요."));
+</script>
+
+<style>
+  .search {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 640px;
+    margin-top: 22px;
+    padding: 12px 16px;
+    border: 2px solid var(--ink);
+    border-radius: 14px;
+    background: var(--paper-3);
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .search :global(svg) {
+    flex: none;
+    color: var(--ink-3);
+  }
+  .search input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    font-size: 18px;
+  }
+  .s-count {
+    font-size: 13px;
+    color: var(--ink-3);
+  }
+  .quick {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 14px;
+  }
+  .q-k {
+    margin-right: 4px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink-3);
+  }
+  .quick button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px 4px 5px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 999px;
+    background: var(--paper-3);
+    color: var(--ink-2);
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .quick button:hover {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+  .quick img,
+  .card img,
+  .detail :global(img) {
+    image-rendering: pixelated;
+  }
+
+  .dex {
+    padding-top: 28px;
+  }
+  .groups {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .groups button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--ink-2);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .groups .mono {
+    font-size: 11.5px;
+    color: var(--ink-3);
+  }
+  .groups button[aria-pressed="true"] {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--paper-3);
+  }
+  .groups button[aria-pressed="true"] .mono {
+    color: rgb(255 255 255 / 0.7);
+  }
+
+  .body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 440px);
+    gap: 20px;
+    align-items: start;
+    margin-top: 18px;
+  }
+  .r-note {
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: var(--ink-3);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .grid :global(.card) {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    background: var(--paper-3);
+    color: var(--ink);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      border-color 120ms ease,
+      transform 120ms ease;
+  }
+  .grid :global(.card:hover) {
+    border-color: var(--ink-3);
+    transform: translateY(-1px);
+  }
+  .grid :global(.card.sel) {
+    border-color: var(--red);
+    box-shadow: 0 0 0 1px var(--red);
+  }
+  .grid :global(.ic),
+  .detail :global(.d-ic) {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: #1c1c17;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  }
+  .grid :global(.c-t) {
+    display: grid;
+    min-width: 0;
+  }
+  .grid :global(.c-t b) {
+    overflow: hidden;
+    font-size: 14.5px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .grid :global(.c-t small) {
+    overflow: hidden;
+    font-size: 11.5px;
+    color: var(--ink-3);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .grid :global(.c-s) {
+    overflow: hidden;
+    margin-top: 2px;
+    font-size: 12px;
+    color: var(--ink-2);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .grid :global(.c-v) {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--ink) 9%, transparent);
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--ink-3);
+  }
+  .more {
+    height: 1px;
+  }
+  .empty {
+    padding: 40px 0;
+    color: var(--ink-3);
+    text-align: center;
+  }
+
+  /* 자세한 내용 */
+  .detail {
+    position: sticky;
+    top: 82px;
+    max-height: calc(100dvh - 100px);
+    overflow-y: auto;
+    padding: 18px 18px 24px;
+    border: 1px solid var(--rule);
+    border-radius: 16px;
+    background: var(--paper-3);
+    box-shadow: var(--shadow-sheet);
+    overscroll-behavior: contain;
+  }
+  .d-empty {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    padding: 40px 10px;
+    color: var(--ink-3);
+    text-align: center;
+  }
+  .d-empty[hidden],
+  .d-body[hidden] {
+    display: none;
+  }
+  .d-empty b {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--ink);
+  }
+  .detail :global(.d-close) {
+    display: none;
+  }
+  .detail :global(.d-head) {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    align-items: center;
+  }
+  .detail :global(.d-ic) {
+    width: 68px;
+    height: 68px;
+    border-radius: 14px;
+  }
+  .detail :global(.d-head h3) {
+    font-family: var(--f-display);
+    font-weight: 400;
+    font-size: 26px;
+    line-height: 1.15;
+  }
+  .detail :global(.d-head .mono) {
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .detail :global(.d-tags) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+  }
+  .detail :global(.d-tags span) {
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--ink-2);
+  }
+  .detail :global(.vars) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .detail :global(.vars span) {
+    margin-right: 4px;
+  }
+  .detail :global(.vars button) {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: #1c1c17;
+    cursor: pointer;
+  }
+  .detail :global(.vars button.on) {
+    border-color: var(--red);
+  }
+  .detail :global(.tip) {
+    margin-top: 14px;
+    padding: 10px 12px;
+    border-left: 3px solid var(--amber);
+    border-radius: 0 8px 8px 0;
+    background: color-mix(in srgb, var(--amber) 10%, transparent);
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  .detail :global(.stats) {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+    gap: 6px;
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .detail :global(.stats li) {
+    display: grid;
+    gap: 1px;
+    padding: 7px 10px;
+    border-radius: 9px;
+    background: color-mix(in srgb, var(--ink) 5%, transparent);
+  }
+  .detail :global(.stats span) {
+    font-size: 11.5px;
+    color: var(--ink-3);
+  }
+  .detail :global(.stats b) {
+    font-size: 15px;
+  }
+  .detail :global(.stats small) {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-3);
+  }
+  .detail :global(.stats .good b) {
+    color: var(--olive);
+  }
+  .detail :global(.stats .bad b) {
+    color: var(--red);
+  }
+  .detail :global(.sec-d) {
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--rule-strong);
+  }
+  .detail :global(h4) {
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .detail :global(h4.big) {
+    font-size: 18px;
+  }
+  .detail :global(h4 .mono) {
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .detail :global(.hint) {
+    margin-top: 2px;
+    font-size: 12.5px;
+    color: var(--ink-3);
+  }
+  .detail :global(.how) {
+    display: grid;
+    gap: 6px;
+    margin: 8px 0 0;
+    padding-left: 18px;
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  .detail :global(.roles) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 8px;
+  }
+  .detail :global(.role) {
+    padding: 4px 11px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ink-2);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .detail :global(.role.on) {
+    border-color: var(--olive);
+    background: var(--olive);
+    color: #fff;
+  }
+  .detail :global(.chips) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+  }
+  .detail :global(.ichip) {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 100%;
+    padding: 2px 8px 2px 2px;
+    border: 1px solid var(--rule);
+    border-radius: 7px;
+    background: var(--paper);
+    color: var(--ink);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    vertical-align: middle;
+  }
+  .detail :global(.ichip img),
+  .detail :global(.ichip .noimg) {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    padding: 1px;
+    border-radius: 5px;
+    background: #1c1c17;
+  }
+  .detail :global(.ichip span) {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .detail :global(.ichip:hover) {
+    border-color: var(--ink-3);
+  }
+  .detail :global(.ichip.tag),
+  .detail :global(.ichip.off) {
+    cursor: default;
+    background: color-mix(in srgb, var(--olive) 10%, var(--paper));
+  }
+  .detail :global(.rlist) {
+    margin-top: 12px;
+  }
+  .detail :global(.rc) {
+    margin-top: 5px;
+    border: 1px solid var(--rule);
+    border-radius: 9px;
+    background: var(--paper);
+  }
+  .detail :global(.rc summary) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 10px;
+    font-size: 13.5px;
+    cursor: pointer;
+    list-style: none;
+  }
+  .detail :global(.rc summary::-webkit-details-marker) {
+    display: none;
+  }
+  .detail :global(.rc summary::before) {
+    content: "▸";
+    color: var(--ink-3);
+    transition: rotate 150ms ease;
+  }
+  .detail :global(.rc[open] summary::before) {
+    rotate: 90deg;
+  }
+  .detail :global(.rk),
+  .detail :global(.rs),
+  .detail :global(.rl) {
+    padding: 0 7px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+    color: var(--ink-2);
+  }
+  .detail :global(.rk.build) {
+    background: color-mix(in srgb, var(--steel) 18%, transparent);
+  }
+  .detail :global(.rs) {
+    background: color-mix(in srgb, var(--amber) 20%, transparent);
+  }
+  .detail :global(.rl) {
+    background: color-mix(in srgb, var(--red) 14%, transparent);
+  }
+  .detail :global(.rc-b) {
+    padding: 4px 10px 10px;
+  }
+  .detail :global(.rc-io) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 0.8fr);
+    gap: 8px;
+    align-items: center;
+  }
+  .detail :global(.rc-in),
+  .detail :global(.rc-out) {
+    display: grid;
+    gap: 4px;
+  }
+  .detail :global(.slot) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 3px;
+  }
+  .detail :global(.slot .n) {
+    min-width: 1.6em;
+    font-family: var(--f-mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-2);
+  }
+  .detail :global(.slot .n::after) {
+    content: "×";
+    margin-left: 1px;
+    color: var(--ink-3);
+  }
+  .detail :global(.keepmark) {
+    padding: 0 6px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--steel) 18%, transparent);
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--ink-2);
+  }
+  .detail :global(.also) {
+    font-size: 11.5px;
+    color: var(--ink-3);
+  }
+  .detail :global(.arrow) {
+    font-weight: 700;
+    color: var(--ink-3);
+  }
+  .detail :global(.rc-d),
+  .detail :global(.rc-m) {
+    margin-top: 8px;
+    font-size: 12.5px;
+    color: var(--ink-3);
+  }
+  .detail :global(.rmore) {
+    margin-top: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-2);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .detail :global(.loot) {
+    display: grid;
+    gap: 6px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .detail :global(.loot li) {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(50px, 1fr) 46px;
+    gap: 10px;
+    align-items: center;
+    font-size: 13px;
+  }
+  .detail :global(.loot span) {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .detail :global(.loot i) {
+    height: 7px;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--olive) var(--p), color-mix(in srgb, var(--ink) 8%, transparent) var(--p));
+  }
+  .detail :global(.loot b) {
+    font-size: 12px;
+    text-align: right;
+  }
+  .backdrop {
+    display: none;
+  }
+  .credit {
+    margin-top: 56px;
+    font-size: 12.5px;
+    color: var(--ink-3);
+  }
+
+  @media (max-width: 900px) {
+    .body {
+      grid-template-columns: 1fr;
+    }
+    .detail {
+      position: fixed;
+      inset: auto 0 0 0;
+      z-index: 45;
+      max-height: 88dvh;
+      border-radius: 18px 18px 0 0;
+      transform: translateY(105%);
+      transition: transform 220ms ease;
+    }
+    .detail.open {
+      transform: none;
+    }
+    .detail :global(.d-close) {
+      display: grid;
+      place-items: center;
+      position: sticky;
+      top: -6px;
+      float: right;
+      z-index: 2;
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--rule-strong);
+      border-radius: 50%;
+      background: var(--paper-3);
+      color: var(--ink);
+      font-size: 18px;
+      cursor: pointer;
+    }
+    .backdrop {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 44;
+      background: rgb(0 0 0 / 0.45);
+    }
+    .backdrop[hidden] {
+      display: none;
+    }
+    .d-empty {
+      display: none;
+    }
+  }
+  :global(body.sheet-open) {
+    overflow: hidden;
+  }
+</style>

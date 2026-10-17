@@ -5,7 +5,7 @@ import { base } from "../lib/base-url.mjs";
 import { site } from "../lib/site.mjs";
 
 interface Props {
-  active?: "home" | "guide" | "character" | "tips" | "mods" | "help";
+  active?: "home" | "guide" | "character" | "tips" | "items" | "mods" | "help";
 }
 const { active = "home" } = Astro.props;
 
@@ -13,6 +13,7 @@ const nav = [
   { id: "guide", href: base("guide/"), label: "가이드", icon: "route-01" },
   { id: "character", href: base("character/"), label: "캐릭터", icon: "user-circle" },
   { id: "tips", href: base("tips/"), label: "플레이 팁", icon: "bulb" },
+  { id: "items", href: base("items/"), label: "도감", icon: "search-01" },
   { id: "mods", href: base("mods/"), label: "모드 목록", icon: "package" },
   { id: "help", href: base("help/"), label: "문제 해결", icon: "first-aid-kit" },
 ];
