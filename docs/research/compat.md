@@ -1,7 +1,7 @@
-# 모드팩 호환성 점검 (v2, 14개, 2026-10-18 확인)
+# 모드팩 호환성 점검 (v2 14개 → v3 27개, 2026-10-18 확인)
 
 `data/mods.json` v2 의 모드 14개(Mod ID 15개)를 42.21.0 에서 함께 켰을 때 서로 부딪히거나
-42.21 과 맞지 않는 곳이 있는지 확인한 기록이다.
+42.21 과 맞지 않는 곳이 있는지 확인한 기록이다. v3 에서 13개를 더한 점검은 아래 "v3 추가 점검" 절에 있다.
 
 ## 결론
 
@@ -289,6 +289,167 @@ Mini Health Panel, Has Been Read, 한글타이핑은 페이지를 거의 읽지 
 - 오래 플레이할 때의 성능, 저장 파일 크기(Hx 의 `map_symbols.bin` 보고 등).
 - Mini Health Panel, Has Been Read, 한글타이핑의 최근 커뮤니티 보고(429 로 거의 못 읽음).
 - 정적 분석은 정규식 기반이라 동적으로 만든 함수 이름이나 문자열로 부르는 함수는 놓칠 수 있다.
+
+## v3 추가 점검 (후보 15개 → 13개 넣음, 27개, 2026-10-18)
+
+"무기 내구도 보이기, 상태를 쉽게 보는 UI, 그 밖에 있으면 좋을 모드" 요청으로 고른 후보 15개를 위와 같은 방법으로 점검했다.
+고른 과정과 뺀 후보는 `mods.md` 의 "2026-10-18 추가: 화면·편의 모드 13개" 절에 있다.
+
+### 판정
+
+| 모드 | 판정 | 근거 |
+|---|---|---|
+| NeatUI Framework (3508537032) | 넣는다 | Neat Crafting 필수. 바닐라 함수는 없을 때만 채운다 |
+| Clean HotBar (3461263912) | 넣는다 | 새 오류 0. `ISHotbar:render` 교체는 이 모드의 목적(그리기), 나머지는 감쌈 |
+| CH Status HUD (3776182375) | 넣는다 | 바닐라 함수 안 고침, 이벤트만 씀 |
+| Moodle Quarters (2854030563) | 넣는다 | Lua 1개, 바닐라 함수 안 고침 |
+| Neat Crafting (3502080466) | 넣는다 | 교체로 잡힌 3곳 모두 원래 함수를 부름. 빼기 어렵다는 관리 위험은 기록 |
+| Better Generator Info (3576056135) | 넣는다 | 발전기 창 함수 모두 감쌈 |
+| Swap It (2366717227) | 넣는다 | 교체 3곳이 42.21 원본 + 추가분 |
+| Picking Meister (3422220305) | 넣는다 | 모두 감쌈 |
+| Drag Bodies Faster (3393821407, `DBFaster50`) | 넣는다 | 애니메이션 속도 값만 다름(jar 로 확인) |
+| Map Symbol Size Slider (2734705913) | 넣는다 | 모두 감쌈 |
+| MGRS (2928660831) | 넣는다 | 모두 감쌈, 띄어쓰기 든 Mod ID 도 실제로 로드됨 |
+| Rain Cleans Blood (2956146279) | 조건부 | 옷 툴팁 수치가 안 바뀌는 것을 코드로 확인(보기만 어긋남). 장착 불가 보고 1건은 코드 경로 없음 |
+| Combat Text (2286124931) | 조건부 | 좀비가 많으면 렉(작성자 인정), B42 멀티 검증 기록 없음. 화면만 바꾸는 모드라 언제든 뺄 수 있음 |
+| Show Wall Health (3002666175) | **뺀다** | 서버가 클라이언트가 보낸 벽 체력을 믿고 낮춘다(아래 "뺀 모드") |
+| Show Weapon Stats (2762715872) | **뺀다** | 무기 툴팁을 영어로 통째로 다시 그린다, 멀티 탄약 표시 버그 미해결 |
+
+### 확인 방법
+
+1. 받기: SteamCMD 로 후보 15개와 팩 14개를 모두 새로 받았다. Required items: Neat Crafting → NeatUI Framework,
+   Swap It·MGRS → errorMagnifier + Mod Update and Alert System(둘 다 이미 팩에 있음).
+2. 정적 분석: `mod_analyze.py --add` 15개. Drag Bodies Faster 는 한 아이템에 25·50·60·70·80% 다섯 Mod ID 가 있고 서로
+   `incompatible` 이라 `DBFaster50` 만 넣었다.
+3. 바닐라 교체 비교와 jar 확인(CFR 0.152 로 42.21.0 `projectzomboid.jar` 디컴파일):
+   `PlayerDraggingCorpse`, `ChooseGameInfo$Mod`·`GameVersion`, `Clothing`·`InventoryItem`·`BloodClothingType`.
+4. 로딩 테스트: 후보 15개를 모두 넣은 29개 팩(Mod ID 30개)과, 2개를 뺀 최종 27개 팩(Mod ID 28개)을 각각 격리 서버·클라이언트로
+   띄웠다. 결과는 아래 "로딩 테스트".
+5. 커뮤니티: 서브에이전트가 창작마당 댓글·변경 기록·토론을 읽었지만 429 로 Moodle Quarters, Better Generator Info,
+   Map Symbol Size Slider, Picking Meister, Drag Bodies Faster, MGRS 는 못 읽었다. 이 6개는 후보를 고를 때 직접 읽은
+   페이지의 최근 댓글(모드마다 6~10개)만 근거다.
+
+### 로드 순서
+
+- NeatUI Framework 를 라이브러리 바로 뒤(3번)에 둔다. Mini Health Panel 이 NeatUI 보다 먼저 로드되면 서버가 시작 중 꺼진다는
+  보고가 있었고(08-13, Mini Health Panel 댓글), NeatUI 작성자도 "쓰는 모드보다 먼저"라고 한다. 이 순서로 서버가 정상 시작했다.
+  Mini Health Panel 은 10-04 업데이트로 NeatUI 계열과 부딪히던 알림 창을 없앴다.
+- Clean HotBar 는 작성자 권장대로 아래쪽(25번). 42.21 직후 "차에 못 타고 총을 못 쏨" 보고가 로드 순서를 맨 아래로 옮겨 풀렸다는 댓글이 있다.
+- Hx 통합 번역과 Named skill VHS tapes 는 그대로 맨 끝.
+
+| # | Mod ID | # | Mod ID | # | Mod ID |
+|---|---|---|---|---|---|
+| 1 | errorMagnifier | 10 | P4HasBeenRead | 19 | RainCleansBlood |
+| 2 | ChuckleberryFinnAlertSystem | 11 | MiniHealthPanel | 20 | WorldMapNameSymbols |
+| 3 | NeatUI_Framework | 12 | CHStatusHUD | 21 | MapSymbolSizeSlider |
+| 4 | BetterSortCC | 13 | moodle_quarters | 22 | MGRS (FMCCYAYFGLE) |
+| 5 | SmarterStorage | 14 | Neat_Crafting | 23 | Improved-KorChat |
+| 6 | ProximityInventory | 15 | BetterGeneratorInfo | 24 | SkillRecoveryJournal |
+| 7 | stack_all_42Roy | 16 | CombatText | 25 | CleanHotBar |
+| 8 | P4PickingMeister | 17 | SwapIt | 26 | Hx_KR_Vanilla, Hx_KR_Mod |
+| 9 | VB_CommonSense | 18 | DBFaster50 | 27 | NamedSkillVHSTapes |
+
+`require` 로 실제 순서가 바뀌는 것은 v2 와 같다(Alert System 이 errorMagnifier 앞으로).
+
+### 발견 사항 (넣은 모드)
+
+1. **Clean HotBar 가 Common Sense 의 총 탄약 표시를 끈다.** `commonsense_patch.lua` 가 게임 시작 때 클라이언트에서
+   `SandboxVars.CommonSense.GunStats = false` 로 바꾼다. 탄약 수는 Clean HotBar 의 핫바·손 칸 표시로 대신 본다. 의도된 호환 처리다.
+   - `ISHotbar:render` 는 통째로 교체(핫바 그리기가 이 모드의 목적), `refresh`·`update`·`attachItem`·`canBeAttached` 등은 감싼다.
+     핫바를 고치는 다른 모드는 Swap It 뿐이고 고치는 함수가 겹치지 않는다.
+   - "감싸려는 함수가 없음"으로 잡힌 `CEWeaponDurabilityAlert.displayTime` 은 함수가 아니라 숫자 필드다(오탐).
+2. **Swap It**: `ISHotbar:activateSlot`·`equipItem`·`isAllowedToActivateSlot` 를 통째로 바꾸지만, 42.21 원본을 문자열까지 그대로
+   옮기고 맞바꾸기·빈 칸에 걸기만 더했다. 안에서 부르는 `attachItem`·`canBeAttached` 는 Clean HotBar 가 감싼 판을 탄다.
+   Clean HotBar 버그 게시판에 "Swap It 과 충돌하는 것 같다"는 질문(08-26)이 있지만 답은 확인하지 못했다(시작 전 시험 6번).
+   모드 안 `KO/UI.json` 은 UTF-16 을 잘못 바꿔 키가 깨져 있어 안 쓰이고, Hx_KR_Mod 가 키 7개를 모두 번역한다.
+3. **Neat Crafting**: "교체"로 잡힌 `ISEntityUI.GetWindowClass`·`GetComponentPanelClass`·`ISWidgetCraftLogicInputControl:createDynamicChildren`
+   은 모두 원래 함수를 먼저 부르고 결과만 바꾼다(오탐). xuiskin `Base.default` 를 덮어 작업대 창도 Neat 창으로 열리고,
+   모드 옵션에서 끄면 바닐라 창 클래스로 되돌린다. **한 번 넣은 저장에서 빼면 접속이 안 될 수 있다**는 보고(10-04)가 있으니
+   뺄 때는 작성자가 안내하는 Safe Uninstall Support 를 쓴다.
+4. **NeatUI Framework**: `ISUIElement` 중심 좌표 함수 7개는 `if not ISUIElement.X then` 안에서만 정의한다. 42.21 에는 모두 있어 바꾸지 않는다.
+5. **Drag Bodies Faster**: Lua 없이 바닐라 애니메이션 XML 12개를 덮는다. 42.21 원본과 비교하면 BOM 과 `m_SpeedScale` 만 다르다.
+   - 끌기 4개: `WalkSpeedGrapple` → `1.20`. jar 의 `PlayerDraggingCorpse.enter` 가 이 변수를 해골 1.2, 그 밖 0.8 로 정한다.
+     그래서 일반 시체만 0.8 → 1.2(50% 빠름)이고 해골은 그대로다. 바닐라 규칙이 깨지지 않는다.
+   - 들어 올리기 4개: 0.80 → 1.20/1.00. 내려놓기 4개는 BOM 만 다르다.
+6. **Rain Cleans Blood (조건부)**: 입은 옷은 부위별 피·때(`item:setBlood/setDirt`, 그림 값)만 낮춘다. jar 를 보면 툴팁의
+   "피투성이·더러움" 막대는 `Clothing.bloodLevel`·`dirtyness` 필드이고, 게임은 피가 새로 묻을 때 `BloodClothingType.calcTotalBloodLevel`
+   로 다시 계산한다. 이 모드는 다시 계산하지 않아서 **비가 온 뒤 모습은 깨끗해도 툴팁 막대는 남는다**(다음에 피가 묻으면 맞춰진다).
+   바닐라 빨래 메뉴는 이 필드로 뜨므로 빨래는 그대로 된다. 10-10 댓글의 설명과 방향은 다르지만 "화면과 수치가 어긋난다"는 점은 맞다.
+   10-04 "장비를 벗고 입지 못함"은 1건이고, 코드는 피·때 값과 `resetModelNextFrame`·`syncVisuals` 만 건드려 장착 경로가 없다.
+7. **Combat Text (조건부)**: `onCreatePlayer` 같은 이벤트 처리 함수를 `local` 없이 전역으로 정의한다. Mini Health Panel 도 전역
+   `onCreatePlayer` 를 정의해서 나중에 로드되는 Combat Text 가 전역 이름을 덮는다. 하지만 두 모드 모두 정의 직후
+   `Events.OnCreatePlayer.Add(onCreatePlayer)` 로 그때의 함수를 등록하므로 둘 다 실행된다. 이 이름을 직접 부르는 곳은
+   Skill Recovery Journal 뿐인데 SRJ 것은 같은 파일의 `local` 함수다. 무해.
+   - 체력바는 클라이언트의 `zombie:getHealth()` 로 그린다. 멀티 참가자 화면에서 좀비 체력이 갱신되는지는 확인하지 못했다(시작 전 시험 9번).
+8. **CH Status HUD**: 글자를 자를 때 UTF-8 바이트를 가정한다(`dropLastChar`). Kahlua 에서 한글은 한 글자(0xAC00 이상)로 들어와
+   한 글자씩 정상으로 지워진다. 끝 글자가 0x80~0xBF(°, · 등)면 앞 글자까지 같이 지워질 수 있지만 표시용이라 무해.
+   `;` 키는 채팅 입력 중(`ISChat.instance.isTyping`)에는 무시한다.
+9. 같은 바닐라 함수를 여러 모드가 고치는 곳이 3곳 늘었고 모두 감싸기다: `ISContextMenu.onJoypadDown`(Smarter Storage, Picking Meister),
+   `ISInventoryPane:renderdetails`(Has Been Read, Picking Meister), `MainOptions.apply`(Has Been Read, Combat Text).
+10. Better Generator Info 의 `getGenOffColor`, Map Symbol Size Slider 의 `ExtraMapSymbolsUI:OnEvent` 는 조건문 안이다.
+    MGRS 와 Map Symbol Size Slider 는 서로 다른 지도 함수를 감싸고, WorldMap Name Symbols·Hx 와 겹치는 함수가 없다.
+
+### 뺀 모드
+
+- **Show Wall Health (3002666175)**: 우클릭 메뉴가 열릴 때마다 클라이언트가 근처 벽·문의 자기 쪽 체력과 오브젝트 순번
+  (`getObjectIndex`)을 서버로 보낸다. 서버(`WallHealthServer.lua`)는 그 칸의 같은 순번 오브젝트를 꺼내, 클라이언트 값이 더 낮으면
+  실제 체력을 그 값으로 낮추고 모두에게 알린다. 클라이언트 값이 오래됐거나 순번이 어긋나면 수리한 벽이 도로 깎이거나 다른 벽·문
+  체력이 바뀔 수 있다. 커뮤니티의 서버 `InvocationTargetException`(7번째 줄, 2025-05·12)이 바로 이 순번 조회 줄이다.
+  42.21 업데이트(09-28) 뒤 "창이 안 뜬다"(10-13)에 답이 없다. `versionMax=42.21.0` 은 주·부 번호만 비교하므로
+  (`ChooseGameInfo$Mod.isAvailableSelf`, `GameVersion.getInt = 주*1000+부`) 42.21.x 핫픽스에서는 켜진다. 문제는 그쪽이 아니다.
+- **Show Weapon Stats (2762715872)**: 모드 옵션 `compatibilityMode` 의 기본값이 `false` 라, 무기 툴팁을 원래 함수를 부르지 않고
+  "Condition:", "Damage:" 같은 영어 문구로 통째로 다시 그린다. 한국어 게임에서 무기 툴팁이 영어가 된다. 멀티에서 탄약 수가 안 보인다는
+  보고(09-18)를 작성자가 "다음 패치에 고치겠다"(10-08)고 했지만 08-16 뒤 업데이트가 없다.
+
+### 한국어 (v3 추가분)
+
+| 모드 | KO 로 채워짐 | 출처 |
+|---|---|---|
+| Clean HotBar | 9/10 | 모드 + Hx (빠진 1개는 모드 옵션 제목) |
+| CH Status HUD | 72/74 | 모드 + Hx (빠진 2개는 샌드박스 쪽 모드 이름, 키 설정 화면 이름) |
+| Neat Crafting | 117/118 | 모드 + Hx |
+| Better Generator Info | 25/26 | 모드 |
+| Map Symbol Size Slider | 1/1 | 모드 + Hx |
+| Swap It | 7/7 | Hx (모드 KO 파일은 깨짐) |
+| Picking Meister | 18/18 | Hx |
+| Rain Cleans Blood | 21/21 | Hx |
+| MGRS | 5/5 | Hx (샌드박스 문구) |
+| Combat Text | 35/35 | Hx |
+| NeatUI Framework, Moodle Quarters, Drag Bodies Faster | 번역 키 없음 | 화면 글자 없음(`no-text`) |
+
+- `%1` 자리표시 개수가 EN 과 다른 KO 키는 0개다.
+
+### 로딩 테스트
+
+- 후보 15개를 모두 넣은 29개 팩(Mod ID 30개): 서버 `ok`(스택 트레이스 0, 새 오류·경고 0, 알려진 무해 1종:
+  `AdvancedAnimator$1.visitFileFailed` 104줄), 클라이언트 `ok`(새 오류·경고 0). 두 로그 모두 30개 Mod ID 의 `loading`/`overrides` 줄이 있다.
+- 최종 27개 팩(Mod ID 28개): 서버 `ok`(스택 트레이스 0, 새 오류·경고 0, 알려진 무해 1종), 클라이언트 `ok`(새 오류·경고 0).
+  두 로그 모두 `loading` 줄 28개, 뺀 두 모드(`KAMER_WallHealth`, `showweaponstats`) 줄은 0개.
+- 불러오기까지만 본 것이다. 월드 안 조작은 아래 "시작 전 시험"으로 한다.
+
+### 커뮤니티 보고 (v3, 위험한 순서)
+
+1. Rain Cleans Blood: 42.21 정식 뒤 업데이트 없음. "장비를 벗고 입지 못함, 모드를 빼도 그대로"(10-04, 1건, 답 없음),
+   옷 피·때 수치 어긋남(10-10, 위 6번에서 코드로 확인), 폭우에도 차 피가 안 씻김(10-04, 답 없음).
+2. Combat Text: 좀비가 많을수록 렉·튕김(09-01, 09-03, 10-10, 작성자 09-11 인정), "로컬 서버에서 안 된다"(09-24, 답 없음).
+3. Neat Crafting / NeatUI: 호스트 서버에서 "Missing dictionary string"·"file doesn't exist on the client" 로 튕긴 보고(09-17)에
+   작성자가 서버·클라이언트 파일이 달라서라고 답했다. 모드가 업데이트되면 호스트가 게임을 다시 켜고 모두 같은 버전을 받아야 한다.
+   멀티에서 칼을 갈면 튕긴다는 보고(09-25)는 로그 요청 뒤 해결 여부 불명.
+4. Clean HotBar: 모드 업데이트 뒤 서버에 못 들어감(10-07, 작성자 "서버를 다시 켜 버전을 맞춰라"). 우리는 매번 호스트가 새로 열어 대체로 해당 없음.
+5. Swap It: 양손 무기를 든 가드 상태에서 바꾸면 등 무기가 풀림(10-08, 답 없음). 컨트롤러는 안 됨(작성자).
+6. CH Status HUD: "42.21 에서 잘 된다"(10-15), "이제 안 된다"(10-12, 답 없음). 니코틴 금단 스트레스·Sickness 표시는 10-16 업데이트 설명에 고쳤다고 적혀 있다.
+- 출처: 각 모드의 `https://steamcommunity.com/sharedfiles/filedetails/comments/<번호>`, Clean HotBar 버그 스레드
+  https://steamcommunity.com/workshop/filedetails/discussion/3461263912/588433820963856761/
+
+### 시작 전 시험 (v3 추가, 앞 절의 1~4번 다음)
+
+5. **Clean HotBar**: 핫바에 날 무기·총을 걸고 내구도 막대·탄약 표시가 나오는지. 가방에서 같은 무기 여러 개를 핫바 칸으로 끌어 놓아 바닥에 떨어지지 않는지.
+6. **Swap It + Clean HotBar**: 등에 무기를 걸고 다른 무기를 든 채 핫바 숫자키 → 두 무기가 맞바꿔지는지. 빈 칸 숫자키 → 든 무기가 걸리는지.
+7. **CH Status HUD**: `;` 로 패널이 뜨는지, 채팅 중 `;` 를 쳐도 패널이 안 바뀌는지. **Moodle Quarters**: 배고픔 아이콘에 단계 칸이 보이는지.
+8. **Neat Crafting**: 제작 창(B)과 작업대 창이 열리는지, 레시피 검색이 되는지.
+9. **Combat Text**: 참가자 화면에서도 좀비를 때리면 체력바가 줄어드는지. 안 줄면 빼도 된다.
+10. **Rain Cleans Blood**: 비 오는 날 피 묻은 옷을 입고 있다가 모습이 깨끗해지는지, 그 뒤 옷을 벗고 다시 입을 수 있는지.
+11. **MGRS**: 지도(M) → 옵션에서 셀 격자(CellGrid)를 켜면 마우스 칸의 좌표가 뜨는지, 미니맵에 마우스를 올리면 내 좌표가 뜨는지.
 
 ## 다시 점검하는 법
 

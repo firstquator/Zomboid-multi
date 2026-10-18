@@ -15,6 +15,7 @@ const CAT_ICON: Record<string, string> = {
   ui: "heart-check",
   inventory: "backpack-01",
   interaction: "hand-grip",
+  world: "cloud-angled-rain",
   map: "maps-location-01",
   character: "book-02",
   korean: "translate",
@@ -22,6 +23,7 @@ const CAT_ICON: Record<string, string> = {
 const KOREAN: Record<string, { label: string; tone: string }> = {
   native: { label: "한국어 내장", tone: "ok" },
   "via-pack": { label: "번역 팩으로 한국어", tone: "ok" },
+  "no-text": { label: "글자 없음", tone: "ok" },
   none: { label: "영어만", tone: "dim" },
 };
 const ko = KOREAN[mod.korean?.status] ?? KOREAN.none;

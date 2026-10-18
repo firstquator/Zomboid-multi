@@ -2,7 +2,8 @@
 // 필드가 많지 않아서 직접 검사하는 편이 의존성을 줄인다.
 
 const REQUIRED = ["workshopId", "name", "nameKo", "category", "summary", "why", "url"];
-const KOREAN = ["native", "via-pack", "none"];
+// no-text: 화면에 글자가 없어 번역할 것이 없는 모드(아이콘·애니메이션·라이브러리)
+const KOREAN = ["native", "via-pack", "no-text", "none"];
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const WORKSHOP_ID = /^\d{6,12}$/;
 // Mod ID 는 ini 의 Mods= 줄에 그대로 들어간다. 세미콜론이나 줄바꿈이

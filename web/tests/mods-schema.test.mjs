@@ -49,6 +49,14 @@ describe("validateMods", () => {
     expect(msg).toContain("\\\\C");
   });
 
+  it("글자가 없는 모드는 korean.status 를 no-text 로 적을 수 있고, 모르는 값은 막는다", () => {
+    const d = fixtureData();
+    d.mods[0].korean.status = "no-text";
+    expect(validateMods(d)).toEqual({ ok: true });
+    d.mods[0].korean.status = "unknown";
+    expect(validateMods(d).errors.join("\n")).toContain("korean.status");
+  });
+
   it("B42 확인이 안 된 모드는 막는다", () => {
     const d = fixtureData();
     d.mods[2].b42.supported = false;

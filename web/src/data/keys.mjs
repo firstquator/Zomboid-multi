@@ -53,6 +53,7 @@ export const keybinds = [
   { keys: ["F1"], name: "생존 지침서 전환", group: "ui", tip: "게임에 들어 있는 그림 설명서" },
   { keys: ["=", "-", "Wheel"], alt: true, name: "화면 확대·축소", group: "ui", tip: "가까이 보거나 멀리 본다. 마우스 휠로도 된다" },
   { keys: ["F10"], name: "스크린샷 찍기", group: "ui", tip: "Zomboid\\Screenshots 폴더에 저장된다" },
+  { keys: [";"], name: "상태 수치 패널", group: "ui", tip: "상태 수치 패널 모드의 키. 배고픔·갈증·피로·공포 같은 상태를 막대와 숫자로 띄운다. 우클릭으로 볼 항목을 고른다", mod: true },
 
   // 차량
   { keys: ["E"], name: "타기·내리기", group: "vehicle", tip: "차 문 옆에서 누른다", when: "차 옆에서" },

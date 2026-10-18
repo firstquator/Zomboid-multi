@@ -69,6 +69,17 @@
 | Mod Update and Alert System | 3077900375 | 이 팩 안에 이걸 의존으로 요구하는 모드가 없음 |
 | Map Legend UI / Read While Walking | 2710167561 / 2845952197 | 마지막 업데이트가 42.20 정식 이전(2026-03 / 2025-08) |
 | Equipment UI, Reorder The Hotbar, Reorder Containers | 2950902979, 2903771337, 2901962885 | 제목에 [DISCONTINUED] |
+| [B41&B42] Show Wall Health | 3002666175 | (v3 점검) 우클릭할 때마다 클라이언트가 자기 쪽 벽 체력을 보내고, 서버는 그 값이 더 낮으면 실제 체력을 그 값으로 낮춘다(`WallHealthServer.lua`). 오브젝트를 순번(`getObjectIndex`)으로 찾아서, 클라이언트 값이 오래됐거나 순번이 어긋나면 수리한 벽이 도로 깎이거나 다른 벽·문 체력이 바뀔 수 있다. 같은 줄의 서버 오류 보고, 42.21 에서 창이 안 뜬다는 10-13 보고가 해결되지 않음 |
+| [41][42] Show Weapon Stats MP | 2762715872 | (v3 점검) 기본 설정에서 무기 툴팁을 영어 문구로 통째로 다시 그려 바닐라 한국어 툴팁이 사라진다(호환 모드는 각자 모드 옵션에서 켜야 함). 멀티에서 탄약 수가 안 보이는 버그를 작성자가 인정했지만 08-16 뒤 업데이트 없음. 내구도는 Clean HotBar 가 보여 준다 |
+| Item Condition Overlay (BUILD 42 STABLE) | 3641048285 | 인벤토리에도 내구도 막대를 그리지만 42.20.4 뒤 "대부분 안 나온다"는 보고 여럿(전용 서버 포함), 마지막 업데이트 08-09, 한국어 없음. Clean HotBar 와 같이 쓰면 둘 다 핫바를 그린다 |
+| [B41/B42] Item Condition, Condition On Dash, Weapon Condition Indicator, Equipment Condition (42.13-16) | 2852309899, 3306168142, 3412262177, 3646678287 | 2024-12~2026-03 이후 업데이트 없음(42.20 정식 이전) |
+| [B41\|B42] Simple Status | 2867431511 | 상태 막대 패널로 가장 유명하고 KO 내장이지만, 켜고 끄는 기본 키가 `\` 라 한글 채팅의 한/영 키와 겹친다. 42.21·호스트 멀티에서 "안 된다"는 댓글과 "된다"는 댓글이 섞여 있고, 마지막 업데이트가 42.21 정식 이전(09-13) |
+| Modern Status [B42] | 3451167732 | 원형 게이지 등 꾸밀 수 있는 범위가 가장 넓지만 CH Status HUD 와 같은 일을 한다. 둘 중 하나만 넣는다 |
+| Minimal Display Bars 계열 | 3388844542, 3775659041 | 같은 종류의 상태 막대. 원작(2004998206)과 겹치는 이어받기판이 여럿이다 |
+| [B42] Moodle Descriptions Expanded | 3389003300 | 무들 설명 문구를 바꾸는 모드라 한국어 게임에서는 번역이 있어야 의미가 있다. 다른 모드와 함께 쓰면 적용 안 된다는 9월 보고 |
+| Dynamic Moodles, Neon moodle levels | 3674800555, 3392116408 | 무들 아이콘 교체. Moodles in lua 프레임워크가 따로 필요하다. Moodle Quarters 로 단계 구분은 충분 |
+| KillCount | 2553809727 | "42.21 에서 안 된다" 댓글(10-15) |
+| DayZ Health HUD | 3818297469 | 2026-10-18 공개, 사용 보고 거의 없음 |
 
 ## 확인 못 한 점
 
@@ -100,3 +111,33 @@
 - 필수 모드(워크숍 Required items): errorMagnifier (2896041179, `errorMagnifier`),
   Mod Update and Alert System (3077900375, `ChuckleberryFinnAlertSystem`). 두 라이브러리는 서로를 필수로 지정한다.
 - `npm run mods:verify` 결과 14개 모두 오류·경고 없음.
+
+## 2026-10-18 추가: 화면·편의 모드 13개 (모드팩 v3)
+
+사용자 요청: "무기 내구도 보이기, 갈증·배고픔·피로·무서움 같은 상태를 쉽게 보는 UI, 그 외 있으면 좋을 모드".
+
+- 후보 찾기: 창작마당 검색(B42 태그, `durability`·`condition`·`moodle`·`status`·`bars` 등)과 B42 태그 전체·QOL 태그의
+  구독 순 상위 목록에서, 42.20 정식(2026-07-29) 이후 갱신된 것만 골랐다. 설명문과 페이지의 최근 댓글(모드마다 6~10개)을 읽었다.
+- 점검: `zomboid-mod-check` 스킬. 결과는 `compat.md` 의 "v3 추가 점검" 절.
+- 넣은 13개(Workshop ID / Mod ID):
+
+| 모드 | Workshop ID | Mod ID | 마지막 업데이트 | 한국어 | 고른 이유 |
+|---|---|---|---|---|---|
+| NeatUI Framework [B42] | 3508537032 | NeatUI_Framework | 2026-09-21 | 글자 없음 | Neat Crafting 의 필수 라이브러리 |
+| Clean HotBar [B42] | 3461263912 | CleanHotBar | 2026-10-12 | 모드 KO | 무기 내구도. 핫바·손에 든 칸에 내구도·날카로움·탄약. 설명에 42.21.0 까지 명시 |
+| CH Status HUD | 3776182375 | CHStatusHUD | 2026-10-15 | 모드 KO | 배고픔·갈증·피로·공포 등 32가지 수치 패널(`;` 키). 42.21 작동 댓글 여럿 |
+| Moodle Quarters [B42] | 2854030563 | moodle_quarters | 2026-08-11 | 글자 없음 | 상태 아이콘 단계를 1/4 칸으로 보여 줌 |
+| Neat Crafting [B42] | 3502080466 | Neat_Crafting | 2026-10-15 | 모드 KO | 제작 창 교체(검색·제작 사슬). 42.21.x 명시 |
+| Better Generator Info | 3576056135 | BetterGeneratorInfo | 2026-09-16 | 모드 KO | 발전기 연료 남은 시간·전력 범위 |
+| Combat Text (B40+B41+B42) | 2286124931 | CombatText | 2026-08-25 | Hx | 좀비 체력바·피해 숫자. 조건부(렉·멀티 미확인) |
+| Swap It | 2366717227 | SwapIt | 2026-08-19 | Hx | 핫바 숫자키로 무기 맞바꿔 들기. 필요 라이브러리가 이미 팩에 있음 |
+| Picking Meister | 3422220305 | P4PickingMeister | 2026-09-04 | Hx | 가방 속 물건 바로 꺼내기, 총 탄 한 번에 빼기 |
+| [B42] Drag Bodies Faster | 3393821407 | DBFaster50 | 2026-08-02 | 글자 없음 | 시체 끌기 50% 빠르게(5가지 중 50% 판만) |
+| Rain Cleans Blood [B42.20 + MP] | 2956146279 | RainCleansBlood | 2026-09-25 | Hx | 비·눈에 피·재가 씻김. 조건부(툴팁 수치 안 바뀜) |
+| Map Symbol Size Slider | 2734705913 | MapSymbolSizeSlider | 2026-08-01 | 모드 KO | 지도 기호 크기 조절 |
+| Military Grid Reference System … | 2928660831 | MGRS (FMCCYAYFGLE) | 2026-08-07 | Hx | 지도·미니맵 격자 좌표로 위치 부르기. 필요 라이브러리가 이미 팩에 있음 |
+
+- 같은 일을 하는 모드 중 고른 기준과 뺀 후보는 위 "뺀 후보" 표에 더했다(Show Wall Health, Show Weapon Stats 는 점검 뒤 뺐다).
+- `korean.status` 에 `no-text`(글자 없음)를 새로 만들었다. 아이콘·애니메이션·라이브러리처럼 번역할 글자가 없는 모드를 "영어만"으로 보이지 않게 하려고.
+- 사이트: 분류 "환경"(Rain Cleans Blood)을 더했고, 참가자 가이드 마지막 장에 상태 수치(`;`)·무기 바꿔 들기·지도 좌표 팁을, 단축키 목록에 `;` 를 넣었다.
+- `npm run mods:verify` 결과 27개 모두 오류·경고 없음.
